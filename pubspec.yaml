@@ -15,7 +15,6 @@ dependencies:
   dio: ^4.0.0
   json_annotation: ^4.8.0  # Bu da çalışıyor
   provider: ^6.0.0
-  google_fonts: ^5.0.0
   cupertino_icons: ^1.0.8
 
 dev_dependencies:
@@ -27,3 +26,25 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-SemiBold.ttf
+        - asset: assets/fonts/Roboto-Black.ttf
+  assets:
+    - assets/icons/home.png
+    - assets/icons/profile.png
+    - assets/icons/score.png
+    - assets/icons/cup.png
+    - assets/icons/fire.png
+    - assets/icons/profilephoto.png
+    - assets/icons/ticket.png
+    - assets/icons/diamond.png
+    - assets/icons/subtitleopen.png
+    - assets/icons/subtitleclose.png
+    - assets/icons/bookmark.png
+    - assets/icons/ticket-one.png
+    - assets/images/otta.png
+    - assets/images/karty.png
+    - assets/images/catsbattle.png
+    - assets/gifs/diamond1.gif

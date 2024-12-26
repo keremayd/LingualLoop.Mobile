@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/providers/UserProvider.dart';
 import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/services/auth_service.dart';
@@ -22,7 +22,7 @@ void main() {
         Provider<AuthService>(
           create: (context) {
             final dio = Dio(BaseOptions(baseUrl: 'http://10.0.2.2:5213/ll-api/'));
-            final authService = AuthService(dio);
+            final authService = AuthService(dio, );
             dio.interceptors.add(TokenInterceptor(authService));
             return authService;
           },
@@ -44,6 +44,9 @@ void main() {
         ),
         ChangeNotifierProvider<UserProvider>(
           create: (_) => UserProvider(),
+        ),
+        ChangeNotifierProvider<ScoreWithLivesProvider>(
+          create: (_) => ScoreWithLivesProvider(),
         ),
       ],
       child: MyApp(),
@@ -68,12 +71,10 @@ class MyApp extends StatelessWidget {
 
 
       theme: ThemeData(
-        scaffoldBackgroundColor: Color(0xFFEFF6FC),
-        textTheme: GoogleFonts.rubikTextTheme(
-          Theme.of(context).textTheme, // Varsayılan tema ile birleştir
-        ),
+        scaffoldBackgroundColor: Color(0xFFF9FBFF),
+        fontFamily: 'Roboto',
         appBarTheme: AppBarTheme(
-          backgroundColor: Color(0xFFEFF6FC), // AppBar arka plan rengi
+          backgroundColor: Color(0xFFF9FBFF), // AppBar arka plan rengi
         ),
       ),
 

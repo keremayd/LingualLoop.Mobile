@@ -29,10 +29,12 @@ class _NavbarWidgetState extends State<NavbarWidget> {
     return Scaffold(
       body: _pages[_selectedIndex],
       bottomNavigationBar: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(23),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(23),
+            topRight: Radius.circular(23),
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black12,
@@ -42,13 +44,22 @@ class _NavbarWidgetState extends State<NavbarWidget> {
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(icon: Icons.home_rounded, index: 0, label: 'Home'),
+              _buildNavItem(
+                customIconPath: 'assets/icons/home.png',
+                index: 0,
+                label: 'Home',
+              ),
               _buildNavItem(icon: Icons.leaderboard_rounded, index: 2, label: 'Leaderboard'),
-              _buildNavItem(icon: Icons.person, index: 3, label: 'Profile'),
+              _buildNavItem(icon: Icons.leaderboard_rounded, index: 4, label: 'Leaderboard'),
+              _buildNavItem(
+                customIconPath: 'assets/icons/profile.png',
+                index: 3,
+                label: 'Profile',
+              ),
             ],
           ),
         ),
@@ -57,7 +68,8 @@ class _NavbarWidgetState extends State<NavbarWidget> {
   }
 
   Widget _buildNavItem({
-    required IconData icon,
+    String? customIconPath,
+    IconData? icon,
     required int index,
     required String label,
   }) {
@@ -67,19 +79,17 @@ class _NavbarWidgetState extends State<NavbarWidget> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
+          customIconPath != null
+              ? Image.asset(
+            customIconPath,
+            color: isSelected ? Color(0xFF5F5CF0) : Color(0xFFD1D1D1),
+            height: 24,
+            width: 24,
+          )
+              : Icon(
             icon,
-            color: isSelected ? Colors.black : Colors.grey,
+            color: isSelected ? Color(0xFF5F5CF0) : Color(0xFFD1D1D1),
             size: 35,
-          ),
-          AnimatedContainer(
-            duration: Duration(milliseconds: 300),
-            height: 6,
-            width: 6,
-            decoration: BoxDecoration(
-              color: isSelected ? Colors.black : Colors.transparent,
-              shape: BoxShape.circle,
-            ),
           ),
         ],
       ),

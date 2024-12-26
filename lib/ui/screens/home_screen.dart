@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:lingualloop/services/auth_service.dart';
-import 'package:lingualloop/services/question_service.dart';
-import 'package:lingualloop/ui/screens/video_quiz_screen.dart';
+import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/ui/widgets/LessonCard.dart';
+import 'package:lingualloop/ui/widgets/MainLessonCard.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/User.dart';
-import '../../providers/UserProvider.dart'; // Provider'ı ekliyoruz
+import '../../models/responses/ScoreWithLivesResponse.dart';
+import '../../providers/ScoreWithLivesProvider.dart';
+import '../../providers/UserProvider.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -15,16 +16,24 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenScreenState extends State<HomeScreen> {
   User? user;
+  ScoreWithLivesResponse? scoreWithLives;
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _getUser(context);
+    _initializeData();
   }
 
-  Future<void> _sendRequest(BuildContext context) async {
-    final questionService = Provider.of<QuestionService>(context, listen: false);
-    await questionService.random();
+  Future<void> _initializeData() async {
+    setState(() {
+      isLoading = true;
+    });
+    await _getUser(context);
+    await _getScoreWithLives(context);
+    setState(() {
+      isLoading = false;
+    });
   }
 
   Future<void> _getUser(BuildContext context) async {
@@ -32,84 +41,277 @@ class _HomeScreenScreenState extends State<HomeScreen> {
     user = userProvider.user!;
   }
 
+  Future<void> _getScoreWithLives(BuildContext context) async {
+    final userService = Provider.of<UserService>(context, listen: false);
+    final scoreWithLivesProvider = Provider.of<ScoreWithLivesProvider>(context, listen: false);
+
+    await userService.scoreWithLivesById(context);
+
+    setState(() {
+      scoreWithLives = scoreWithLivesProvider.scoreWithLives;
+    });
+  }
+
+  Future<void> _updateLivesAndRouter(BuildContext context, String routeUrl) async {
+    final userService = Provider.of<UserService>(context, listen: false);
+
+    var apiResponse = await userService.updateLivesById();
+    if (apiResponse.errorCode == null) {
+      Navigator.pushNamed(context, '/${routeUrl}');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start, // Sol hizalama
-          mainAxisSize: MainAxisSize.min, // AppBar'da fazla alan kaplamaması için
-          children: [
-             Text('Merhaba, ${user!.userNickname}', // İlk satır
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.normal, color: Colors.black),
-            ),
-            Text('Almanca\'ya devam et!', // Alt satır
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
-            ),
-          ],
-        ),
-      ),
+    if (isLoading) {
+      return Center(child: CircularProgressIndicator());
+    }
 
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        double screenHeight = constraints.maxHeight; // 706.09
+        double screenWidth = constraints.maxWidth; // 392.72
 
-      body: Padding(
-        padding: const EdgeInsets.all(14.0),
-        child: SizedBox(
-          height: MediaQuery.of(context).size.height * 0.35, // Ekranın %90'ını kapla
-          child: Row(
-            children: [
-              Expanded(
-                flex: 1, // Büyük kart için daha fazla alan
-                child: LessonCard(
-                  icon: Icons.style_outlined,
-                  title: "Oyun Kartları",
-                  progress: "300'den fazla oyun kartı",
-                  color: Color(0xFFF66955),
-                  onTap: () {
-                    Navigator.pushNamed(context, '/videoquiz');
-                  },
-                ),
+        return Scaffold(
+            appBar: PreferredSize(
+              preferredSize: Size.fromHeight(screenHeight * 0.1317), // 93
+              child: Column(
+                children: [
+                  Container(
+                    margin: EdgeInsets.only(
+                      top: screenHeight * 0.05665, // 40
+                      left: screenHeight * 0.0226, // 16
+                      right: screenHeight * 0.0226, // 16
+                    ),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF5F5CF0), // Mor arkaplan
+                      borderRadius: BorderRadius.circular(14), // Köşeleri yuvarla
+                    ),
+                    child: Column(
+                      children: [
+                        // Üst Beyaz Alan
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: screenHeight * 0.0226), // 16
+                          decoration: BoxDecoration(
+                            color: Color(0xFFFFFFFF), // Beyaz arkaplan
+                            borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(14),
+                                topRight: Radius.circular(14),
+                                bottomLeft: Radius.circular(14),
+                                bottomRight: Radius.circular(14)
+                            ),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                                top: screenHeight * 0.0240, // 17
+                                bottom: screenHeight * 0.0240, // 17
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Image.asset(
+                                      'assets/icons/profilephoto.png',
+                                      height: screenHeight * 0.0693, // 49
+                                    ),
+                                    SizedBox(width: screenWidth * 0.0254),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Merhaba, ${user!.userNickname}',
+                                          style: TextStyle(
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Almanca\'ya devam et!',
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            color: Color(0xFF8C8C8C),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                Container(
+                                  width: screenWidth * 0.1247, // 49
+                                  height: screenHeight * 0.0693, // 49
+                                  decoration: BoxDecoration(
+                                    color: Color(0xFFF7F9FD), // Arka plan rengi mor
+                                    borderRadius: BorderRadius.circular(14), // Köşeleri 14 px oval yap
+                                  ),
+                                  child: Center(
+                                    child:  Image.asset(
+                                      'assets/icons/diamond.png',
+                                      height: screenHeight * 0.0410, // 29
+                                    ),
+                                  ),
+                                ),
+
+                              ],
+                            ),
+                          ),
+                        ),
+                        // Alt Mor Şerit
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: screenHeight * 0.0226), // 16
+                          decoration: BoxDecoration(
+                            color: Color(0xFF5F5CF0), // Mor arkaplan
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(14),
+                              bottomRight: Radius.circular(14),
+                            ),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.only(left: screenWidth * 0.005, top: screenHeight * 0.0028, bottom: screenHeight * 0.0028), // 2, 2, 2
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Image.asset(
+                                      'assets/icons/cup.png', // Coin simgesi
+                                      height: screenHeight * 0.0311, // 22
+                                      width: screenWidth * 0.0560, // 22
+                                    ),
+                                    SizedBox(width: screenWidth * 0.0127), // 5
+                                    Text(
+                                      '${scoreWithLives?.score ?? ""}', // Score değeri
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(width: screenWidth * 0.0381), // 15
+                                Row(
+                                  children: [
+                                    Image.asset(
+                                      'assets/icons/ticket.png', // Ticket simgesi
+                                      height: screenHeight * 0.0269, // 19
+                                      width: screenWidth * 0.0789, // 31
+                                    ),
+                                    SizedBox(width: screenWidth * 0.0127), // 5
+                                    Text(
+                                      '${scoreWithLives?.lives ?? ""}', // Ticket değeri
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(width: 14), // Üst ve alt kartlar arası boşluk
-              Expanded(
-                flex: 1,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch, // Kartları genişlet
+            ),
 
+            body: Padding(
+              padding: EdgeInsets.only(
+                top: screenHeight * 0.0226,  // 13
+                left: screenWidth * 0.0407, // 16
+                right: screenWidth * 0.0407, // 16
+              ),
+              child: Column(
                   children: [
+                    SizedBox(
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start, // Başlığı sola hizalamak için
+                          children: [
+                            // Başlık
+                            Text(
+                              "Yolculuğunu Sürdür",
+                              style: TextStyle(
+                                fontSize: 19,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF2C2C2C),
+                              ),
+                            ),
+                            SizedBox(height: 0.0084), // 6
+                            SizedBox(
+                              //height: MediaQuery.of(context).size.height * 0.28, // 219
+                              height: screenHeight * 0.30973, // 218.7
+                              child: MainLessonCard(
+                                title: "Solo Pratik!",
+                                description: "Kendi hızınızda videolarla öğrenin ve pratik yapın.",
+                                color: Color(0xFF7875FC),
+                                onTap: () async {
+                                  await _updateLivesAndRouter(context, 'videoquiz');
+                                },
+                              ),
+                            ),
+                          ]
+                      ),
+                    ),
 
-                    // Üstteki küçük kart
-                    Expanded(
-                      child:  LessonCard(
-                        icon: Icons.video_library_outlined,
-                        title: "Video",
-                        progress: "500'den fazla video",
-                        color: Color(0xFFF4CE53),
-                        onTap: () {
-                          Navigator.pushNamed(context, '/videoquiz');
-                        },
-                      ),
-                    ),
-                    SizedBox(height: 14), // Üst ve alt kartlar arası boşluk
-                    // Alttaki küçük kart
-                    Expanded(
-                      child:  LessonCard(
-                        icon: Icons.description_outlined,
-                        title: "Test",
-                        progress: "Seviyeni belirle",
-                        color: const Color(0xFF70c9c3),
-                        onTap: () {
-                          Navigator.pushNamed(context, '/videoquiz');
-                        },
-                      ),
-                    ),
-                  ],
-                ),
+
+                    SizedBox(
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start, // Başlığı sola hizalamak için
+                          children: [
+                            SizedBox(height: screenHeight * 0.0283), // 20
+                            Text(
+                              "Diğer modlar",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF2C2C2C),
+                              ),
+                            ),
+                            SizedBox(height: screenHeight * 0.0056), // 4
+                            SizedBox(
+                              height: screenHeight * 0.30973, // 218.7
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    flex: 1, // Eşit alan kaplaması için
+                                    child: LessonCard(
+                                      title: "Karty",
+                                      description: "Kartları kaydır, yeni kelimeler öğren!",
+                                      color: Color(0xFF7875FC),
+                                      imageName: "karty",
+                                      onTap: () async {
+                                        await _updateLivesAndRouter(context, 'videoquiz');
+                                      },
+                                    ),
+                                  ),
+                                  SizedBox(width: screenWidth * 0.0509), // 20
+                                  Expanded(
+                                    flex: 1, // Eşit alan kaplaması için
+                                    child: LessonCard(
+                                      title: "Battle",
+                                      description: "Rakiplerinle 10 soruda kapış!",
+                                      color: Color(0xFF7875FC),
+                                      imageName: "catsbattle",
+                                      onTap: () async {
+                                        await _updateLivesAndRouter(context, 'videoquiz');
+                                      },
+                                      childTitle: "1v1",
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ]),
+                    )
+                  ]
               ),
-            ],
-          ),
-        )
-      ),
+            )
+        );
+      },
     );
   }
 }

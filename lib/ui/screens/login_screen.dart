@@ -64,9 +64,17 @@ class _LoginScreenState extends State<LoginScreen> {
             SizedBox(height: 10),
             TextField(
               controller: _passwordController,
-              decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10.0))), labelText: 'Şifre'),
-              obscureText: true,
-            ),
+                decoration: const InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10.0))),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xFFF8E9E9), width: 1.0), // Varsayılan border rengi
+                      borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xFFF77968), width: 2.0), // Odaklanıldığında border rengi
+                      borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                    ),
+                    labelText: 'Şifre'),
+              obscureText: true),
             SizedBox(height: 10),
             SizedBox(
               width: double.infinity,

@@ -13,16 +13,12 @@ import 'package:provider/provider.dart';
 import '../models/User.dart';
 
 class AuthService {
-  String? _accessToken;
-  String? _refreshToken;
   Dio _dio;
   final _storage = const FlutterSecureStorage();
 
   AuthService(this._dio);
 
   Dio get dio => _dio;
-
-  String? getAccessToken() => _accessToken;
 
   Future<ApiResponse<AuthenticateResponse>> login(String email, String password, BuildContext context) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
