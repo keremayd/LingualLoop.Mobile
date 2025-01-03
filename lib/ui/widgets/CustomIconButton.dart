@@ -5,6 +5,7 @@ class CustomIconButton extends StatefulWidget {
   final String clickedImg; // İkinci ikon
   final Color backgroundColor;
   final Color iconColor;
+  final Function? ontap;
 
   const CustomIconButton({
     Key? key,
@@ -12,6 +13,7 @@ class CustomIconButton extends StatefulWidget {
     required this.clickedImg, // İkinci ikon parametresi
     required this.backgroundColor,
     required this.iconColor,
+    this.ontap,
   }) : super(key: key);
 
   @override
@@ -44,7 +46,10 @@ class _CustomIconButtonState extends State<CustomIconButton> {
           borderRadius: BorderRadius.circular(14),
         ),
         child: InkWell(
-          onTap: _toggleIcon, // İkon değişimini tetikler
+          onTap: () {
+            widget.ontap!(); // Null check yapmadan doğrudan fonksiyonu çağır
+            _toggleIcon(); // Önce ikon değişimini yap
+          }, // İkon değişimini tetikler
           borderRadius: BorderRadius.circular(14),
           splashColor: Colors.grey.withOpacity(0.1),
           child: Padding(

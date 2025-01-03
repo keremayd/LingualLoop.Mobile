@@ -43,6 +43,8 @@ flutter:
     - assets/icons/subtitleopen.png
     - assets/icons/subtitleclose.png
     - assets/icons/bookmark.png
+    - assets/icons/info.png
+    - assets/icons/next.png
     - assets/icons/ticket-one.png
     - assets/images/otta.png
     - assets/images/karty.png

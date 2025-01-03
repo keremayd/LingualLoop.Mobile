@@ -24,6 +24,7 @@ class VideoQuizScreen extends StatefulWidget {
 
 class _VideoQuizScreenState extends State<VideoQuizScreen> {
   int streak = 0;
+  late int duration;
   String aButton = "";
   String bButton = "";
   bool isLoading = true;
@@ -31,8 +32,12 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
   var userNickname = "";
   User? user;
   ScoreWithLivesResponse? scoreWithLives;
+  final ValueNotifier<int> progressBarResetNotifier = ValueNotifier<int>(1);
+  final ValueNotifier<int> durationNotifier = ValueNotifier<int>(3);
   final ValueNotifier<bool> isCountdownFinished = ValueNotifier(false);
   ApiResponse<GetQuestionByScoreResponse>? question;
+  Map<String, Color> buttonsColor = {};
+  late Color textColors;
 
   @override
   void initState() {
@@ -48,6 +53,7 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
     await _getUser(context);
     await _getScoreWithLives(context);
     setState(() {
+      duration = 4;
       isLoading = false;
     });
   }
@@ -72,6 +78,11 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
     setState(() {
       aButton = question!.data!.answers[0].answerText;
       bButton = question!.data!.answers[1].answerText;
+      textColors = Color(0xFF5F5CEF);
+      buttonsColor = {
+        aButton: Colors.transparent,
+        bButton: Colors.transparent,
+      };
     });
   }
 
@@ -85,15 +96,20 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
         .map((x) => x.answerText)
         .firstOrNull;
 
+    isCountdownFinished.value = true;
+
     if (correctAnswerText != pressedButton) {
       // Kupa düştü
       var apiResponse = await userService.updateScoreById(-1);
-      if(apiResponse.errorCode == null){
+      if (apiResponse.errorCode == null) {
         setState(() {
           streak = 0;
           scoreWithLives!.score += -1;
           scoreWithLivesProvider.setScoreWithLives(scoreWithLives);
+          duration = 0; // Süreyi tekrar ayarla
         });
+        await Future.delayed(Duration(milliseconds: 20));
+        progressBarResetNotifier.value+= 1; // ProgressBar'ı sıfırla
 
       }
       return;
@@ -106,10 +122,38 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
         streak += 1;
         scoreWithLives!.score += 1;
         scoreWithLivesProvider.setScoreWithLives(scoreWithLives);
+        duration = 0; // Süreyi tekrar ayarla
       });
-
-      await _getQuestion(context);
+      await Future.delayed(Duration(milliseconds: 20));
+      progressBarResetNotifier.value+= 1; // ProgressBar'ı sıfırla
     }
+
+  }
+
+  void _updateButtonBorder() {
+    var correctAnswerText = question!.data!.answers
+        .where((x) => x.isCorrect == true)
+        .map((x) => x.answerText)
+        .firstOrNull;
+
+    buttonsColor = {
+      aButton: (aButton == correctAnswerText) ? Color(0xFF67D445) : Color(0xFFFF6536),
+      bButton: (bButton == correctAnswerText) ? Color(0xFF67D445) : Color(0xFFFF6536),
+    };
+    textColors = Colors.white;
+  }
+
+  Future<void> _test(BuildContext context) async {
+    await _getQuestion(context);
+    isCountdownFinished.value = false;
+
+    print("yeni videoya geçildi");
+
+    duration = 5; // Süreyi tekrar ayarla
+
+    await Future.delayed(Duration(milliseconds: 20));
+    progressBarResetNotifier.value+= 1;
+
   }
 
   @override
@@ -119,16 +163,15 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
         color: Color(0xFF5F5CEF),
         child: Center(
           child: CircularProgressIndicator(
-            color: Colors.white, // Yükleme göstergesinin renk
+            color: Colors.white,
           ),
         ),
       );
     }
 
-
     return Scaffold(
-        backgroundColor: Color(0xFF5F5CEF),
-        appBar: PreferredSize(
+      backgroundColor: Color(0xFF5F5CEF),
+      appBar: PreferredSize(
           preferredSize: Size.fromHeight(93),
           child: Column(
             children: [
@@ -156,209 +199,214 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
                           children: [
                             Row(
                               children: [
-                                ProgressBar(
-                                  duration: 10, // 10 saniye geri sayım
-                                  isCountdownFinished: isCountdownFinished,
-                                ),
+                                if (duration != 0)
+                                  ProgressBar(
+                                    duration: duration, // 10 saniye geri sayım
+                                    isCountdownFinished: isCountdownFinished,
+                                    onReset: progressBarResetNotifier,
+                                  ),
                               ],
-                            )
-                          ],
-                        ),
-                        Column(
+                            ),
+                        ],
+                    ),
+                      Column(
+                        children: [
+                        Row(
                           children: [
-                            Row(
-                              children: [
-                                Image.asset(
-                                  'assets/icons/cup.png', // Coin simgesi
-                                  height: 22, // 22
-                                  width: 22, // 22
-                                ),
-                                SizedBox(width: 4), // İkon ile sayı arasında boşluk
-                                Text(
-                                  "${scoreWithLives?.score}", // Sayı
-                                  style: TextStyle(
-                                    fontSize: 17, // Yazı boyutu
-                                    color: Color(0xFFF99300), // Yazı rengi
-                                    fontWeight: FontWeight.w600
-                                  ),
-                                ),
-                                SizedBox(width: 20),
-
-
-                                Image.asset(
-                                  'assets/icons/fire.png', // Coin simgesi
-                                  height: 22, // 22
-                                  width: 22, // 22
-                                ),
-                                SizedBox(width: 4), // İkon ile sayı arasında boşluk
-                                Text(
-                                  "${streak}", // Sayı
-                                  style: TextStyle(
-                                    fontSize: 17, // Yazı boyutu
-                                    color: Color(0xFFFF6536), // Yazı rengi
-                                    fontWeight: FontWeight.w600
-                                  ),
-                                ),
-                              ],
-                            )
+                            Image.asset(
+                              'assets/icons/cup.png',
+                              height: 22,
+                              width: 22,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              "${scoreWithLives?.score}",
+                              style: TextStyle(
+                                  fontSize: 17,
+                                  color: Color(0xFFF99300),
+                                  fontWeight: FontWeight.w600),
+                            ),
+                            SizedBox(width: 20),
+                            Image.asset(
+                              'assets/icons/fire.png',
+                              height: 22,
+                              width: 22,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              "${streak}",
+                              style: TextStyle(
+                                  fontSize: 17,
+                                  color: Color(0xFFFF6536),
+                                  fontWeight: FontWeight.w600),
+                            ),
                           ],
                         ),
                       ],
-                    )
+                      ),
+                    ],
                 ),
               ),
-            ],
-          )
-        ),
-        
-        body: Column(
-          children: [
-            Container(
-              height: 300,
-              margin: EdgeInsets.only(
-                left: 16, // Kenar boşlukları
-                right: 16, // Kenar boşlukları
-              ),
-              decoration: BoxDecoration(
-                color: Color(0xFF7875FC), // Mor arka plan
-                borderRadius: BorderRadius.circular(14), // Yuvarlak köşeler
-              ),
-              child: Column(
-                children: [
-                  // Üstteki Beyaz Alan
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white, // Beyaz arka plan
-                        borderRadius: BorderRadius.circular(12), // İç köşeleri yuvarla
-                      ),
-
-                    ),
-                  ),
-
-                  // Alttaki İkon Butonlar
-                  Padding(
-                    padding: EdgeInsets.all(8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children:
-                      [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center, // İkonları orta
-                          children: [
-                            CustomIconButton(
-                              img: 'subtitleclose',
-                              clickedImg: 'subtitleclose',
-                              backgroundColor: Colors.white,
-                              iconColor: Colors.grey,
-                            ),
-                            SizedBox(width: 10), // İkonlar arasında boşluk
-                            CustomIconButton(
-                              img: 'subtitleopen',
-                              clickedImg: 'subtitleclose',
-                              backgroundColor: Colors.white,
-                              iconColor: Colors.grey,
-                            ),
-                          ],
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center, // İkonları ortal
-                          children: [
-                            CustomIconButton(
-                              img: 'bookmark',
-                              clickedImg: 'bookmark',
-                              backgroundColor: Colors.white,
-                              iconColor: Colors.grey,
-                            ),
-                          ],
-                        )
-                      ],
-                    ),
-                  )
-                ],
-              ),
             ),
-
-            CustomDesignWidget(),
-
-            Expanded(
-                child: Center(
-                  child:  Container(
+          ],
+        ),
+      ),
+      body: Column(
+        children: [
+          Container(
+            height: 300,
+            margin: EdgeInsets.only(left: 16, right: 16),
+            decoration: BoxDecoration(
+              color: Color(0xFF7875FC),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Stack(
+              children: [
+                Column(
+                  children: [
+                    ValueListenableBuilder<bool>(
+              valueListenable: isCountdownFinished,
+              builder: (context, value, child) {
+                return Expanded(
+                  child: Container(
                     decoration: BoxDecoration(
-                      color: Color(0xFF7875FC), // Arka plan rengi
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 32),
-                      // Her taraftan 14 piksel padding
-                      child: Column(
+                    child: duration == 0 || value
+                        ? Align(
+                      alignment: Alignment.centerRight, // Sağ ortada
+                      child: CustomIconButton(
+                        img: 'next',
+                        clickedImg: 'next',
+                        backgroundColor: Colors.white,
+                        iconColor: Colors.grey,
+                        ontap: () => _test(context),
+                      ),
+                    )
+                        : null,
+                  ),
+                );
+              },
+            ),
+                    Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(
-                                "Süre tükenmeden yanıtını seç!", // Sayı
-                                style: TextStyle(
-                                    fontSize: 22, // Yazı boyutu
-                                    color: Colors.white, // Yazı rengi
-                                    fontWeight: FontWeight.w600
-                                ),
+                              CustomIconButton(
+                                img: 'info',
+                                clickedImg: 'info',
+                                backgroundColor: Colors.white,
+                                iconColor: Colors.grey,
+                              ),
+                              SizedBox(width: 10),
+                              CustomIconButton(
+                                img: 'subtitleopen',
+                                clickedImg: 'subtitleclose',
+                                backgroundColor: Colors.white,
+                                iconColor: Colors.grey,
                               ),
                             ],
                           ),
-                          SizedBox(height: 10), // Butonlar arasında boşluk bırakır
-                          Spacer(),
-
-
-
-
-                          ValueListenableBuilder<bool>(
-                            valueListenable: isCountdownFinished,
-                            builder: (context, value, child) {
-                              return Column(
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      AnswerButton(
-                                        text: aButton,
-                                        onPressed: value ? null : () => _answerQuestion(context, aButton),
-                                      ),
-                                    ],
-                                  ),
-
-                                  SizedBox(height: 5), // Butonlar arasında boşluk bırakır
-                                  Text(
-                                    "veya", // Sayı
-                                    style: TextStyle(
-                                        fontSize: 20, // Yazı boyutu
-                                        color: Color(0xFF5F5CEF), // Yazı rengi
-                                        fontWeight: FontWeight.w600
-                                    ),
-                                  ),
-                                  SizedBox(height: 5), // Butonlar arasında boşluk bırakır
-
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      AnswerButton(
-                                        text: bButton,
-                                        onPressed: value ? null : () => _answerQuestion(context, bButton),
-                                      )
-                                    ],
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CustomIconButton(
+                                img: 'bookmark',
+                                clickedImg: 'bookmark',
+                                backgroundColor: Colors.white,
+                                iconColor: Colors.grey,
+                              ),
+                            ],
+                          )
                         ],
                       ),
                     ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          CustomDesignWidget(),
+          Expanded(
+            child: Center(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Color(0xFF7875FC),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 16, right: 16, bottom: 32),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Süre tükenmeden yanıtını seç!",
+                            style: TextStyle(
+                                fontSize: 22,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 10),
+                      Spacer(),
+                      ValueListenableBuilder<bool>(
+                        valueListenable: isCountdownFinished,
+                        builder: (context, value, child) {
+                          if (value) {
+                            _updateButtonBorder();
+                          }
+                          return Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  AnswerButton(
+                                    text: aButton,
+                                    onPressed: value ? null : () => _answerQuestion(context, aButton),
+                                    buttonDisabledColor: buttonsColor[aButton]!,
+                                    textColor: textColors,
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 5),
+                              Text(
+                                "veya",
+                                style: TextStyle(
+                                    fontSize: 20,
+                                    color: Color(0xFF5F5CEF),
+                                    fontWeight: FontWeight.w600),
+                              ),
+                              SizedBox(height: 5),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  AnswerButton(
+                                    text: bButton,
+                                    onPressed: value ? null : () => _answerQuestion(context, bButton),
+                                    buttonDisabledColor: buttonsColor[bButton]!,
+                                    textColor: textColors,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                )
-            )
-          ],
-        )
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -284,7 +284,7 @@ class _HomeScreenScreenState extends State<HomeScreen> {
                                       color: Color(0xFF7875FC),
                                       imageName: "karty",
                                       onTap: () async {
-                                        await _updateLivesAndRouter(context, 'videoquiz');
+                                        await _updateLivesAndRouter(context, 'kartyquiz');
                                       },
                                     ),
                                   ),
