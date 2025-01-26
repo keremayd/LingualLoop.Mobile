@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:lingualloop/providers/KartyProvider.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/providers/UserProvider.dart';
+import 'package:lingualloop/services/KartyService.dart';
 import 'package:lingualloop/services/UserService.dart';
-import 'package:lingualloop/services/auth_service.dart';
-import 'package:lingualloop/services/question_service.dart';
+import 'package:lingualloop/services/AuthenticationService.dart';
+import 'package:lingualloop/services/VideoService.dart';
 import 'package:lingualloop/ui/screens/karty_quiz_screen.dart';
 import 'package:lingualloop/ui/screens/video_quiz_screen.dart';
 import 'package:lingualloop/ui/widgets/NavbarWidget.dart';
@@ -31,10 +33,10 @@ void main() {
         Provider<Dio>(
           create: (context) => context.read<AuthService>().dio,
         ),
-        Provider<QuestionService>(
+        Provider<VideoService>(
           create: (context) {
             final dio = context.read<Dio>();
-            return QuestionService(dio);
+            return VideoService(dio);
           },
         ),
         Provider<UserService>(
@@ -43,11 +45,20 @@ void main() {
             return UserService(dio);
           },
         ),
+        Provider<KartyService>(
+          create: (context) {
+            final dio = context.read<Dio>();
+            return KartyService(dio);
+          },
+        ),
         ChangeNotifierProvider<UserProvider>(
           create: (_) => UserProvider(),
         ),
         ChangeNotifierProvider<ScoreWithLivesProvider>(
           create: (_) => ScoreWithLivesProvider(),
+        ),
+        ChangeNotifierProvider<KartyProvider>(
+          create: (_) => KartyProvider(),
         ),
       ],
       child: MyApp(),

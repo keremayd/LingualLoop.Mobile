@@ -3,23 +3,19 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:lingualloop/models/responses/GetQuestionByScoreResponse.dart';
 
 import '../models/ApiResponse.dart';
-import '../models/User.dart';
 
-class QuestionService {
+class VideoService {
   final Dio _dio;
   final _storage = FlutterSecureStorage();
   GetQuestionByScoreResponse? question;
 
-  QuestionService(this._dio);
-
-  Future<void> test() async {
-  }
+  VideoService(this._dio);
 
   Future<ApiResponse<GetQuestionByScoreResponse>> random() async {
     final token = await _storage.read(key: 'accessToken');
     final userId = await _storage.read(key: 'userId');
 
-    final response = await _dio.get('questions/random/$userId',
+    final response = await _dio.get('videos/random/$userId',
       options: Options(
         headers: {
           'Authorization': 'Bearer $token',

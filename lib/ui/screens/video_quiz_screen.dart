@@ -6,11 +6,11 @@ import 'package:lingualloop/models/responses/ScoreWithLivesResponse.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/providers/UserProvider.dart';
 import 'package:lingualloop/services/UserService.dart';
-import 'package:lingualloop/services/auth_service.dart';
-import 'package:lingualloop/services/question_service.dart';
+import 'package:lingualloop/services/AuthenticationService.dart';
+import 'package:lingualloop/services/VideoService.dart';
 import 'package:lingualloop/ui/widgets/CurvedDesign.dart';
 import 'package:lingualloop/ui/widgets/CustomIconButton.dart';
-import 'package:lingualloop/ui/widgets/ProgressBar.dart';
+import 'package:lingualloop/ui/widgets/TimeBar.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/responses/GetQuestionByScoreResponse.dart';
@@ -24,17 +24,15 @@ class VideoQuizScreen extends StatefulWidget {
 
 class _VideoQuizScreenState extends State<VideoQuizScreen> {
   int streak = 0;
-  late int duration;
   String aButton = "";
   String bButton = "";
   bool isLoading = true;
   bool isAnswered = false;
   var userNickname = "";
   User? user;
-  ScoreWithLivesResponse? scoreWithLives;
-  final ValueNotifier<int> progressBarResetNotifier = ValueNotifier<int>(1);
-  final ValueNotifier<int> durationNotifier = ValueNotifier<int>(3);
-  final ValueNotifier<bool> isCountdownFinished = ValueNotifier(false);
+  final ValueNotifier<int> timeBarResetNotifier = ValueNotifier<int>(1);
+  final ValueNotifier<int> duration = ValueNotifier<int>(3);
+  final ValueNotifier<bool> isFinished = ValueNotifier(false);
   ApiResponse<GetQuestionByScoreResponse>? question;
   Map<String, Color> buttonsColor = {};
   late Color textColors;
@@ -53,7 +51,7 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
     await _getUser(context);
     await _getScoreWithLives(context);
     setState(() {
-      duration = 4;
+      duration.value = 4;
       isLoading = false;
     });
   }
@@ -65,14 +63,11 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
 
   Future<void> _getScoreWithLives(BuildContext context) async {
     final userService = Provider.of<UserService>(context, listen: false);
-    final scoreWithLivesProvider = Provider.of<ScoreWithLivesProvider>(context, listen: false);
-
     await userService.scoreWithLivesById(context);
-    scoreWithLives = scoreWithLivesProvider.scoreWithLives;
   }
 
   Future<void> _getQuestion(BuildContext context) async {
-    final questionService = Provider.of<QuestionService>(context, listen: false);
+    final questionService = Provider.of<VideoService>(context, listen: false);
     question = await questionService.random();
 
     setState(() {
@@ -87,16 +82,14 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
   }
 
   Future<void> _answerQuestion(BuildContext context, String pressedButton) async {
-    final questionService = Provider.of<QuestionService>(context, listen: false);
     final userService = Provider.of<UserService>(context, listen: false);
-    final scoreWithLivesProvider = Provider.of<ScoreWithLivesProvider>(context, listen: false);
 
     var correctAnswerText = question!.data!.answers
         .where((x) => x.isCorrect == true)
         .map((x) => x.answerText)
         .firstOrNull;
 
-    isCountdownFinished.value = true;
+    isFinished.value = true;
 
     if (correctAnswerText != pressedButton) {
       // Kupa düştü
@@ -104,12 +97,12 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
       if (apiResponse.errorCode == null) {
         setState(() {
           streak = 0;
-          scoreWithLives!.score += -1;
-          scoreWithLivesProvider.setScoreWithLives(scoreWithLives);
-          duration = 0; // Süreyi tekrar ayarla
+          duration.value = 0; // Süreyi tekrar ayarla
         });
+        await userService.scoreWithLivesById(context);
+
         await Future.delayed(Duration(milliseconds: 20));
-        progressBarResetNotifier.value+= 1; // ProgressBar'ı sıfırla
+        timeBarResetNotifier.value+= 1; // ProgressBar'ı sıfırla
 
       }
       return;
@@ -120,14 +113,13 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
     if (apiResponse.errorCode == null) {
       setState(() {
         streak += 1;
-        scoreWithLives!.score += 1;
-        scoreWithLivesProvider.setScoreWithLives(scoreWithLives);
-        duration = 0; // Süreyi tekrar ayarla
+        duration.value = 0; // Süreyi tekrar ayarla
       });
-      await Future.delayed(Duration(milliseconds: 20));
-      progressBarResetNotifier.value+= 1; // ProgressBar'ı sıfırla
-    }
+      await userService.scoreWithLivesById(context);
 
+      await Future.delayed(Duration(milliseconds: 20));
+      timeBarResetNotifier.value+= 1; // ProgressBar'ı sıfırla
+    }
   }
 
   void _updateButtonBorder() {
@@ -143,17 +135,16 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
     textColors = Colors.white;
   }
 
-  Future<void> _test(BuildContext context) async {
+  Future<void> _nextVideo(BuildContext context) async {
     await _getQuestion(context);
-    isCountdownFinished.value = false;
+    isFinished.value = false;
 
     print("yeni videoya geçildi");
 
-    duration = 5; // Süreyi tekrar ayarla
+    duration.value = 5; // Süreyi tekrar ayarla
 
     await Future.delayed(Duration(milliseconds: 20));
-    progressBarResetNotifier.value+= 1;
-
+    timeBarResetNotifier.value+= 1;
   }
 
   @override
@@ -199,12 +190,12 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
                           children: [
                             Row(
                               children: [
-                                if (duration != 0)
-                                  ProgressBar(
+                                if (duration.value != 0)
+                                  TimeBar(
                                     duration: duration, // 10 saniye geri sayım
-                                    isCountdownFinished: isCountdownFinished,
-                                    onReset: progressBarResetNotifier,
-                                  ),
+                                    isFinished: isFinished,
+                                    onReset: timeBarResetNotifier,
+                                ),
                               ],
                             ),
                         ],
@@ -219,13 +210,19 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
                               width: 22,
                             ),
                             SizedBox(width: 4),
-                            Text(
-                              "${scoreWithLives?.score}",
-                              style: TextStyle(
-                                  fontSize: 17,
-                                  color: Color(0xFFF99300),
-                                  fontWeight: FontWeight.w600),
+                            Consumer<ScoreWithLivesProvider>(
+                              builder: (context, provider, child) {
+                                return Text(
+                                  "${provider.scoreWithLives?.score}",
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    color: Color(0xFFF99300),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                );
+                              },
                             ),
+
                             SizedBox(width: 20),
                             Image.asset(
                               'assets/icons/fire.png',
@@ -265,29 +262,28 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
                 Column(
                   children: [
                     ValueListenableBuilder<bool>(
-              valueListenable: isCountdownFinished,
-              builder: (context, value, child) {
-                return Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: duration == 0 || value
-                        ? Align(
-                      alignment: Alignment.centerRight, // Sağ ortada
-                      child: CustomIconButton(
-                        img: 'next',
-                        clickedImg: 'next',
-                        backgroundColor: Colors.white,
-                        iconColor: Colors.grey,
-                        ontap: () => _test(context),
-                      ),
-                    )
-                        : null,
-                  ),
-                );
-              },
+                      valueListenable: isFinished,
+                      builder: (context, value, child) {
+                        return Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: duration.value == 0 || value
+                                ? Align(
+                                  alignment: Alignment.centerRight, // Sağ ortada
+                                  child: CustomIconButton(
+                                    img: 'next',
+                                    clickedImg: 'next',
+                                    backgroundColor: Colors.white,
+                                    iconColor: Color(0xFF5F5CEF),
+                                    ontap: () => _nextVideo(context),
+                                  ),
+                                ) : null,
+                          ),
+                        );
+                    },
             ),
                     Padding(
                       padding: EdgeInsets.all(8),
@@ -301,14 +297,14 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
                                 img: 'info',
                                 clickedImg: 'info',
                                 backgroundColor: Colors.white,
-                                iconColor: Colors.grey,
+                                iconColor: Color(0xFF7875FC),
                               ),
                               SizedBox(width: 10),
                               CustomIconButton(
                                 img: 'subtitleopen',
                                 clickedImg: 'subtitleclose',
                                 backgroundColor: Colors.white,
-                                iconColor: Colors.grey,
+                                iconColor: Color(0xFF7875FC),
                               ),
                             ],
                           ),
@@ -319,7 +315,7 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
                                 img: 'bookmark',
                                 clickedImg: 'bookmark',
                                 backgroundColor: Colors.white,
-                                iconColor: Colors.grey,
+                                iconColor: Color(0xFF7875FC),
                               ),
                             ],
                           )
@@ -357,7 +353,7 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
                       SizedBox(height: 10),
                       Spacer(),
                       ValueListenableBuilder<bool>(
-                        valueListenable: isCountdownFinished,
+                        valueListenable: isFinished,
                         builder: (context, value, child) {
                           if (value) {
                             _updateButtonBorder();

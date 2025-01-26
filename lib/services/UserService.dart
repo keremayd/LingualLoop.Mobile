@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:lingualloop/models/responses/GetQuestionByScoreResponse.dart';
 import 'package:lingualloop/models/responses/ScoreWithLivesResponse.dart';
 import 'package:lingualloop/models/responses/UpdateLivesResponse.dart';
 import 'package:lingualloop/models/responses/UpdateScoreResponse.dart';

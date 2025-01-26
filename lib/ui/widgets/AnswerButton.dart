@@ -19,7 +19,7 @@ class AnswerButton extends StatelessWidget {
             disabledBackgroundColor: buttonDisabledColor,
             backgroundColor: Color(0xFFF9FBFF),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(14),
             ),
           ),
           child: Text(

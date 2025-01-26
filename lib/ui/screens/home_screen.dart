@@ -15,8 +15,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenScreenState extends State<HomeScreen> {
-  User? user;
-  ScoreWithLivesResponse? scoreWithLives;
   bool isLoading = true;
 
   @override
@@ -29,27 +27,15 @@ class _HomeScreenScreenState extends State<HomeScreen> {
     setState(() {
       isLoading = true;
     });
-    await _getUser(context);
     await _getScoreWithLives(context);
     setState(() {
       isLoading = false;
     });
   }
 
-  Future<void> _getUser(BuildContext context) async {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    user = userProvider.user!;
-  }
-
   Future<void> _getScoreWithLives(BuildContext context) async {
     final userService = Provider.of<UserService>(context, listen: false);
-    final scoreWithLivesProvider = Provider.of<ScoreWithLivesProvider>(context, listen: false);
-
     await userService.scoreWithLivesById(context);
-
-    setState(() {
-      scoreWithLives = scoreWithLivesProvider.scoreWithLives;
-    });
   }
 
   Future<void> _updateLivesAndRouter(BuildContext context, String routeUrl) async {
@@ -58,6 +44,7 @@ class _HomeScreenScreenState extends State<HomeScreen> {
     var apiResponse = await userService.updateLivesById();
     if (apiResponse.errorCode == null) {
       Navigator.pushNamed(context, '/${routeUrl}');
+      await userService.scoreWithLivesById(context);
     }
   }
 
@@ -119,13 +106,17 @@ class _HomeScreenScreenState extends State<HomeScreen> {
                                     Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          'Merhaba, ${user!.userNickname}',
-                                          style: TextStyle(
-                                            fontSize: 22,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black,
-                                          ),
+                                        Consumer<UserProvider>(
+                                          builder: (context, provider, child) {
+                                            return Text(
+                                              'Merhaba, ${provider.user?.userNickname}',
+                                              style: TextStyle(
+                                                fontSize: 22,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black,
+                                              ),
+                                            );
+                                          },
                                         ),
                                         Text(
                                           'Almanca\'ya devam et!',
@@ -180,13 +171,17 @@ class _HomeScreenScreenState extends State<HomeScreen> {
                                       width: screenWidth * 0.0560, // 22
                                     ),
                                     SizedBox(width: screenWidth * 0.0127), // 5
-                                    Text(
-                                      '${scoreWithLives?.score ?? ""}', // Score değeri
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
+                                    Consumer<ScoreWithLivesProvider>(
+                                      builder: (context, provider, child) {
+                                        return Text(
+                                          "${provider.scoreWithLives?.score ?? ""}",
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ],
                                 ),
@@ -199,14 +194,19 @@ class _HomeScreenScreenState extends State<HomeScreen> {
                                       width: screenWidth * 0.0789, // 31
                                     ),
                                     SizedBox(width: screenWidth * 0.0127), // 5
-                                    Text(
-                                      '${scoreWithLives?.lives ?? ""}', // Ticket değeri
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
+                                    Consumer<ScoreWithLivesProvider>(
+                                      builder: (context, provider, child) {
+                                        return Text(
+                                          "${provider.scoreWithLives?.lives}",
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        );
+                                      },
                                     ),
+
                                   ],
                                 ),
                               ],

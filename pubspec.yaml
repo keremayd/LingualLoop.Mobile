@@ -8,6 +8,7 @@ environment:
   sdk: ^3.5.3
 
 dependencies:
+  confetti: ^0.7.0
   flutter:
     sdk: flutter
   http: ^1.2.2  # Geri döndük
@@ -40,6 +41,10 @@ flutter:
     - assets/icons/profilephoto.png
     - assets/icons/ticket.png
     - assets/icons/diamond.png
+    - assets/icons/cancel.png
+    - assets/icons/correct.png
+    - assets/icons/pause.png
+    - assets/icons/play.png
     - assets/icons/subtitleopen.png
     - assets/icons/subtitleclose.png
     - assets/icons/bookmark.png

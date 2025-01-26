@@ -6,6 +6,8 @@ class CustomIconButton extends StatefulWidget {
   final Color backgroundColor;
   final Color iconColor;
   final Function? ontap;
+  final double? buttonSize;
+  final double? padding;
 
   const CustomIconButton({
     Key? key,
@@ -14,6 +16,8 @@ class CustomIconButton extends StatefulWidget {
     required this.backgroundColor,
     required this.iconColor,
     this.ontap,
+    this.buttonSize,
+    this.padding
   }) : super(key: key);
 
   @override
@@ -37,26 +41,38 @@ class _CustomIconButtonState extends State<CustomIconButton> {
 
   @override
   Widget build(BuildContext context) {
+    // Butonun devre dışı olup olmadığını kontrol et
+    bool isButtonDisabled = widget.ontap == null;
+
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(14),
-      child: Ink(
-        decoration: BoxDecoration(
-          color: widget.backgroundColor,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: InkWell(
-          onTap: () {
-            widget.ontap!(); // Null check yapmadan doğrudan fonksiyonu çağır
-            _toggleIcon(); // Önce ikon değişimini yap
-          }, // İkon değişimini tetikler
-          borderRadius: BorderRadius.circular(14),
-          splashColor: Colors.grey.withOpacity(0.1),
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Image.asset(
-              'assets/icons/${currentIcon}.png',
-              height: 26, // 49
+      child: AbsorbPointer(
+        absorbing: isButtonDisabled, // Buton devre dışıysa, etkileşimi yutuyoruz
+        child: Ink(
+          decoration: BoxDecoration(
+            color: widget.backgroundColor,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: InkWell(
+            onTap: isButtonDisabled
+                ? null // Buton devre dışıysa tıklanamaz
+                : () {
+              widget.ontap!(); // Null check yapmadan doğrudan fonksiyonu çağır
+              _toggleIcon(); // Önce ikon değişimini yap
+            },
+            borderRadius: BorderRadius.circular(14),
+            splashColor: Colors.grey.withOpacity(0.1),
+            child: Padding(
+              padding: EdgeInsets.all(widget.padding ?? 10),
+              child: Opacity(
+                opacity: isButtonDisabled ? 0.5 : 1.0, // Buton devre dışıysa opaklık %50
+                child: Image.asset(
+                  'assets/icons/${currentIcon}.png',
+                  height: widget.buttonSize ?? 26, // 49
+                  color: widget.iconColor, // Rengi gri yapıyoruz
+                ),
+              ),
             ),
           ),
         ),
