@@ -10,7 +10,6 @@ import 'package:lingualloop/ui/screens/karty_quiz_screen.dart';
 import 'package:lingualloop/ui/screens/video_quiz_screen.dart';
 import 'package:lingualloop/ui/widgets/NavbarWidget.dart';
 import 'ui/screens/login_screen.dart';
-import 'ui/screens/home_screen.dart';
 import 'package:dio/dio.dart';
 import 'TokenInterceptor.dart';
 import 'package:provider/provider.dart';

@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:lingualloop/models/ApiResponse.dart';
 import 'package:lingualloop/models/User.dart';
-import 'package:lingualloop/models/responses/ScoreWithLivesResponse.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/providers/UserProvider.dart';
 import 'package:lingualloop/services/UserService.dart';
-import 'package:lingualloop/services/AuthenticationService.dart';
 import 'package:lingualloop/services/VideoService.dart';
 import 'package:lingualloop/ui/widgets/CurvedDesign.dart';
 import 'package:lingualloop/ui/widgets/CustomIconButton.dart';

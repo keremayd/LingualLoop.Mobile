@@ -1,6 +1,4 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'package:lingualloop/models/Answer.dart';
-import 'package:lingualloop/models/Video.dart';
 
 part 'GetKartyByScoreResponse.g.dart';
 

@@ -48,18 +48,10 @@ class _NavbarWidgetState extends State<NavbarWidget> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(
-                customIconPath: 'assets/icons/home.png',
-                index: 0,
-                label: 'Home',
-              ),
+              _buildNavItem(customIconPath: 'assets/icons/home.png', index: 0, label: 'Home'),
               _buildNavItem(icon: Icons.leaderboard_rounded, index: 2, label: 'Leaderboard'),
               _buildNavItem(icon: Icons.leaderboard_rounded, index: 4, label: 'Leaderboard'),
-              _buildNavItem(
-                customIconPath: 'assets/icons/profile.png',
-                index: 3,
-                label: 'Profile',
-              ),
+              _buildNavItem(customIconPath: 'assets/icons/profile.png', index: 3, label: 'Profile'),
             ],
           ),
         ),
@@ -73,26 +65,26 @@ class _NavbarWidgetState extends State<NavbarWidget> {
     required int index,
     required String label,
   }) {
-    bool isSelected = _selectedIndex == index;
-    return GestureDetector(
-      onTap: () => _onItemTapped(index),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          customIconPath != null
-              ? Image.asset(
-            customIconPath,
-            color: isSelected ? Color(0xFF5F5CF0) : Color(0xFFD1D1D1),
-            height: 24,
-            width: 24,
-          )
-              : Icon(
-            icon,
-            color: isSelected ? Color(0xFF5F5CF0) : Color(0xFFD1D1D1),
-            size: 35,
-          ),
-        ],
-      ),
-    );
+  bool isSelected = _selectedIndex == index;
+  return GestureDetector(
+    onTap: () => _onItemTapped(index),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        customIconPath != null
+            ? Image.asset(
+          customIconPath,
+          color: isSelected ? Color(0xFF5F5CF0) : Color(0xFFD1D1D1),
+          height: 24,
+          width: 24,
+        )
+            : Icon(
+          icon,
+          color: isSelected ? Color(0xFF5F5CF0) : Color(0xFFD1D1D1),
+          size: 35,
+        ),
+      ],
+    ),
+  );
   }
 }

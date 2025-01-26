@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../services/AuthenticationService.dart';
-import 'package:provider/provider.dart'; // Provider'ı ekliyoruz
+import 'package:provider/provider.dart';
 
 
 class LoginScreen extends StatefulWidget {

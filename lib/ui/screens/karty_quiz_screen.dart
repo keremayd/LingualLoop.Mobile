@@ -1,4 +1,3 @@
-import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:lingualloop/models/Karty.dart';
 import 'package:lingualloop/providers/KartyProvider.dart';

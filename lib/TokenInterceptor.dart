@@ -1,8 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'services/AuthenticationService.dart';
-import 'main.dart'; // Global navigatorKey’i burada import ediyoruz
+import 'main.dart';
 
 
 class TokenInterceptor extends Interceptor {

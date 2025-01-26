@@ -4,8 +4,6 @@ import 'package:lingualloop/ui/widgets/LessonCard.dart';
 import 'package:lingualloop/ui/widgets/MainLessonCard.dart';
 import 'package:provider/provider.dart';
 
-import '../../models/User.dart';
-import '../../models/responses/ScoreWithLivesResponse.dart';
 import '../../providers/ScoreWithLivesProvider.dart';
 import '../../providers/UserProvider.dart';
 
