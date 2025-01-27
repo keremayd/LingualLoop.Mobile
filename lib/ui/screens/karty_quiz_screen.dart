@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:lingualloop/models/Karty.dart';
 import 'package:lingualloop/providers/KartyProvider.dart';
@@ -280,105 +282,136 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
                 builder: (context, isFinishedValue, child) {
                   return ValueListenableBuilder<bool>(
                       valueListenable: isPaused,
-                      builder: (context, isPausedValue, child){
-                        return Column(
+                      builder: (context, isPausedValue, child) {
+                        return Stack(
                           children: [
-                            Stack(
-                              alignment: Alignment.center,
+
+
+                            Column(
                               children: [
-                                CorrectAnimation(
-                                  key: _confettiKey,
-                                  numberOfParticles: (streak + 1) * 5,
-                                  duration: 1,
+                                Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    CorrectAnimation(
+                                      key: _confettiKey,
+                                      numberOfParticles: (streak + 1) * 5,
+                                      duration: 1,
+                                    ),
+
+                                    ...cardProvider.cards.asMap().entries.map((entry) {
+                                      int index = entry.key;
+                                      final card = entry.value;
+
+                                      if ((index == 0 && duration.value != 0) && isFinishedValue == false && isPausedValue == false) {
+                                        return SwipableCard(
+                                          card: card,
+                                          position: _position,
+                                          rotation: _rotation,
+                                          onPanUpdate: (details) {
+                                            setState(() {
+                                              _position += details.delta;
+                                              _rotation = _position.dx / 300;
+                                              _checkRegion(screenWidth, cardProvider, null);
+                                            });
+                                          },
+                                          onPanEnd: (details) {
+                                            if (!_regionAccepted) {
+                                              _resetCard();
+                                            }
+                                          },
+                                        );
+                                      } else {
+                                        return Transform.translate(
+                                          offset: Offset(0, index * 10.0),
+                                          child: SwipableCard(
+                                            card: card,
+                                            position: Offset.zero,
+                                            rotation: 0,
+                                            onPanUpdate: (_) {},
+                                            onPanEnd: (_) {},
+                                          ),
+                                        );
+                                      }
+                                    }).toList(),
+                                  ],
                                 ),
+                                Spacer(),
+                                Padding(
+                                  padding: EdgeInsets.only(bottom: 70),
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          CustomIconButton(
+                                            img: 'cancel',
+                                            clickedImg: 'cancel',
+                                            backgroundColor: Color(0xFFDE4343),
+                                            iconColor: Colors.white,
+                                            buttonSize: 25,
+                                            padding: 15,
+                                            ontap: isFinishedValue || isPausedValue ? null : () async {
+                                              await _checkRegion(screenWidth, cardProvider, false, isButton: true);
+                                            },
+                                          ),
 
-                                ...cardProvider.cards.asMap().entries.map((entry) {
-                                  int index = entry.key;
-                                  final card = entry.value;
 
-                                  if ((index == 0 && duration.value != 0) && isFinishedValue == false && isPausedValue == false) {
-                                    return SwipableCard(
-                                      card: card,
-                                      position: _position,
-                                      rotation: _rotation,
-                                      onPanUpdate: (details) {
-                                        setState(() {
-                                          _position += details.delta;
-                                          _rotation = _position.dx / 300;
-                                          _checkRegion(screenWidth, cardProvider, null);
-                                        });
-                                      },
-                                      onPanEnd: (details) {
-                                        if (!_regionAccepted) {
-                                          _resetCard();
-                                        }
-                                      },
-                                    );
-                                  } else {
-                                    return Transform.translate(
-                                      offset: Offset(0, index * 10.0),
-                                      child: SwipableCard(
-                                        card: card,
-                                        position: Offset.zero,
-                                        rotation: 0,
-                                        onPanUpdate: (_) {},
-                                        onPanEnd: (_) {},
+
+                                          SizedBox(width: 10),
+                                          CustomIconButton(
+                                            img: 'correct',
+                                            clickedImg: 'correct',
+                                            backgroundColor: Color(0xFF4EA42B),
+                                            iconColor: Colors.white,
+                                            buttonSize: 25,
+                                            padding: 15,
+                                            ontap: isFinishedValue || isPausedValue ? null : () async {
+                                              await _checkRegion(screenWidth, cardProvider, true, isButton: true);
+                                            },
+                                          ),
+
+                                          if (isPausedValue)
+                                            Positioned.fill(
+                                              child: BackdropFilter(
+                                                filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5), // Bulanıklık şiddeti
+                                                child: Container(
+                                                  color: Colors.black.withOpacity(0), // Arka plandaki içerikleri maskeler
+                                                ),
+                                              ),
+                                            ),
+                                        ],
                                       ),
-                                    );
-                                  }
-                                }).toList(),
+                                      Padding(
+                                        padding: EdgeInsets.only(top: 10),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            CustomIconButton(
+                                              img: 'pause',
+                                              clickedImg: 'play',
+                                              backgroundColor: Color(0xFF7875FC),
+                                              iconColor: Colors.white,
+                                              buttonSize: 15,
+                                              ontap: isFinishedValue ? null : () async {
+                                                isPaused.value = !isPaused.value;
+                                                if (isPausedValue) {
+                                                  _confettiKey.currentState?.stop();
+                                                }
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                ),
                               ],
                             ),
-                            Spacer(),
-                            Padding(padding: EdgeInsets.only(bottom: 100),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  CustomIconButton(
-                                    img: 'cancel',
-                                    clickedImg: 'cancel',
-                                    backgroundColor: Color(0xFFDE4343),
-                                    iconColor: Colors.white,
-                                    buttonSize: 25,
-                                    padding: 15,
-                                    ontap: isFinishedValue || isPausedValue ? null : () async {
-                                      await _checkRegion(screenWidth, cardProvider, false, isButton: true);
-                                    },
-                                  ),
-                                  SizedBox(width: 10),
-                                  CustomIconButton(
-                                    img: 'pause',
-                                    clickedImg: 'play',
-                                    backgroundColor: Color(0xFF7875FC),
-                                    iconColor: Colors.white,
-                                    buttonSize: 15,
-                                    ontap: isFinishedValue ? null : () async {
-                                      isPaused.value = !isPaused.value;
-                                      if (isPausedValue){
-                                        _confettiKey.currentState?.stop();
-                                      }
-                                    },
-                                  ),
-                                  SizedBox(width: 10),
-                                  CustomIconButton(
-                                    img: 'correct',
-                                    clickedImg: 'correct',
-                                    backgroundColor: Color(0xFF4EA42B),
-                                    iconColor: Colors.white,
-                                    buttonSize: 25,
-                                    padding: 15,
-                                    ontap: isFinishedValue || isPausedValue ? null : () async {
-                                      await _checkRegion(screenWidth, cardProvider, true, isButton: true);
-                                    },
-                                  ),
-                                ],
-                              )
-                            )
                           ],
                         );
                       }
                   );
-                },
+                  },
             )
             : CircularProgressIndicator(),
       ),
