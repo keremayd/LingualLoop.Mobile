@@ -28,6 +28,8 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
   late ValueNotifier<int> duration = ValueNotifier<int>(0);
   final ValueNotifier<bool> isFinished = ValueNotifier(false);
   final ValueNotifier<bool> isPaused = ValueNotifier(false);
+  final ValueNotifier<bool> isTrueAnswerBlurActive = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> isFalseAnswerBlurActive = ValueNotifier<bool>(false);
 
   late KartyProvider kartyProvider;
   late KartyService kartyService;
@@ -71,6 +73,9 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
         await userService.scoreWithLivesById(context);
 
         _confettiKey.currentState?.play();
+        isTrueAnswerBlurActive.value = true;
+        await Future.delayed(Duration(seconds: 1));
+        isTrueAnswerBlurActive.value = false;
 
         await Future.delayed(Duration(milliseconds: 20));
         timeBarResetNotifier.value+= 1; // ProgressBar'ı sıfırla
@@ -87,6 +92,10 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
         duration.value = 0; // Süreyi tekrar ayarla
       });
       await userService.scoreWithLivesById(context);
+
+      isFalseAnswerBlurActive.value = true;
+      await Future.delayed(Duration(seconds: 1));
+      isFalseAnswerBlurActive.value = false;
 
       await Future.delayed(Duration(milliseconds: 20));
       timeBarResetNotifier.value+= 1; // ProgressBar'ı sıfırla
@@ -174,7 +183,8 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
         await _nextKarty(context);
 
         _resetCard();
-      } else if (_isInRegion(_position, screenWidth, true)) {
+      }
+      else if (_isInRegion(_position, screenWidth, true)) {
         print("Sol Bölgeye Bırakıldı");
 
         duration.value = 0;
@@ -307,6 +317,8 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
                                           card: card,
                                           position: _position,
                                           rotation: _rotation,
+                                          isTrueAnswerBlurActive: isTrueAnswerBlurActive,
+                                          isFalseAnswerBlurActive: isFalseAnswerBlurActive,
                                           onPanUpdate: (details) {
                                             setState(() {
                                               _position += details.delta;
@@ -327,6 +339,8 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
                                             card: card,
                                             position: Offset.zero,
                                             rotation: 0,
+                                            isTrueAnswerBlurActive: isTrueAnswerBlurActive,
+                                            isFalseAnswerBlurActive: isFalseAnswerBlurActive,
                                             onPanUpdate: (_) {},
                                             onPanEnd: (_) {},
                                           ),
