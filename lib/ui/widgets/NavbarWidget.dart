@@ -1,7 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:lingualloop/ui/screens/profile_screen.dart';
+import 'package:provider/provider.dart';
 
+import '../../providers/UserProvider.dart';
 import '../screens/home_screen.dart';
+import '../screens/login_screen.dart';
 
 class NavbarWidget extends StatefulWidget {
   @override
@@ -15,10 +19,17 @@ class _NavbarWidgetState extends State<NavbarWidget> {
     HomeScreen(),
     Center(child: Text('Arama', style: TextStyle(fontSize: 24))),
     Center(child: Text('Liderlik', style: TextStyle(fontSize: 24))),
-    Center(child: Text('Profil', style: TextStyle(fontSize: 24))),
+    ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+    if (userProvider.user == null) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginScreen()),);
+      return;
+    }
+
     setState(() {
       _selectedIndex = index;
     });

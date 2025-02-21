@@ -7,6 +7,7 @@ import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/services/AuthenticationService.dart';
 import 'package:lingualloop/services/VideoService.dart';
 import 'package:lingualloop/ui/screens/karty_quiz_screen.dart';
+import 'package:lingualloop/ui/screens/profile_screen.dart';
 import 'package:lingualloop/ui/screens/video_quiz_screen.dart';
 import 'package:lingualloop/ui/widgets/NavbarWidget.dart';
 import 'ui/screens/login_screen.dart';
@@ -78,6 +79,7 @@ class MyApp extends StatelessWidget {
         '/home': (context) => NavbarWidget(),
         '/videoquiz': (context) => VideoQuizScreen(),
         '/kartyquiz': (context) => KartyQuizScreen(),
+        '/profile': (context) => ProfileScreen(),
       },
 
 
