@@ -35,7 +35,8 @@ class AuthService {
     userProvider.setUser(
       User(
         userId: apiResponse.data!.userId,
-        userNickname: apiResponse.data!.userNickname
+        userNickname: apiResponse.data!.userNickname,
+        userName: apiResponse.data!.userName,
       ),
     );
 

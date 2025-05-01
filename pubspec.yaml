@@ -41,6 +41,7 @@ flutter:
     - assets/icons/profilephoto.png
     - assets/icons/ticket.png
     - assets/icons/diamond.png
+    - assets/icons/settings.png
     - assets/icons/cancel.png
     - assets/icons/correct.png
     - assets/icons/pause.png
@@ -55,3 +56,7 @@ flutter:
     - assets/images/karty.png
     - assets/images/catsbattle.png
     - assets/gifs/diamond1.gif
+
+    - assets/badges/badge_1.png
+    - assets/badges/badge_2.png
+    - assets/badges/badge_3.png

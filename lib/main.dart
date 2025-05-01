@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:lingualloop/providers/BadgeProvider.dart';
 import 'package:lingualloop/providers/KartyProvider.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/providers/UserProvider.dart';
+import 'package:lingualloop/services/BadgeService.dart';
 import 'package:lingualloop/services/KartyService.dart';
 import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/services/AuthenticationService.dart';
@@ -51,6 +53,12 @@ void main() {
             return KartyService(dio);
           },
         ),
+        Provider<BadgeService>(
+          create: (context) {
+            final dio = context.read<Dio>();
+            return BadgeService(dio);
+          },
+        ),
         ChangeNotifierProvider<UserProvider>(
           create: (_) => UserProvider(),
         ),
@@ -59,6 +67,9 @@ void main() {
         ),
         ChangeNotifierProvider<KartyProvider>(
           create: (_) => KartyProvider(),
+        ),
+        ChangeNotifierProvider<BadgeProvider>(
+          create: (_) => BadgeProvider(),
         ),
       ],
       child: MyApp(),
