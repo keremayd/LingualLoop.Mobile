@@ -107,7 +107,7 @@ class _HomeScreenScreenState extends State<HomeScreen> {
                                         Consumer<UserProvider>(
                                           builder: (context, provider, child) {
                                             return Text(
-                                              'Merhaba, ${provider.user?.userNickname}',
+                                              'Merhaba, ${provider.user?.firstName}',
                                               style: TextStyle(
                                                 fontSize: 22,
                                                 fontWeight: FontWeight.bold,

@@ -2,21 +2,28 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:lingualloop/models/Badge.dart' as mein;
+import 'package:provider/provider.dart';
+
+import '../../providers/BadgeProvider.dart';
+import 'Popups/BadgePopup.dart';
 
 
 class BadgesCard extends StatelessWidget {
   final Color color;
-  final List<String> badgeNames;
   final VoidCallback onTap;
+  late List<mein.Badge> badges;
 
   BadgesCard({
     required this.color,
-    required this.badgeNames,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final badgeProvider = Provider.of<BadgeProvider>(context, listen: false);
+    badges = badgeProvider.badges;
+
     return LayoutBuilder(builder: (context, constraints) {
       double screenHeight = constraints.maxHeight; // 218.697
       double screenWidth = constraints.maxWidth; // 170.384
@@ -73,27 +80,32 @@ class BadgesCard extends StatelessWidget {
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
                         physics: BouncingScrollPhysics(),
-                        itemCount: badgeNames.length,
+                        itemCount: badges.length,
                         padding: EdgeInsets.symmetric(horizontal: 16),
                         itemBuilder: (context, index) {
-                          return Padding(
-                            padding: EdgeInsets.only(right: 12),
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                Transform.translate(
-                                  offset: Offset(0, 4),
-                                  child: Image.asset(
-                                    'assets/badges/${badgeNames[index]}.png',
-                                    height: 83,
-                                    color: Color(0xFF5F5CF0).withOpacity(0.8), //Colors.black.withOpacity(0.3) hangisi karar ver
+                          return GestureDetector(
+                            onTap: () {
+                              showBadgePopup(context, index);
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.only(right: 12),
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Transform.translate(
+                                    offset: Offset(0, 4),
+                                    child: Image.asset(
+                                      'assets/badges/${badges[index].badgeUrl}.png',
+                                      height: 83,
+                                      color: Color(0xFF5F5CF0).withOpacity(0.8), //Colors.black.withOpacity(0.3) hangisi karar ver
+                                    ),
                                   ),
-                                ),
-                                Image.asset(
-                                  'assets/badges/${badgeNames[index]}.png',
-                                  height: 80,
-                                ),
-                              ],
+                                  Image.asset(
+                                    'assets/badges/${badges[index].badgeUrl}.png',
+                                    height: 80,
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         },

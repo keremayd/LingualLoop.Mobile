@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lingualloop/providers/BadgeProvider.dart';
 import 'package:lingualloop/providers/UserProvider.dart';
+import 'package:lingualloop/providers/VideoProvider.dart';
 import 'package:lingualloop/ui/widgets/BadgesCard.dart';
 import 'package:lingualloop/ui/widgets/ProfileCard.dart';
+import 'package:lingualloop/ui/widgets/SavedVideosCard.dart';
 import '../../services/AuthenticationService.dart';
 import 'package:provider/provider.dart';
 
@@ -19,6 +21,9 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   late UserProvider userProvider;
   late BadgeProvider badgeProvider;
+  late VideoProvider videoProvider;
+
+  bool isLoading = true;
 
 
   Future<void> _logout(BuildContext context) async {
@@ -33,6 +38,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     userProvider = Provider.of<UserProvider>(context, listen: false);
     badgeProvider = Provider.of<BadgeProvider>(context, listen: false);
+    videoProvider = Provider.of<VideoProvider>(context, listen: false);
 
     Future.microtask(() async {
 
@@ -40,11 +46,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (!isLoaded)
         print("Rozetler yüklenirken bir hata oluştu.");
 
+      final resp = await videoProvider.getSavedVideos(context);
+
+
+      setState(() {
+        isLoading = false;
+      });
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return Center(child: CircularProgressIndicator());
+    }
+
     return Scaffold(
       body: Padding(
         padding: EdgeInsets.only(
@@ -55,24 +71,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
             children: [
               SizedBox(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start, // Başlığı sola hizalamak için
-                    children: [
-                      SizedBox(
-                        //height: MediaQuery.of(context).size.height * 0.28, // 219
-                        height: 248.7, // 218.7
-                        child: ProfileCard(
-                          title: "Solo Pratik!",
-                          description: "Kendi hızınızda videolarla öğrenin ve pratik yapın.",
-                          color: Color(0xFF7875FC),
-                          onTap: () async {
-                          },
-                        ),
-                      ),
-                    ]
+                child: ProfileCard(
+                  color: Color(0xFF7875FC),
                 ),
               ),
-
+              SizedBox(height: 10),
 
               SizedBox(
                 child: Column(
@@ -87,12 +90,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 builder: (context, badgeProvider, child) {
                                   return BadgesCard(
                                     color: Color(0xFF7875FC),
-                                    badgeNames: badgeProvider.badges.map((b) => b.badgeUrl).toList(),
                                     onTap: () async {},
                                   );
                                 },
                               ),
-
                             ),
                           ],
                         ),
@@ -100,20 +101,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ]
                 ),
               ),
+              SizedBox(height: 10),
+
               SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0), // Oval kenarlar
-                    ),
-                    backgroundColor:  Color(0xFF7875FC),
-                    minimumSize: Size(double.infinity, 58), // Yüksekliği input alanlarına eşitle
-                  ),
-                  onPressed: () => _logout(context),
-                  child: Text('Çıkış Yap', style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal, color: Colors.white)),
+                child: Column(
+                    children: [
+                      SizedBox(
+                        height: 150, // 218.7
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 1, // Eşit alan kaplaması için
+                              child: Consumer<VideoProvider>(
+                                builder: (context, videoProvider, child) {
+                                  return SavedVideosCard(
+                                    color: Color(0xFF7875FC),
+                                    videoTitle: videoProvider.savedVideos.map((v) => v.video.videoTitle.substring(0, 7)).toList(),
+                                    onTap: () async {},
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ]
                 ),
               ),
+
+
             ]
         ),
       )

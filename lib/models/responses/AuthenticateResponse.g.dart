@@ -10,6 +10,9 @@ AuthenticateResponse _$AuthenticateResponseFromJson(
         Map<String, dynamic> json) =>
     AuthenticateResponse(
       userId: json['userId'] as String,
+      firstName: json['firstName'] as String?,
+      lastName: json['lastName'] as String?,
+      displayName: json['displayName'] as String?,
       userNickname: json['userNickname'] as String,
       userName: json['userName'] as String,
       accessToken: json['accessToken'] as String,
@@ -20,6 +23,9 @@ Map<String, dynamic> _$AuthenticateResponseToJson(
         AuthenticateResponse instance) =>
     <String, dynamic>{
       'userId': instance.userId,
+      'firstName': instance.firstName,
+      'lastName': instance.lastName,
+      'displayName': instance.displayName,
       'userNickname': instance.userNickname,
       'userName': instance.userName,
       'accessToken': instance.accessToken,

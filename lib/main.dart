@@ -3,6 +3,7 @@ import 'package:lingualloop/providers/BadgeProvider.dart';
 import 'package:lingualloop/providers/KartyProvider.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/providers/UserProvider.dart';
+import 'package:lingualloop/providers/VideoProvider.dart';
 import 'package:lingualloop/services/BadgeService.dart';
 import 'package:lingualloop/services/KartyService.dart';
 import 'package:lingualloop/services/UserService.dart';
@@ -11,6 +12,7 @@ import 'package:lingualloop/services/VideoService.dart';
 import 'package:lingualloop/ui/screens/karty_quiz_screen.dart';
 import 'package:lingualloop/ui/screens/profile_screen.dart';
 import 'package:lingualloop/ui/screens/video_quiz_screen.dart';
+import 'package:lingualloop/ui/screens/welcome_screen.dart';
 import 'package:lingualloop/ui/widgets/NavbarWidget.dart';
 import 'ui/screens/login_screen.dart';
 import 'package:dio/dio.dart';
@@ -71,6 +73,9 @@ void main() {
         ChangeNotifierProvider<BadgeProvider>(
           create: (_) => BadgeProvider(),
         ),
+        ChangeNotifierProvider<VideoProvider>(
+          create: (_) => VideoProvider(),
+        ),
       ],
       child: MyApp(),
     ),
@@ -84,13 +89,14 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       navigatorKey: navigatorKey,
       title: 'Lingual Loop',
-      initialRoute: '/login',
+      initialRoute: '/welcome',
       routes: {
         '/login': (context) => LoginScreen(),
         '/home': (context) => NavbarWidget(),
         '/videoquiz': (context) => VideoQuizScreen(),
         '/kartyquiz': (context) => KartyQuizScreen(),
         '/profile': (context) => ProfileScreen(),
+        '/welcome': (context) => WelcomeScreen(),
       },
 
 

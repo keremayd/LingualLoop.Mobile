@@ -5,13 +5,10 @@ import 'package:provider/provider.dart';
 import '../models/responses/GetSavedVideosByIdResponse.dart';
 import '../services/VideoService.dart';
 
-class UserProvider with ChangeNotifier {
+class VideoProvider with ChangeNotifier {
   final List<GetSavedVideosByIdResponse> _savedVideos = [];
   bool _isLoaded = false;
 
-  User? _user;
-
-  User? get user => _user;
   List<GetSavedVideosByIdResponse> get savedVideos => List.unmodifiable(_savedVideos); // Dışarıdan değiştirilemez liste
   bool get isLoaded => _isLoaded;
 
@@ -41,15 +38,5 @@ class UserProvider with ChangeNotifier {
     }
 
     return false;
-  }
-
-  void setUser(User user) {
-    _user = user;
-    notifyListeners();
-  }
-
-  void clearUser() {
-    _user = null;
-    notifyListeners();
   }
 }

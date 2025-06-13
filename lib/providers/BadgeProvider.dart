@@ -18,6 +18,11 @@ class BadgeProvider with ChangeNotifier {
 
     _badges.clear();
     var apiResponse = await badgeService.getBadgesById();
+    if (apiResponse.errorCode == 'E4120') { // Henüz rozete sahip değil
+      _isLoaded = true;
+      notifyListeners();
+      return true;
+    }
     if (apiResponse.errorCode == null) {
       _isLoaded = false;
       notifyListeners();

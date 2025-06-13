@@ -4,7 +4,7 @@ class CustomIconButton extends StatefulWidget {
   final String img;
   final String clickedImg; // İkinci ikon
   final Color backgroundColor;
-  final Color iconColor;
+  final Color? iconColor;
   final Function? ontap;
   final double? buttonSize;
   final double? padding;
@@ -14,7 +14,7 @@ class CustomIconButton extends StatefulWidget {
     required this.img,
     required this.clickedImg, // İkinci ikon parametresi
     required this.backgroundColor,
-    required this.iconColor,
+    this.iconColor,
     this.ontap,
     this.buttonSize,
     this.padding
@@ -45,7 +45,7 @@ class _CustomIconButtonState extends State<CustomIconButton> {
     bool isButtonDisabled = widget.ontap == null;
 
     return Material(
-      color: Colors.transparent,
+      color: widget.iconColor,
       borderRadius: BorderRadius.circular(14),
       child: AbsorbPointer(
         absorbing: isButtonDisabled, // Buton devre dışıysa, etkileşimi yutuyoruz
