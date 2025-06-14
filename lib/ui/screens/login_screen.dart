@@ -233,7 +233,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     SizedBox(width: 20),
                     CustomIconButton(
                       img: 'apple-logo',
-                      clickedImg: 'bookmark',
                       backgroundColor: Color(0xFFD9D9D9),
                       buttonSize: 28,
                       padding: 13,

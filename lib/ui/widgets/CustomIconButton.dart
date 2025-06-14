@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class CustomIconButton extends StatefulWidget {
   final String img;
-  final String clickedImg; // İkinci ikon
+  final String? clickedImg; // İkinci ikon
   final Color backgroundColor;
   final Color? iconColor;
   final Function? ontap;
@@ -12,7 +12,7 @@ class CustomIconButton extends StatefulWidget {
   const CustomIconButton({
     Key? key,
     required this.img,
-    required this.clickedImg, // İkinci ikon parametresi
+    this.clickedImg, // İkinci ikon parametresi
     required this.backgroundColor,
     this.iconColor,
     this.ontap,
@@ -34,8 +34,10 @@ class _CustomIconButtonState extends State<CustomIconButton> {
   }
 
   void _toggleIcon() {
+    if (widget.clickedImg == null) return;
+
     setState(() {
-      currentIcon = currentIcon == widget.img ? widget.clickedImg : widget.img;
+      currentIcon = currentIcon == widget.img ? widget.clickedImg! : widget.img;
     });
   }
 

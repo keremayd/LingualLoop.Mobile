@@ -43,7 +43,6 @@ void showBadgePopup(BuildContext context, int badgeIndex) {
                     children: [
                       CustomIconButton(
                         img: 'cancel',
-                        clickedImg: 'cancel',
                         backgroundColor: Color(0xFFF7F9FD),
                         iconColor: Color(0xFF5F5CF0),
                         buttonSize: 18,

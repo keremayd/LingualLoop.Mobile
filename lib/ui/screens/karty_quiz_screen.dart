@@ -359,7 +359,6 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
                                         children: [
                                           CustomIconButton(
                                             img: 'cancel',
-                                            clickedImg: 'cancel',
                                             backgroundColor: Color(0xFFDE4343),
                                             iconColor: Colors.white,
                                             buttonSize: 25,
@@ -374,7 +373,6 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
                                           SizedBox(width: 10),
                                           CustomIconButton(
                                             img: 'correct',
-                                            clickedImg: 'correct',
                                             backgroundColor: Color(0xFF4EA42B),
                                             iconColor: Colors.white,
                                             buttonSize: 25,

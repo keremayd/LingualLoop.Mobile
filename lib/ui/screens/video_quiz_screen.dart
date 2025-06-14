@@ -272,7 +272,6 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
                                   alignment: Alignment.centerRight, // Sağ ortada
                                   child: CustomIconButton(
                                     img: 'next',
-                                    clickedImg: 'next',
                                     backgroundColor: Colors.white,
                                     iconColor: Color(0xFF5F5CEF),
                                     ontap: () => _nextVideo(context),
@@ -292,7 +291,6 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
                             children: [
                               CustomIconButton(
                                 img: 'info',
-                                clickedImg: 'info',
                                 backgroundColor: Colors.white,
                                 iconColor: Color(0xFF7875FC),
                               ),
@@ -310,7 +308,6 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
                             children: [
                               CustomIconButton(
                                 img: 'bookmark',
-                                clickedImg: 'bookmark',
                                 backgroundColor: Colors.white,
                                 iconColor: Color(0xFF7875FC),
                               ),

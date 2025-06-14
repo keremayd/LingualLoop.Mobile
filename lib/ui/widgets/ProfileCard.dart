@@ -31,7 +31,6 @@ class ProfileCard extends StatelessWidget {
                   children: [
                     CustomIconButton(
                       img: 'settings',
-                      clickedImg: 'settings',
                       backgroundColor: Color(0xFFF7F9FD),
                       iconColor: Color(0xFF5F5CF0),
                       buttonSize: 18,
