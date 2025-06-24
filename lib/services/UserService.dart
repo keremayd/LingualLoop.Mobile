@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -7,6 +9,7 @@ import 'package:lingualloop/models/responses/UpdateScoreResponse.dart';
 import 'package:provider/provider.dart';
 
 import '../models/ApiResponse.dart';
+import '../models/responses/UploadUserFileResponse.dart';
 import '../providers/ScoreWithLivesProvider.dart';
 
 class UserService {
@@ -58,4 +61,23 @@ class UserService {
 
     return apiResponse;
   }
+
+  Future<ApiResponse<UploadUserFileResponse>> updateProfilePhotoById(File file) async {
+    final userId = await _storage.read(key: 'userId');
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(
+        file.path,
+        filename: file.path.split('/').last,
+      ),
+    });
+    final response = await _dio.post('users/$userId/upload-profile-photo', data: formData);
+
+    var apiResponse = ApiResponse<UploadUserFileResponse>.fromJson(
+      response.data,
+          (data) => UploadUserFileResponse.fromJson(data as Map<String, dynamic>),
+    );
+
+    return apiResponse;
+  }
+
 }

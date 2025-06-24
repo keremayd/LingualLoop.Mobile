@@ -7,7 +7,7 @@ part of 'GetSavedVideosByIdResponse.dart';
 // **************************************************************************
 
 GetSavedVideosByIdResponse _$GetSavedVideosByIdResponseFromJson(
-    Map<String, dynamic> json) =>
+        Map<String, dynamic> json) =>
     GetSavedVideosByIdResponse(
       userVideoId: (json['userVideoId'] as num).toInt(),
       userId: json['userId'] as String,

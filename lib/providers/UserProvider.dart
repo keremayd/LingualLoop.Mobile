@@ -43,6 +43,12 @@ class UserProvider with ChangeNotifier {
     return false;
   }
 
+  Future<void> setProfilePhoto(String profilePhotoUrl) async {
+    user!.profilePhotoUrl = profilePhotoUrl;
+    _user = user;
+    notifyListeners();
+  }
+
   void setUser(User user) {
     _user = user;
     notifyListeners();

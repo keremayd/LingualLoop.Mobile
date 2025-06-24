@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
+import 'package:lingualloop/ui/widgets/ProfilePhoto.dart';
 import 'package:provider/provider.dart';
 import '../../models/User.dart';
 import '../../providers/UserProvider.dart';
@@ -41,15 +44,7 @@ class ProfileCard extends StatelessWidget {
                 ),
 
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Align(
-                    alignment: Alignment.center, // Resmi sola hizala
-                    child: Image.asset('assets/icons/profilephoto.png', height: 75),
-                  ),
-                ],
-              ),
+              ProfilePhotoWidget(),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [

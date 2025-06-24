@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
@@ -6,6 +7,8 @@ import 'package:lingualloop/models/responses/AuthenticateResponse.dart';
 import 'package:lingualloop/models/responses/RefreshTokenResponse.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:lingualloop/providers/UserProvider.dart';
+import 'package:lingualloop/services/FileService.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -22,6 +25,7 @@ class AuthService {
 
   Future<ApiResponse<AuthenticateResponse>> login(String email, String password, BuildContext context) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final fileService = LocalFileService();
 
     final response = await _dio.post('authentication/login', data: {
     'userName': email,
@@ -33,6 +37,11 @@ class AuthService {
           (data) => AuthenticateResponse.fromJson(data as Map<String, dynamic>),
     );
 
+    final cachedPhotoPath = await fileService.cacheProfilePhoto(
+      apiResponse.data!.profilePhotoUrl,
+      apiResponse.data!.userId,
+    );
+
     // Update UserProvider
     userProvider.setUser(
       User(
@@ -40,6 +49,7 @@ class AuthService {
         firstName: apiResponse.data!.firstName,
         lastName: apiResponse.data!.lastName,
         displayName: apiResponse.data!.displayName,
+        profilePhotoUrl: cachedPhotoPath,
         userNickname: apiResponse.data!.userNickname,
         userName: apiResponse.data!.userName,
       ),
@@ -91,6 +101,7 @@ class AuthService {
           firstName: apiResponse.data!.firstName,
           lastName: apiResponse.data!.lastName,
           displayName: apiResponse.data!.displayName,
+          profilePhotoUrl: apiResponse.data!.profilePhotoUrl,
           userNickname: apiResponse.data!.userNickname,
           userName: apiResponse.data!.userName,
         ),

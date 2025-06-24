@@ -5,6 +5,7 @@ import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/providers/UserProvider.dart';
 import 'package:lingualloop/providers/VideoProvider.dart';
 import 'package:lingualloop/services/BadgeService.dart';
+import 'package:lingualloop/services/FileService.dart';
 import 'package:lingualloop/services/KartyService.dart';
 import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/services/AuthenticationService.dart';
@@ -59,6 +60,11 @@ void main() {
           create: (context) {
             final dio = context.read<Dio>();
             return BadgeService(dio);
+          },
+        ),
+        Provider<LocalFileService>(
+          create: (context) {
+            return LocalFileService();
           },
         ),
         ChangeNotifierProvider<UserProvider>(
