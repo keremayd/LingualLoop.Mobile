@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.lingualloop.lingualloop"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 35
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

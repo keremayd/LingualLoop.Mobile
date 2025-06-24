@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/ui/widgets/LessonCard.dart';
 import 'package:lingualloop/ui/widgets/MainLessonCard.dart';
+import 'package:lingualloop/ui/widgets/ProfilePhoto.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/ScoreWithLivesProvider.dart';
@@ -96,10 +97,7 @@ class _HomeScreenScreenState extends State<HomeScreen> {
                               children: [
                                 Row(
                                   children: [
-                                    Image.asset(
-                                      'assets/icons/profilephoto.png',
-                                      height: screenHeight * 0.0693, // 49
-                                    ),
+                                    ProfilePhotoWidget(width: 49, height: 49, borderRadius: 13, editable: false),
                                     SizedBox(width: screenWidth * 0.0254),
                                     Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,

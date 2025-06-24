@@ -64,6 +64,7 @@ class AuthService {
 
   Future<ApiResponse<AuthenticateResponse>> signInWithGoogle(BuildContext context) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final fileService = LocalFileService();
     final GoogleSignInAuthentication googleAuth;
     final GoogleSignIn googleSignIn = GoogleSignIn(
       scopes: [
@@ -95,13 +96,18 @@ class AuthService {
             (data) => AuthenticateResponse.fromJson(data as Map<String, dynamic>),
       );
 
+      final cachedPhotoPath = await fileService.cacheProfilePhoto(
+        apiResponse.data!.profilePhotoUrl,
+        apiResponse.data!.userId,
+      );
+
       userProvider.setUser(
         User(
           userId: apiResponse.data!.userId,
           firstName: apiResponse.data!.firstName,
           lastName: apiResponse.data!.lastName,
           displayName: apiResponse.data!.displayName,
-          profilePhotoUrl: apiResponse.data!.profilePhotoUrl,
+          profilePhotoUrl: cachedPhotoPath,
           userNickname: apiResponse.data!.userNickname,
           userName: apiResponse.data!.userName,
         ),

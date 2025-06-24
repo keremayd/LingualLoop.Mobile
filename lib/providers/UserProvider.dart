@@ -44,8 +44,7 @@ class UserProvider with ChangeNotifier {
   }
 
   Future<void> setProfilePhoto(String profilePhotoUrl) async {
-    user!.profilePhotoUrl = profilePhotoUrl;
-    _user = user;
+    _user!.profilePhotoUrl = profilePhotoUrl;
     notifyListeners();
   }
 
