@@ -127,18 +127,22 @@ class ProfileCard extends StatelessWidget {
                               height: 26,
                             ),
                             Text(
-                              'Liderlik',
+                              'Sıralama',
                               style: TextStyle(
                                   fontSize: 16,
                                   color: Color(0xFF7875FC),
                                   fontWeight: FontWeight.bold),
                             ),
-                            Text(
-                              '#5', // Liderlik numarasını ekledim
-                              style: TextStyle(
-                                  fontSize: 19,
-                                  color: Color(0xFF5F5CF0),
-                                  fontWeight: FontWeight.w800),
+                            Consumer<UserProvider>(
+                              builder: (context, userProvider, child) {
+                                return Text(
+                                  '#${userProvider.user?.userRank ?? 0}',
+                                  style: TextStyle(
+                                      fontSize: 19,
+                                      color: Color(0xFF5F5CF0),
+                                      fontWeight: FontWeight.w800),
+                                );
+                              },
                             ),
                           ],
                         ),

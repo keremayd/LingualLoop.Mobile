@@ -54,4 +54,21 @@ class LocalFileService {
     await userProvider.setProfilePhoto(filePath);
   }
 
+  Future<String> cacheKartyImage(String imageUrl, int kartyId) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final filePath = '${directory.path}/$kartyId.png';
+    final file = File(filePath);
+
+    // Eğer daha önce kaydedilmişse tekrar indirme
+    if (await file.exists()) return filePath;
+
+    final response = await Dio().get<List<int>>(
+      imageUrl,
+      options: Options(responseType: ResponseType.bytes),
+    );
+
+    await file.writeAsBytes(response.data!);
+
+    return filePath;
+  }
 }

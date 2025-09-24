@@ -52,6 +52,7 @@ class AuthService {
         profilePhotoUrl: cachedPhotoPath,
         userNickname: apiResponse.data!.userNickname,
         userName: apiResponse.data!.userName,
+        userRank: apiResponse.data!.userRank
       ),
     );
 
@@ -110,6 +111,7 @@ class AuthService {
           profilePhotoUrl: cachedPhotoPath,
           userNickname: apiResponse.data!.userNickname,
           userName: apiResponse.data!.userName,
+          userRank: 0
         ),
       );
 

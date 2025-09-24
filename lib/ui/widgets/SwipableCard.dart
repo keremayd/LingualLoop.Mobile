@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:lingualloop/models/Karty.dart';
@@ -194,13 +195,13 @@ class _SwipableCardState extends State<SwipableCard> with TickerProviderStateMix
                 children: [
                   Align(
                     alignment: Alignment.center,
-                    child: Text(
-                      widget.card.kartyUrl,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                      ),
+                    child: Image.file(
+                      File(widget.card.kartyUrl),
+                      fit: BoxFit.cover,
+                      width: 140,
+                      key: ValueKey(DateTime.now().toString()), // Unique key forces reload
                     ),
+
                   ),
                 ],
               ),

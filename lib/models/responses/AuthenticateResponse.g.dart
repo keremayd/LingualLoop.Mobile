@@ -16,6 +16,7 @@ AuthenticateResponse _$AuthenticateResponseFromJson(
       profilePhotoUrl: json['profilePhotoUrl'] as String,
       userNickname: json['userNickname'] as String,
       userName: json['userName'] as String,
+      userRank: json['userRank'] as int,
       accessToken: json['accessToken'] as String,
       refreshToken: json['refreshToken'] as String,
     );
@@ -30,6 +31,7 @@ Map<String, dynamic> _$AuthenticateResponseToJson(
       'profilePhotoUrl': instance.profilePhotoUrl,
       'userNickname': instance.userNickname,
       'userName': instance.userName,
+      'userRank': instance.userRank,
       'accessToken': instance.accessToken,
       'refreshToken': instance.refreshToken,
     };

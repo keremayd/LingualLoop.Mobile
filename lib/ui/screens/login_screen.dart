@@ -224,7 +224,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     CustomIconButton(
                       img: 'google-logo',
-                      clickedImg: 'bookmark',
                       backgroundColor: Color(0xFFD9D9D9),
                       buttonSize: 28,
                       padding: 13,

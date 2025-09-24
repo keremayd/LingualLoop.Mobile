@@ -58,6 +58,7 @@ flutter:
     - assets/icons/leader.png
     - assets/icons/google-logo.png
     - assets/icons/apple-logo.png
+    - assets/icons/logout.png
 
     - assets/images/otta.png
     - assets/images/otta_login.png

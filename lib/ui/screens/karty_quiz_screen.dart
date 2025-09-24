@@ -10,6 +10,7 @@ import 'package:lingualloop/ui/widgets/SwipableCard.dart';
 import 'package:lingualloop/ui/widgets/TimeBar.dart';
 import 'package:provider/provider.dart';
 
+import '../../services/FileService.dart';
 import '../../services/UserService.dart';
 import '../widgets/CorrectAnimation.dart';
 import '../widgets/CustomIconButton.dart';
@@ -103,9 +104,14 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
   }
 
   Future<Karty?> _getQuestion(BuildContext context) async {
+    final localFileService = Provider.of<LocalFileService>(context, listen: false);
+
     var apiResponse = await kartyService.random();
     if (apiResponse.errorCode == null) {
-      return Karty(kartyUrl: apiResponse.data!.kartyUrl, questionText: apiResponse.data!.questionText, isCorrect: apiResponse.data!.isCorrect);
+      var cacheUrl = await localFileService.cacheKartyImage(apiResponse.data!.kartyUrl, apiResponse.data!.kartyId);
+
+      // Cache'teki kaydettiğimiz adres üzerinden ilerletiyoruz
+      return Karty(kartyUrl: cacheUrl, questionText: apiResponse.data!.questionText, isCorrect: apiResponse.data!.isCorrect);
     }
 
     return null;
