@@ -29,8 +29,15 @@ void main() {
       providers: [
         Provider<AuthService>(
           create: (context) {
-            final dio = Dio(BaseOptions(baseUrl: 'http://10.0.2.2:5213/ll-api/'));
-            final authService = AuthService(dio, );
+            final dio = Dio(
+              BaseOptions(
+                baseUrl: 'http://10.0.2.2:5213/ll-api/',
+                connectTimeout: 5000, // 5 saniye
+                receiveTimeout: 5000,
+                sendTimeout: 5000,
+              ),
+            );
+            final authService = AuthService(dio);
             dio.interceptors.add(TokenInterceptor(authService));
             return authService;
           },

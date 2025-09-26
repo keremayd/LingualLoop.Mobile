@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:lingualloop/Utils/ErrorHandler.dart';
 import 'services/AuthenticationService.dart';
 import 'main.dart';
 
@@ -13,6 +15,17 @@ class TokenInterceptor extends Interceptor {
 
   @override
   void onError(DioError err, ErrorInterceptorHandler handler) async {
+    if (err.type == DioErrorType.connectTimeout ||
+        err.type == DioErrorType.sendTimeout ||
+        err.type == DioErrorType.receiveTimeout ||
+        err.type == DioErrorType.other) {
+
+      ErrorHandler.showError("Timeout hatası! Daha sonra tekrar deneyin.");
+
+      return handler.next(err);
+    }
+    
+    
     if (err.response?.statusCode == 401) {
       var response = await authService.refreshToken();
       if(!response){

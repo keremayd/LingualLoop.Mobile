@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:lingualloop/Utils/ErrorHandler.dart';
 import 'package:lingualloop/services/FileService.dart';
 import 'package:provider/provider.dart';
 
@@ -48,24 +49,14 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
 
     final response = await _userService.updateProfilePhotoById(File(pickedFile.path));
     if (response.errorCode != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Fotoğraf yüklenemedi: ${response.errorCode}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      ErrorHandler.showError("Fotoğraf yüklenemedi: ${response.errorCode}");
 
       return;
     }
 
     await _localFileService.updateCachedProfilePhoto(response.data!.signedUrl, _user!.userId, context,);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Profil fotoğrafı başarıyla güncellendi.'),
-        backgroundColor: Colors.green,
-      ),
-    );
+    ErrorHandler.showError("Profil fotoğrafı başarıyla güncellendi. ${response.errorCode}", color: Colors.green);
   }
 
   @override

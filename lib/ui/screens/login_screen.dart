@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lingualloop/Utils/ErrorHandler.dart';
 import '../../Enums/LoginMethod.dart';
 import '../../services/AuthenticationService.dart';
 import 'package:provider/provider.dart';
@@ -29,9 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (response.errorCode == null) {
           Navigator.pushReplacementNamed(context, '/home');
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Giriş başarısız: ${response.errorCode}')),
-          );
+          ErrorHandler.showError("Giriş başarısız: ${response.errorCode}");
         }
         break;
 
@@ -40,9 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (response.errorCode == null) {
           Navigator.pushReplacementNamed(context, '/home');
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Giriş başarısız: ${response.errorCode}')),
-          );
+          ErrorHandler.showError("Giriş başarısız: ${response.errorCode}");
         }
         break;
 
