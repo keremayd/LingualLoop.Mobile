@@ -11,7 +11,7 @@ class User {
   String? profilePhotoUrl;
   final String userNickname;
   final String userName;
-  final int userRank;
+  final int? userRank;
 
   User({required this.userId, required this.firstName, required this.lastName, required this.displayName, required this.profilePhotoUrl, required this.userNickname,  required this.userName, required this.userRank});
 

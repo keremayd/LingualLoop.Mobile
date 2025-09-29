@@ -25,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
         final username = "string";
         final password = "string123";
 
-        final response = await authService.login(username, password, context);
+        final response = await authService.signIn(username, password, context);
 
         if (response.errorCode == null) {
           Navigator.pushReplacementNamed(context, '/home');

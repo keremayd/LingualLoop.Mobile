@@ -10,6 +10,7 @@ import 'package:lingualloop/services/KartyService.dart';
 import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/services/AuthenticationService.dart';
 import 'package:lingualloop/services/VideoService.dart';
+import 'package:lingualloop/ui/screens/SignUpScreen.dart';
 import 'package:lingualloop/ui/screens/karty_quiz_screen.dart';
 import 'package:lingualloop/ui/screens/profile_screen.dart';
 import 'package:lingualloop/ui/screens/video_quiz_screen.dart';
@@ -32,9 +33,6 @@ void main() {
             final dio = Dio(
               BaseOptions(
                 baseUrl: 'http://10.0.2.2:5213/ll-api/',
-                connectTimeout: 5000, // 5 saniye
-                receiveTimeout: 5000,
-                sendTimeout: 5000,
               ),
             );
             final authService = AuthService(dio);
@@ -110,6 +108,7 @@ class MyApp extends StatelessWidget {
         '/kartyquiz': (context) => KartyQuizScreen(),
         '/profile': (context) => ProfileScreen(),
         '/welcome': (context) => WelcomeScreen(),
+        '/signup': (context) => SignUpScreen(),
       },
 
 

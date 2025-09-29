@@ -36,6 +36,7 @@ flutter:
         - asset: assets/fonts/Inter-SemiBold.ttf
         - asset: assets/fonts/Roboto-Black.ttf
   assets:
+    # Icons
     - assets/icons/home.png
     - assets/icons/profile.png
     - assets/icons/score.png
@@ -60,12 +61,21 @@ flutter:
     - assets/icons/apple-logo.png
     - assets/icons/logout.png
 
+    # Images
     - assets/images/otta.png
     - assets/images/otta_login.png
     - assets/images/karty.png
     - assets/images/catsbattle.png
     - assets/gifs/diamond1.gif
 
+    # Badges
     - assets/badges/badge_1.png
     - assets/badges/badge_2.png
     - assets/badges/badge_3.png
+      
+      # Profile Photos
+    - assets/ProfilePhotos/photo_1.png
+    - assets/ProfilePhotos/photo_2.png
+    - assets/ProfilePhotos/photo_3.png
+    - assets/ProfilePhotos/photo_4.png
+    - assets/ProfilePhotos/photo_5.png

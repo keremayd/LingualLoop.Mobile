@@ -16,7 +16,7 @@ AuthenticateResponse _$AuthenticateResponseFromJson(
       profilePhotoUrl: json['profilePhotoUrl'] as String,
       userNickname: json['userNickname'] as String,
       userName: json['userName'] as String,
-      userRank: json['userRank'] as int,
+      userRank: (json['userRank'] as num).toInt(),
       accessToken: json['accessToken'] as String,
       refreshToken: json['refreshToken'] as String,
     );

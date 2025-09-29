@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:lingualloop/Utils/ErrorHandler.dart';
 import 'package:lingualloop/models/Karty.dart';
 import 'package:lingualloop/providers/KartyProvider.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
@@ -133,7 +134,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
       return;
     }
 
-    print("Karty yüklenirken bir hata oluştu.");
+    ErrorHandler.showError("Karty yüklenirken bir hata oluştu.");
   }
 
   void _resetCard() {

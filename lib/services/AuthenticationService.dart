@@ -1,11 +1,16 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
+import 'package:lingualloop/Utils/ErrorHandler.dart';
 import 'package:lingualloop/models/ApiResponse.dart';
+import 'package:lingualloop/models/Requests/SignUpRequest.dart';
 import 'package:lingualloop/models/responses/AuthenticateResponse.dart';
 import 'package:lingualloop/models/responses/RefreshTokenResponse.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:lingualloop/models/responses/SignUpResponse.dart';
 import 'package:lingualloop/providers/UserProvider.dart';
 import 'package:lingualloop/services/FileService.dart';
 import 'package:path_provider/path_provider.dart';
@@ -23,12 +28,12 @@ class AuthService {
 
   Dio get dio => _dio;
 
-  Future<ApiResponse<AuthenticateResponse>> login(String email, String password, BuildContext context) async {
+  Future<ApiResponse<AuthenticateResponse>> signIn(String email, String password, BuildContext context) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final fileService = LocalFileService();
 
     final response = await _dio.post('authentication/login', data: {
-    'userName': email,
+    'email': email,
     'password': password,
     });
 
@@ -125,6 +130,45 @@ class AuthService {
           errorCode: 'Hata alındı!'
       );
     }
+  }
+  
+  Future<bool> signUp(SignUpRequest request, BuildContext context) async {
+    final random = Random().nextInt(5) + 1; // 1..5 arası
+
+    final byteData = await rootBundle.load("assets/ProfilePhotos/photo_$random.png");
+
+    // Geçici klasöre yaz fotoğrafı
+    final tempDir = await getTemporaryDirectory();
+    final file = File("${tempDir.path}/profilePhoto.png");
+    await file.writeAsBytes(byteData.buffer.asUint8List());
+    
+    FormData formData = FormData.fromMap({
+      "firstName": request.firstName,
+      "lastName": request.lastName,
+      "password": request.password,
+      "email": request.email,
+      "file": await MultipartFile.fromFile(file.path, filename: "profilePhoto.png"),
+      "roles": "Admin",
+    });
+
+    final response = await _dio.post("authentication/register", data: formData,
+      options: Options(
+        contentType: "multipart/form-data",
+      ),
+    );
+
+    var apiResponse = ApiResponse<SignUpResponse>.fromJson(
+      response.data,
+          (data) => SignUpResponse.fromJson(data as Map<String, dynamic>),
+    );
+
+    if (apiResponse.errorCode != null) {
+      return false;
+    }
+
+    ErrorHandler.showError("Kayıt başarıyla oluşturuldu.", color: Colors.green);
+
+    return true;
   }
 
   Future<bool> isAccessTokenExpired() async {

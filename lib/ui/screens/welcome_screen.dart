@@ -32,7 +32,28 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 Navigator.pushNamed(context, '/login')
               },
               child: Text(
-                  'GİRİŞ YAP',
+                  'Giriş yap',
+                  style: TextStyle(
+                      fontSize: 23,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white
+                  )
+              ),
+            ),
+
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                backgroundColor: Color(0xFF7875FC),
+                minimumSize: Size(double.infinity, 65), // Yüksekliği input alanlarına eşitle
+              ),
+              onPressed: () => {
+                Navigator.pushNamed(context, '/signup')
+              },
+              child: Text(
+                  'Kayıt ol',
                   style: TextStyle(
                       fontSize: 23,
                       fontWeight: FontWeight.w500,
