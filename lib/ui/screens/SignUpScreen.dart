@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:lingualloop/models/Requests/SignUpRequest.dart';
 import 'package:lingualloop/models/responses/AuthenticateResponse.dart';
@@ -95,11 +96,11 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(60),
+        preferredSize: Size.fromHeight(60),
         child: Column(
           children: [
             Container(
-              margin: const EdgeInsets.only(top: 50),
+              margin: EdgeInsets.only(top: 50),
               child: CustomAppBar(
                 child: Stack(
                   alignment: Alignment.center,
@@ -108,14 +109,14 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
                       alignment: Alignment.centerLeft,
                       child: GestureDetector(
                         onTap: () => Navigator.pop(context),
-                        child: const Icon(
+                        child: Icon(
                           Icons.arrow_back_rounded,
                           color: Color(0xFF7875FC),
                           size: 35,
                         ),
                       ),
                     ),
-                    const Text(
+                    Text(
                       "Profilini oluştur",
                       style: TextStyle(
                         fontSize: 24,
@@ -135,22 +136,31 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  SignUpInputField(
-                    controller: _firstNameController,
-                    hint: "İsim",
-                    errorText: _errors['firstName'],
-                    keyboardType: TextInputType.name,
-                    onChanged: (_) => setState(() => _errors['firstName'] = null),
-                  ),
-                  SignUpInputField(
-                    controller: _lastNameController,
-                    hint: "Soyisim",
-                    errorText: _errors['lastName'],
-                    keyboardType: TextInputType.name,
-                    onChanged: (_) => setState(() => _errors['lastName'] = null),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SignUpInputField(
+                          controller: _firstNameController,
+                          hint: "İsim",
+                          errorText: _errors['firstName'],
+                          keyboardType: TextInputType.name,
+                          onChanged: (_) => setState(() => _errors['firstName'] = null),
+                        ),
+                      ),
+                      SizedBox(width: 12), // iki input arasında boşluk
+                      Expanded(
+                        child: SignUpInputField(
+                          controller: _lastNameController,
+                          hint: "Soyisim",
+                          errorText: _errors['lastName'],
+                          keyboardType: TextInputType.name,
+                          onChanged: (_) => setState(() => _errors['lastName'] = null),
+                        ),
+                      ),
+                    ],
                   ),
                   SignUpInputField(
                     controller: _emailController,
@@ -166,17 +176,16 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
                     obscureText: true,
                     onChanged: (_) => setState(() => _errors['password'] = null),
                   ),
-                  const SizedBox(height: 23),
+                  SizedBox(height: 23),
 
-                  // ✅ Kayıt Ol Butonu
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFF7875FC),
+                      color: Color(0xFF7875FC),
                       borderRadius: BorderRadius.circular(20),
-                      border: const Border(
+                      border: Border(
                         bottom: BorderSide(
                           color: Color(0xFF5F5CF0),
-                          width: 4,
+                          width: 6,
                         ),
                       ),
                     ),
@@ -194,7 +203,7 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
                         child: const Text(
                           'KAYIT OL',
                           style: TextStyle(
-                            fontSize: 23,
+                            fontSize: 21,
                             fontWeight: FontWeight.w500,
                             color: Colors.white,
                           ),
@@ -203,19 +212,45 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
                     ),
                   ),
 
-                  const SizedBox(height: 19),
+                  SizedBox(height: 19),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 35),
-                    child: Container(
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF5F5CF0),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: Color(0xFF5F5CF0),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: Text(
+                            'VEYA',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF5F5CF0),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Container(
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: Color(0xFF5F5CF0),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 23),
 
+                  SizedBox(height: 23),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -257,11 +292,15 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF949494),
                     ),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () {
+                        Navigator.pushNamed(context, "/signin");
+                      },
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 45),
+            SizedBox(height: 45),
           ],
         ),
       ),

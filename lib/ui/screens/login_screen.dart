@@ -22,8 +22,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
     switch (method) {
       case LoginMethod.usernamePassword:
-        final username = "string";
-        final password = "string123";
+        final username = "sefa@gmail.com";
+        final password = "sefa123";
 
         final response = await authService.signIn(username, password, context);
 
@@ -117,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      hintText: 'Kullanıcı adı',
+                      hintText: 'E-posta',
                       hintStyle: TextStyle(
                         color: Colors.white,
                       ),
@@ -181,7 +181,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       onPressed: () => _login(context, LoginMethod.usernamePassword),
                       child: Text(
-                          'GİRİŞ YAP',
+                          'Giriş yap',
                           style: TextStyle(
                               fontSize: 23,
                               fontWeight: FontWeight.w500,

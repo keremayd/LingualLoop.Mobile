@@ -29,7 +29,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 minimumSize: Size(double.infinity, 65), // Yüksekliği input alanlarına eşitle
               ),
               onPressed: () => {
-                Navigator.pushNamed(context, '/login')
+                Navigator.pushNamed(context, '/signin')
               },
               child: Text(
                   'Giriş yap',

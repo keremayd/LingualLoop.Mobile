@@ -35,7 +35,7 @@ class SignUpInputField extends StatelessWidget {
       errorBorder: commonBorder,
       focusedErrorBorder: commonBorder,
       hintText: hint,
-      hintStyle: const TextStyle(color: Colors.white),
+      hintStyle: const TextStyle(color: Colors.white, fontSize: 17),
       contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
     );
   }

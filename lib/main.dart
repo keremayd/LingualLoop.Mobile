@@ -102,7 +102,7 @@ class MyApp extends StatelessWidget {
       title: 'Lingual Loop',
       initialRoute: '/welcome',
       routes: {
-        '/login': (context) => LoginScreen(),
+        '/signin': (context) => LoginScreen(),
         '/home': (context) => NavbarWidget(),
         '/videoquiz': (context) => VideoQuizScreen(),
         '/kartyquiz': (context) => KartyQuizScreen(),
