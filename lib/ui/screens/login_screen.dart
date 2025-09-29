@@ -120,6 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       hintText: 'E-posta',
                       hintStyle: TextStyle(
                         color: Colors.white,
+                        fontSize: 17
                       ),
                       contentPadding: EdgeInsets.symmetric(vertical: 20, horizontal: 16),
                     ),
@@ -151,6 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       hintText: 'Parola',
                       hintStyle: TextStyle(
                         color: Colors.white,
+                        fontSize: 17
                       ),
                       contentPadding: EdgeInsets.symmetric(vertical: 20, horizontal: 16),
                     ),
@@ -165,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     border: Border(
                       bottom: BorderSide(
                         color: Color(0xFF5F5CF0),
-                        width: 4,
+                        width: 6,
                       ),
                     ),
                   ),
@@ -181,9 +183,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       onPressed: () => _login(context, LoginMethod.usernamePassword),
                       child: Text(
-                          'Giriş yap',
+                          'GİRİŞ YAP',
                           style: TextStyle(
-                              fontSize: 23,
+                              fontSize: 21,
                               fontWeight: FontWeight.w500,
                               color: Colors.white
                           )
