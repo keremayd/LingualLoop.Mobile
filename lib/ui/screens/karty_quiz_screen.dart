@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:lingualloop/Utils/ErrorHandler.dart';
+import 'package:lingualloop/Utils/MessageHandler.dart';
 import 'package:lingualloop/models/Karty.dart';
 import 'package:lingualloop/providers/KartyProvider.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
@@ -48,8 +48,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
 
     Future.microtask(() async {
 
-      kartyProvider.removeTopCard();
-      final isLoaded = await kartyProvider.loadCard(context);
+      final isLoaded = await kartyProvider.loadKarty(context);
       if (isLoaded) {
         duration.value = 2;
         timeBarResetNotifier.value += 1;
@@ -104,27 +103,11 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
     }
   }
 
-  Future<Karty?> _getQuestion(BuildContext context) async {
-    final localFileService = Provider.of<LocalFileService>(context, listen: false);
-
-    var apiResponse = await kartyService.random();
-    if (apiResponse.errorCode == null) {
-      var cacheUrl = await localFileService.cacheKartyImage(apiResponse.data!.kartyUrl, apiResponse.data!.kartyId);
-
-      // Cache'teki kaydettiğimiz adres üzerinden ilerletiyoruz
-      return Karty(kartyUrl: cacheUrl, questionText: apiResponse.data!.questionText, isCorrect: apiResponse.data!.isCorrect);
-    }
-
-    return null;
-  }
-
   Future<void> _nextKarty(BuildContext context) async {
-    var karty = await _getQuestion(context);
-    if (karty != null) {
+    bool isLoaded = await kartyProvider.loadKarty(context);
+    if (isLoaded) {
       print("yeni karty'e geçildi");
-
-      kartyProvider.removeTopCard();
-      kartyProvider.addNewCard(karty);
+      
       duration.value = 5; // Süreyi tekrar ayarla
 
       await Future.delayed(Duration(milliseconds: 20));
@@ -134,7 +117,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
       return;
     }
 
-    ErrorHandler.showError("Karty yüklenirken bir hata oluştu.");
+    AppNotifier.showError("Karty yüklenirken bir hata oluştu.");
   }
 
   void _resetCard() {

@@ -11,9 +11,11 @@ class KartyProvider with ChangeNotifier {
   List<Karty> get cards => List.unmodifiable(_cards); // Dışarıdan değiştirilemez liste
   bool get isLoaded => _isLoaded;
 
-  Future<bool> loadCard(BuildContext context) async {
+  Future<bool> loadKarty(BuildContext context) async {
     final kartyService = Provider.of<KartyService>(context, listen: false);
     final localFileService = Provider.of<LocalFileService>(context, listen: false);
+    
+    removeTopCard();
 
     var apiResponse = await kartyService.random();
     if (apiResponse.errorCode == null) {
@@ -26,7 +28,7 @@ class KartyProvider with ChangeNotifier {
 
       // Cache'teki kaydettiğimiz adres üzerinden ilerletiyoruz
       _cards.add(
-        Karty(kartyUrl: cacheUrl, questionText: apiResponse.data!.questionText, isCorrect: apiResponse.data!.isCorrect),
+        Karty(kartyUrl: cacheUrl, questionText: apiResponse.data!.questionText,  correctText: apiResponse.data!.correctText, isCorrect: apiResponse.data!.isCorrect),
       );
 
       _isLoaded = true;
