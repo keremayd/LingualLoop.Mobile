@@ -49,14 +49,14 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
 
     final response = await _userService.updateProfilePhotoById(File(pickedFile.path));
     if (response.errorCode != null) {
-      AppNotifier.showError("Fotoğraf yüklenemedi: ${response.errorCode}");
+      AppNotifier.showMessage("Fotoğraf yüklenemedi: ${response.errorCode}");
 
       return;
     }
 
     await _localFileService.updateCachedProfilePhoto(response.data!.signedUrl, _user!.userId, context,);
 
-    AppNotifier.showError("Profil fotoğrafı başarıyla güncellendi. ${response.errorCode}", color: Colors.green);
+    AppNotifier.showMessage("Profil fotoğrafı başarıyla güncellendi. ${response.errorCode}", color: Colors.green);
   }
 
   @override

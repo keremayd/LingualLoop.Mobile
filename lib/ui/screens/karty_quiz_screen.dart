@@ -117,7 +117,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
       return;
     }
 
-    AppNotifier.showError("Karty yüklenirken bir hata oluştu.");
+    AppNotifier.showMessage("Karty yüklenirken bir hata oluştu.");
   }
 
   void _resetCard() {

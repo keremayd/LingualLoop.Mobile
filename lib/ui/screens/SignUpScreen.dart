@@ -83,12 +83,12 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
           return;
         }
         
-        AppNotifier.showError("Kayıt oluşturuldu, giriş başarısız. Tekrar giriş yapmayı deneyin.");
+        AppNotifier.showMessage("Kayıt oluşturuldu, giriş başarısız. Tekrar giriş yapmayı deneyin.");
 
         return;
       }
       
-      AppNotifier.showError("Kayıt olurken hata oluştu!");
+      AppNotifier.showMessage("Kayıt olurken hata oluştu!");
     }
   }
 

@@ -20,7 +20,7 @@ class TokenInterceptor extends Interceptor {
         err.type == DioErrorType.receiveTimeout ||
         err.type == DioErrorType.other) {
 
-      AppNotifier.showError("Timeout hatası! Daha sonra tekrar deneyin.");
+      AppNotifier.showMessage("Timeout hatası! Daha sonra tekrar deneyin.");
 
       return handler.next(err);
     }

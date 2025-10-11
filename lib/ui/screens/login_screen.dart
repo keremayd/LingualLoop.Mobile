@@ -30,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (response.errorCode == null) {
           Navigator.pushReplacementNamed(context, '/home');
         } else {
-          AppNotifier.showError("Giriş başarısız: ${response.errorCode}");
+          AppNotifier.showMessage("Giriş başarısız: ${response.errorCode}");
         }
         break;
 
@@ -39,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (response.errorCode == null) {
           Navigator.pushReplacementNamed(context, '/home');
         } else {
-          AppNotifier.showError("Giriş başarısız: ${response.errorCode}");
+          AppNotifier.showMessage("Giriş başarısız: ${response.errorCode}");
         }
         break;
 

@@ -78,7 +78,7 @@ class AuthService {
 
     userProvider.clearUser();
 
-    AppNotifier.showError("Başarıyla çıkış yapıldı. Tekrar görüşmek üzere...", color: Colors.green);
+    AppNotifier.showMessage("Başarıyla çıkış yapıldı. Tekrar görüşmek üzere...", color: Colors.green);
   }
   
   Future<ApiResponse<AuthenticateResponse>> signInWithGoogle(BuildContext context) async {
@@ -179,7 +179,7 @@ class AuthService {
       return false;
     }
 
-    AppNotifier.showError("Kayıt başarıyla oluşturuldu.", color: Colors.green);
+    AppNotifier.showMessage("Kayıt başarıyla oluşturuldu.", color: Colors.green);
 
     return true;
   }
