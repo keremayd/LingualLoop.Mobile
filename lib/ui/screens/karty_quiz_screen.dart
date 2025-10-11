@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:lingualloop/Utils/MessageHandler.dart';
+import 'package:lingualloop/Utils/AppNotifier.dart';
 import 'package:lingualloop/models/Karty.dart';
 import 'package:lingualloop/providers/KartyProvider.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';

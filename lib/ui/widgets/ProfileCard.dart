@@ -1,11 +1,13 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/ui/widgets/ProfilePhoto.dart';
 import 'package:provider/provider.dart';
 import '../../models/User.dart';
 import '../../providers/UserProvider.dart';
+import '../../services/AuthenticationService.dart';
 import 'CustomIconButton.dart'; // CustomIconButton widget'ının bulunduğu dosya
 
 class ProfileCard extends StatelessWidget {
@@ -18,6 +20,7 @@ class ProfileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     User? user = Provider.of<UserProvider>(context).user;
+    final authService = AuthService(Dio());
 
     return Card(
       color: color,
@@ -33,12 +36,14 @@ class ProfileCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     CustomIconButton(
-                      img: 'settings',
+                      img: 'logout',
                       backgroundColor: Color(0xFFF7F9FD),
                       iconColor: Color(0xFF5F5CF0),
                       buttonSize: 18,
                       padding: 9,
-                      ontap: () async {},
+                      ontap: () async {
+                        await authService.signOut(context);
+                      },
                     ),
                   ],
                 ),

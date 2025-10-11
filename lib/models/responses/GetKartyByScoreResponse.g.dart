@@ -11,6 +11,7 @@ GetKartyByScoreResponse _$GetKartyByScoreResponseFromJson(
     GetKartyByScoreResponse(
       (json['kartyId'] as num).toInt(),
       json['questionText'] as String,
+      json['correctText'] as String,
       json['kartyUrl'] as String,
       json['isCorrect'] as bool,
       (json['minScore'] as num).toInt(),
@@ -22,6 +23,7 @@ Map<String, dynamic> _$GetKartyByScoreResponseToJson(
     <String, dynamic>{
       'kartyId': instance.kartyId,
       'questionText': instance.questionText,
+      'correctText': instance.questionText,
       'kartyUrl': instance.kartyUrl,
       'isCorrect': instance.isCorrect,
       'minScore': instance.minScore,

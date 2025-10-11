@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:lingualloop/Utils/ErrorHandler.dart';
+import 'package:lingualloop/Utils/AppNotifier.dart';
 import 'package:lingualloop/services/FileService.dart';
 import 'package:provider/provider.dart';
 
@@ -49,14 +49,14 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
 
     final response = await _userService.updateProfilePhotoById(File(pickedFile.path));
     if (response.errorCode != null) {
-      ErrorHandler.showError("Fotoğraf yüklenemedi: ${response.errorCode}");
+      AppNotifier.showError("Fotoğraf yüklenemedi: ${response.errorCode}");
 
       return;
     }
 
     await _localFileService.updateCachedProfilePhoto(response.data!.signedUrl, _user!.userId, context,);
 
-    ErrorHandler.showError("Profil fotoğrafı başarıyla güncellendi. ${response.errorCode}", color: Colors.green);
+    AppNotifier.showError("Profil fotoğrafı başarıyla güncellendi. ${response.errorCode}", color: Colors.green);
   }
 
   @override

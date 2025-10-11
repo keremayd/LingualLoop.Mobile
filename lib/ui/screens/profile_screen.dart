@@ -25,14 +25,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   bool isLoading = true;
 
-
-  Future<void> _logout(BuildContext context) async {
-    userProvider.clearUser();
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginScreen()),);
-
-    print('The user is logout');
-  }
-
   @override
   void initState() {
     super.initState();

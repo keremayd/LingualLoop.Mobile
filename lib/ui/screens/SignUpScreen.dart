@@ -4,7 +4,7 @@ import 'package:lingualloop/models/Requests/SignUpRequest.dart';
 import 'package:lingualloop/models/responses/AuthenticateResponse.dart';
 import 'package:lingualloop/ui/widgets/Inputs/SignUpInputField.dart';
 import 'package:provider/provider.dart';
-import 'package:lingualloop/Utils/ErrorHandler.dart';
+import 'package:lingualloop/Utils/AppNotifier.dart';
 import '../../services/AuthenticationService.dart';
 import '../widgets/CustomAppBar.dart';
 import '../widgets/CustomIconButton.dart';
@@ -83,12 +83,12 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
           return;
         }
         
-        ErrorHandler.showError("Kayıt oluşturuldu, giriş başarısız. Tekrar giriş yapmayı deneyin.");
+        AppNotifier.showError("Kayıt oluşturuldu, giriş başarısız. Tekrar giriş yapmayı deneyin.");
 
         return;
       }
       
-      ErrorHandler.showError("Kayıt olurken hata oluştu!");
+      AppNotifier.showError("Kayıt olurken hata oluştu!");
     }
   }
 

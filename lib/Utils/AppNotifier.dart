@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main.dart'; // navigatorKey için
 
-class ErrorHandler {
+class AppNotifier {
   static void showError(String message, {Color? color}) {
     final context = navigatorKey.currentState?.overlay?.context;
     if (context != null) {

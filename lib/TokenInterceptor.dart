@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:lingualloop/Utils/ErrorHandler.dart';
+import 'package:lingualloop/Utils/AppNotifier.dart';
 import 'services/AuthenticationService.dart';
 import 'main.dart';
 
@@ -20,7 +20,7 @@ class TokenInterceptor extends Interceptor {
         err.type == DioErrorType.receiveTimeout ||
         err.type == DioErrorType.other) {
 
-      ErrorHandler.showError("Timeout hatası! Daha sonra tekrar deneyin.");
+      AppNotifier.showError("Timeout hatası! Daha sonra tekrar deneyin.");
 
       return handler.next(err);
     }

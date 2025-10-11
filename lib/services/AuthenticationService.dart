@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
-import 'package:lingualloop/Utils/ErrorHandler.dart';
+import 'package:lingualloop/Utils/AppNotifier.dart';
 import 'package:lingualloop/models/ApiResponse.dart';
 import 'package:lingualloop/models/Requests/SignUpRequest.dart';
 import 'package:lingualloop/models/responses/AuthenticateResponse.dart';
@@ -19,6 +19,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 
 import '../models/User.dart';
+import '../ui/screens/login_screen.dart';
 
 class AuthService {
   Dio _dio;
@@ -68,6 +69,18 @@ class AuthService {
     return apiResponse;
   }
 
+  Future<void> signOut(BuildContext context) async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginScreen()),);
+
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    userProvider.clearUser();
+
+    AppNotifier.showError("Başarıyla çıkış yapıldı. Tekrar görüşmek üzere...", color: Colors.green);
+  }
+  
   Future<ApiResponse<AuthenticateResponse>> signInWithGoogle(BuildContext context) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final fileService = LocalFileService();
@@ -166,7 +179,7 @@ class AuthService {
       return false;
     }
 
-    ErrorHandler.showError("Kayıt başarıyla oluşturuldu.", color: Colors.green);
+    AppNotifier.showError("Kayıt başarıyla oluşturuldu.", color: Colors.green);
 
     return true;
   }
