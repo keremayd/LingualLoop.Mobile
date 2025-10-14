@@ -76,9 +76,10 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
         _confettiKey.currentState?.play();
         isTrueAnswerBlurActive.value = true;
         await Future.delayed(Duration(seconds: 1));
+        
         isTrueAnswerBlurActive.value = false;
+        await Future.delayed(Duration(seconds: 1));
 
-        await Future.delayed(Duration(milliseconds: 20));
         timeBarResetNotifier.value+= 1; // ProgressBar'ı sıfırla
       }
 
@@ -95,10 +96,11 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
       await userService.scoreWithLivesById(context);
 
       isFalseAnswerBlurActive.value = true;
-      await Future.delayed(Duration(seconds: 1));
+      await Future.delayed(Duration(milliseconds: 2000));
+      
       isFalseAnswerBlurActive.value = false;
+      await Future.delayed(Duration(milliseconds: 600));
 
-      await Future.delayed(Duration(milliseconds: 20));
       timeBarResetNotifier.value+= 1; // ProgressBar'ı sıfırla
     }
   }
@@ -196,7 +198,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
     return Scaffold(
       backgroundColor: Color(0xFF5F5CEF),
       appBar: PreferredSize(
-          preferredSize: Size.fromHeight(93),
+          preferredSize: Size.fromHeight(53),
           child: Column(children: [
             Container(
                 margin: EdgeInsets.only(top: 50),
@@ -304,7 +306,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
 
                                       if ((index == 0 && duration.value != 0) && isFinishedValue == false && isPausedValue == false) {
                                         return SwipableCard(
-                                          card: card,
+                                          karty: card,
                                           position: _position,
                                           rotation: _rotation,
                                           isTrueAnswerBlurActive: isTrueAnswerBlurActive,
@@ -326,7 +328,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
                                         return Transform.translate(
                                           offset: Offset(0, index * 10.0),
                                           child: SwipableCard(
-                                            card: card,
+                                            karty: card,
                                             position: Offset.zero,
                                             rotation: 0,
                                             isTrueAnswerBlurActive: isTrueAnswerBlurActive,
@@ -341,7 +343,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
                                 ),
                                 Spacer(),
                                 Padding(
-                                  padding: EdgeInsets.only(bottom: 70),
+                                  padding: EdgeInsets.only(bottom: 60),
                                   child: Column(
                                     children: [
                                       Row(

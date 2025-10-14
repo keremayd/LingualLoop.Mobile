@@ -23,7 +23,7 @@ Map<String, dynamic> _$GetKartyByScoreResponseToJson(
     <String, dynamic>{
       'kartyId': instance.kartyId,
       'questionText': instance.questionText,
-      'correctText': instance.questionText,
+      'correctText': instance.correctText,
       'kartyUrl': instance.kartyUrl,
       'isCorrect': instance.isCorrect,
       'minScore': instance.minScore,

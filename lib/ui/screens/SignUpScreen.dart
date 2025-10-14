@@ -6,6 +6,7 @@ import 'package:lingualloop/ui/widgets/Inputs/SignUpInputField.dart';
 import 'package:provider/provider.dart';
 import 'package:lingualloop/Utils/AppNotifier.dart';
 import '../../services/AuthenticationService.dart';
+import '../widgets/Buttons/PressableButton.dart';
 import '../widgets/CustomAppBar.dart';
 import '../widgets/CustomIconButton.dart';
 
@@ -189,26 +190,9 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
                         ),
                       ),
                     ),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          backgroundColor: const Color(0xFF7875FC),
-                          minimumSize: const Size(double.infinity, 65),
-                        ),
-                        onPressed: () => _signUp(context),
-                        child: const Text(
-                          'KAYIT OL',
-                          style: TextStyle(
-                            fontSize: 21,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
+                    child: PressableButton(
+                      text: 'KAYIT OL',
+                      onPressed: () => _signUp(context),
                     ),
                   ),
 

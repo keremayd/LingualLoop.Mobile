@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:lingualloop/models/Karty.dart';
 
 class SwipableCard extends StatefulWidget {
-  final Karty card;
+  final Karty karty;
   final Offset position;
   final double rotation;
   final ValueNotifier<bool> isTrueAnswerBlurActive;
@@ -15,7 +15,7 @@ class SwipableCard extends StatefulWidget {
 
   SwipableCard({
     Key? key,
-    required this.card,
+    required this.karty,
     required this.position,
     required this.rotation,
     required this.onPanUpdate,
@@ -148,20 +148,65 @@ class _SwipableCardState extends State<SwipableCard> with TickerProviderStateMix
         children: [
           Align(
             alignment: Alignment.topCenter,
-            child: Text(
-              widget.card.questionText,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 35,
-                fontWeight: FontWeight.bold,
-              ),
+            child: ValueListenableBuilder<bool>(
+              valueListenable: widget.isFalseAnswerBlurActive,
+              builder: (context, isFalseActive, _) {
+                return Column(
+                  children: [
+                    
+                    // Eğer yanlış cevap verildiyse doğru görünür
+                    AnimatedOpacity(
+                      opacity: isFalseActive ? 1.0 : 0.0,
+                      duration: Duration(milliseconds: 400),
+                      curve: Curves.easeOut,
+                      child: AnimatedSlide(
+                        offset: isFalseActive ? Offset.zero : Offset(0, 0.7),
+                        duration: Duration(milliseconds: 400),
+                        curve: Curves.easeOut,
+                        child: Text(
+                          widget.karty.correctText ?? '',
+                          style: TextStyle(
+                            color: Colors.greenAccent,
+                            fontSize: 37,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black26,
+                                blurRadius: 4,
+                                offset: Offset(1, 1),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    
+                    // Soru metni
+                    Text(
+                      widget.karty.questionText,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 35,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                  ],
+                );
+              },
             ),
           ),
-          SizedBox(height: 10),
+          SizedBox(height: 15),
           Transform.translate(
             offset: widget.position + Offset(_shakeAnimation.value, 0),
             child: AnimatedBuilder(
-              animation: Listenable.merge([_scaleController, _rotationController, _shakeController, _colorController, _shrinkController]),
+              animation: Listenable.merge([
+                _scaleController,
+                _rotationController,
+                _shakeController,
+                _colorController,
+                _shrinkController,
+              ]),
               builder: (context, child) {
                 return Transform.scale(
                   scale: _scaleAnimation.value * _shrinkAnimation.value,
@@ -197,12 +242,11 @@ class _SwipableCardState extends State<SwipableCard> with TickerProviderStateMix
                   Align(
                     alignment: Alignment.center,
                     child: Image.file(
-                      File(widget.card.kartyUrl),
+                      File(widget.karty.kartyUrl),
                       fit: BoxFit.cover,
                       width: 140,
-                      key: ValueKey(DateTime.now().toString()), // Unique key forces reload
+                      key: ValueKey(DateTime.now().toString()),
                     ),
-
                   ),
                 ],
               ),

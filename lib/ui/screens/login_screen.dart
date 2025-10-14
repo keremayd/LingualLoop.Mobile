@@ -4,6 +4,7 @@ import '../../Enums/LoginMethod.dart';
 import '../../services/AuthenticationService.dart';
 import 'package:provider/provider.dart';
 
+import '../widgets/Buttons/PressableButton.dart';
 import '../widgets/CustomAppBar.dart';
 import '../widgets/CustomIconButton.dart';
 
@@ -16,6 +17,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isPressed = false;
 
   Future<void> _login(BuildContext context, LoginMethod method) async {
     final authService = Provider.of<AuthService>(context, listen: false);
@@ -160,39 +162,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
 
                 SizedBox(height: 23),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Color(0xFF7875FC),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Color(0xFF5F5CF0),
-                        width: 6,
-                      ),
-                    ),
-                  ),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        backgroundColor: Color(0xFF7875FC),
-                        minimumSize: Size(double.infinity, 65), // Yüksekliği input alanlarına eşitle
-                      ),
-                      onPressed: () => _login(context, LoginMethod.usernamePassword),
-                      child: Text(
-                          'GİRİŞ YAP',
-                          style: TextStyle(
-                              fontSize: 21,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white
-                          )
-                      ),
-                    ),
-                  ),
+                PressableButton(
+                  text: 'GİRİŞ YAP',
+                  onPressed: () => _login(context, LoginMethod.usernamePassword),
                 ),
+
 
                 SizedBox(height: 19),
                 Text(

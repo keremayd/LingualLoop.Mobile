@@ -4,7 +4,7 @@ import 'package:lingualloop/ui/widgets/CustomIconButton.dart';
 import 'package:lingualloop/ui/widgets/TimeBar.dart';
 import 'package:provider/provider.dart';
 
-import '../widgets/AnswerButton.dart';
+import '../widgets/Buttons/AnswerButton.dart';
 import '../widgets/CustomAppBar.dart';
 import 'package:lingualloop/providers/VideoProvider.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
