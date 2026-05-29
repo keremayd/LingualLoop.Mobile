@@ -56,7 +56,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       body: Padding(
         padding: EdgeInsets.only(
-          top: 50,  // 13
+          top: 65,  // 13
           left: 16, // 16
           right: 16, // 16
         ),

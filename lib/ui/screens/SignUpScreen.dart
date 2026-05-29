@@ -101,7 +101,7 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
         child: Column(
           children: [
             Container(
-              margin: EdgeInsets.only(top: 50),
+              margin: EdgeInsets.only(top: 40),
               child: CustomAppBar(
                 child: Stack(
                   alignment: Alignment.center,
@@ -112,7 +112,7 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
                         onTap: () => Navigator.pop(context),
                         child: Icon(
                           Icons.arrow_back_rounded,
-                          color: Color(0xFF7875FC),
+                          color: Color(0xFF949494),
                           size: 35,
                         ),
                       ),
@@ -122,7 +122,7 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF5F5CF0),
+                        color: Color(0xFF949494),
                       ),
                     ),
                   ],
@@ -177,7 +177,7 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
                     obscureText: true,
                     onChanged: (_) => setState(() => _errors['password'] = null),
                   ),
-                  SizedBox(height: 23),
+                  SizedBox(height: 30),
 
                   Container(
                     decoration: BoxDecoration(
@@ -191,12 +191,12 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
                       ),
                     ),
                     child: PressableButton(
-                      text: 'KAYIT OL',
+                      text: 'Kayıt ol',
                       onPressed: () => _signUp(context),
                     ),
                   ),
 
-                  SizedBox(height: 19),
+                  SizedBox(height: 23),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 35),
                     child: Row(
@@ -205,7 +205,7 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
                           child: Container(
                             height: 4,
                             decoration: BoxDecoration(
-                              color: Color(0xFF5F5CF0),
+                              color: Color(0xFF0A2042),
                               borderRadius: BorderRadius.circular(5),
                             ),
                           ),
@@ -217,7 +217,7 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF5F5CF0),
+                              color: Color(0xFF949494),
                             ),
                           ),
                         ),
@@ -225,7 +225,7 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
                           child: Container(
                             height: 4,
                             decoration: BoxDecoration(
-                              color: Color(0xFF5F5CF0),
+                              color: Color(0xFF0A2042),
                               borderRadius: BorderRadius.circular(5),
                             ),
                           ),

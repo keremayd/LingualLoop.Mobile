@@ -59,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           children: [
             Container(
-              margin: EdgeInsets.only(top: 50),
+              margin: EdgeInsets.only(top: 40),
               child: CustomAppBar(
                 child: Stack(
                   alignment: Alignment.center,
@@ -72,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                         child: Icon(
                           Icons.arrow_back_rounded,
-                          color: Color(0xFF7875FC),
+                          color: Color(0xFF949494),
                           size: 35,
                         ),
                       ),
@@ -82,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF5F5CF0),
+                        color: Color(0xFF949494),
                       ),
                     ),
                   ],
@@ -104,17 +104,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _usernameController,
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: Color(0xFF7875FC),
+                      fillColor: Color(0xFF1CB1F5),
                       enabledBorder: OutlineInputBorder(
                         borderSide: BorderSide(
-                          color: Color(0xFF5F5CF0),
+                          color: Color(0xFF1B84B5),
                           width: 4,
                         ),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderSide: BorderSide(
-                          color: Color(0xFF5F5CF0),
+                          color: Color(0xFF1B84B5),
                           width: 4,
                         ),
                         borderRadius: BorderRadius.circular(20),
@@ -136,17 +136,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _passwordController,
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: Color(0xFF7875FC),
+                      fillColor: Color(0xFF1CB1F5),
                       enabledBorder: OutlineInputBorder(
                         borderSide: BorderSide(
-                          color: Color(0xFF5F5CF0),
+                          color: Color(0xFF1B84B5),
                           width: 4,
                         ),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderSide: BorderSide(
-                          color: Color(0xFF5F5CF0),
+                          color: Color(0xFF1B84B5),
                           width: 4,
                         ),
                         borderRadius: BorderRadius.circular(20),
@@ -161,14 +161,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                SizedBox(height: 23),
+                SizedBox(height: 30),
                 PressableButton(
-                  text: 'GİRİŞ YAP',
+                  text: 'Giriş yap',
                   onPressed: () => _login(context, LoginMethod.usernamePassword),
                 ),
 
 
-                SizedBox(height: 19),
+                SizedBox(height: 23),
                 Text(
                     'PAROLAMI UNUTTUM',
                     style: TextStyle(
@@ -178,20 +178,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     )
                 ),
 
-                SizedBox(height: 19),
+                SizedBox(height: 23),
                 Padding(
                   padding: const EdgeInsets.only(left: 35, right: 35),
                   child: Container(
                     height: 4, // Kalınlık
                     width: double.infinity, // Genişlik (isteğe göre)
                     decoration: BoxDecoration(
-                      color: Color(0xFF5F5CF0), // Çizgi rengi
+                      color: Color(0xFF0A2042), // Çizgi rengi
                       borderRadius: BorderRadius.circular(5), // Kenarları uvarlat
                     ),
                   ),
                 ),
 
-                SizedBox(height: 23),
+                SizedBox(height: 30),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -216,7 +216,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
 
-          SizedBox(height: 30),
+          SizedBox(height: 120),
           Expanded(
             child: Container(
               width: double.infinity, // Genişliği tam yap

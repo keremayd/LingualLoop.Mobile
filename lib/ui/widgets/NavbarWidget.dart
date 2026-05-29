@@ -41,7 +41,7 @@ class _NavbarWidgetState extends State<NavbarWidget> {
       body: _pages[_selectedIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Color(0xFF041227),
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(23),
             topRight: Radius.circular(23),

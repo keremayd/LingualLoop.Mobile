@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lingualloop/providers/BadgeProvider.dart';
 import 'package:lingualloop/providers/KartyProvider.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
@@ -25,6 +26,13 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Alt sistem çubuğunu şeffaf yap ama içeriği alta taşırma
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+    systemNavigationBarColor: Color(0xFF041227),
+  ));
+
   runApp(
     MultiProvider(
       providers: [
@@ -94,6 +102,7 @@ void main() {
 }
 
 
+
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -111,13 +120,11 @@ class MyApp extends StatelessWidget {
         '/signup': (context) => SignUpScreen(),
       },
 
-
-
       theme: ThemeData(
-        scaffoldBackgroundColor: Color(0xFFF9FBFF),
+        scaffoldBackgroundColor: Color(0xFF041227),
         fontFamily: 'Roboto',
         appBarTheme: AppBarTheme(
-          backgroundColor: Color(0xFFF9FBFF), // AppBar arka plan rengi
+          backgroundColor: Color(0xFF041227), // AppBar arka plan rengi
         ),
       ),
 

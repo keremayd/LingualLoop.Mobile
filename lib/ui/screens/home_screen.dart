@@ -60,26 +60,28 @@ class _HomeScreenScreenState extends State<HomeScreen> {
 
         return Scaffold(
             appBar: PreferredSize(
-              preferredSize: Size.fromHeight(screenHeight * 0.1317), // 93
+              preferredSize: Size.fromHeight(130), // 93
               child: Column(
                 children: [
                   Container(
                     margin: EdgeInsets.only(
-                      top: screenHeight * 0.05665, // 40
+                      top: 65, // 40
                       left: screenHeight * 0.0226, // 16
                       right: screenHeight * 0.0226, // 16
                     ),
                     decoration: BoxDecoration(
-                      color: Color(0xFF5F5CF0), // Mor arkaplan
+                      color: Color(0xFF0B2143), // Mor arkaplan
                       borderRadius: BorderRadius.circular(14), // Köşeleri yuvarla
                     ),
                     child: Column(
                       children: [
-                        // Üst Beyaz Alan
-                        Container(
+                        // Üst Koyu Mavi Alan
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4, left: 4, right: 4, bottom: 4), 
+                          child: Container(
                           padding: EdgeInsets.symmetric(horizontal: screenHeight * 0.0226), // 16
                           decoration: BoxDecoration(
-                            color: Color(0xFFFFFFFF), // Beyaz arkaplan
+                            color: Color(0xFF041227),
                             borderRadius: BorderRadius.only(
                                 topLeft: Radius.circular(14),
                                 topRight: Radius.circular(14),
@@ -89,8 +91,8 @@ class _HomeScreenScreenState extends State<HomeScreen> {
                           ),
                           child: Padding(
                             padding: EdgeInsets.only(
-                                top: screenHeight * 0.0240, // 17
-                                bottom: screenHeight * 0.0240, // 17
+                              top: 10, // 17
+                              bottom: 10, // 17
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -109,7 +111,7 @@ class _HomeScreenScreenState extends State<HomeScreen> {
                                               style: TextStyle(
                                                 fontSize: 22,
                                                 fontWeight: FontWeight.bold,
-                                                color: Colors.black,
+                                                color: Colors.white,
                                               ),
                                             );
                                           },
@@ -118,7 +120,7 @@ class _HomeScreenScreenState extends State<HomeScreen> {
                                           'Almanca\'ya devam et!',
                                           style: TextStyle(
                                             fontSize: 15,
-                                            color: Color(0xFF8C8C8C),
+                                            color: Colors.white,
                                           ),
                                         ),
                                       ],
@@ -143,12 +145,13 @@ class _HomeScreenScreenState extends State<HomeScreen> {
                               ],
                             ),
                           ),
+                        )
                         ),
                         // Alt Mor Şerit
                         Container(
                           padding: EdgeInsets.symmetric(horizontal: screenHeight * 0.0226), // 16
                           decoration: BoxDecoration(
-                            color: Color(0xFF5F5CF0), // Mor arkaplan
+                            color: Color(0xFF0B2143), // Mor arkaplan
                             borderRadius: BorderRadius.only(
                               bottomLeft: Radius.circular(14),
                               bottomRight: Radius.circular(14),
@@ -233,7 +236,7 @@ class _HomeScreenScreenState extends State<HomeScreen> {
                               style: TextStyle(
                                 fontSize: 19,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF2C2C2C),
+                                color: Colors.white,
                               ),
                             ),
                             SizedBox(height: 0.0084), // 6
@@ -243,7 +246,7 @@ class _HomeScreenScreenState extends State<HomeScreen> {
                               child: MainLessonCard(
                                 title: "Solo Pratik!",
                                 description: "Kendi hızınızda videolarla öğrenin ve pratik yapın.",
-                                color: Color(0xFF7875FC),
+                                color: Color(0xFF1CB1F5),
                                 onTap: () async {
                                   await _updateLivesAndRouter(context, 'videoquiz');
                                 },
@@ -264,7 +267,7 @@ class _HomeScreenScreenState extends State<HomeScreen> {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF2C2C2C),
+                                color: Colors.white,
                               ),
                             ),
                             SizedBox(height: screenHeight * 0.0056), // 4
@@ -277,7 +280,8 @@ class _HomeScreenScreenState extends State<HomeScreen> {
                                     child: LessonCard(
                                       title: "Karty",
                                       description: "Kartları kaydır, yeni kelimeler öğren!",
-                                      color: Color(0xFF7875FC),
+                                      color: Color(0xFF93D334),
+                                      borderColor: Color(0xFF628C22),
                                       imageName: "karty",
                                       onTap: () async {
                                         await _updateLivesAndRouter(context, 'kartyquiz');
@@ -290,7 +294,8 @@ class _HomeScreenScreenState extends State<HomeScreen> {
                                     child: LessonCard(
                                       title: "Battle",
                                       description: "Rakiplerinle 10 soruda kapış!",
-                                      color: Color(0xFF7875FC),
+                                      color: Color(0xFFF52A2A),
+                                      borderColor: Color(0xFFAA1C1C),
                                       imageName: "catsbattle",
                                       onTap: () async {
                                         await _updateLivesAndRouter(context, 'videoquiz');
