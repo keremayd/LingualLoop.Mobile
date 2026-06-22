@@ -10,7 +10,7 @@ import '../models/responses/GetSavedVideosByIdResponse.dart';
 class VideoProvider with ChangeNotifier {
   GetQuestionByScoreResponse? question;
   final List<GetSavedVideosByIdResponse> _savedVideos = [];
-  List<GetSavedVideosByIdResponse> get savedVideos => List.unmodifiable(_savedVideos); // Dışarıdan değiştirilemez liste
+  List<GetSavedVideosByIdResponse> get savedVideos => List.unmodifiable(_savedVideos);
 
   String aButton = "";
   String bButton = "";
@@ -20,11 +20,14 @@ class VideoProvider with ChangeNotifier {
   int streak = 0;
   bool isLoading = true;
 
-  // TimeBar ile bağlantı için ValueNotifier'ları dışarı açıyoruz,
-  // böylece UI doğrudan bunlara bağlanabilir (eski ekrana maksimum uyumluluk).
+  // TimeBar ile bağlantı için ValueNotifier'lar
   final ValueNotifier<int> timeBarResetNotifier = ValueNotifier<int>(1);
   final ValueNotifier<int> duration = ValueNotifier<int>(4);
   final ValueNotifier<bool> isFinished = ValueNotifier<bool>(false);
+
+  // Hangi butona basıldığı ve son cevabın doğru olup olmadığı
+  String? lastPressedButton;
+  bool lastAnswerCorrect = false;
 
   VideoProvider() {
     // isFinished'ın değişimlerini dinle, true olunca buton renklerini güncelle
@@ -89,6 +92,11 @@ class VideoProvider with ChangeNotifier {
       // reset timebar
       duration.value = 4;
       isFinished.value = false;
+
+      // temizle önceki seçimleri
+      lastPressedButton = null;
+      lastAnswerCorrect = false;
+
       await Future.delayed(Duration(milliseconds: 20));
       timeBarResetNotifier.value += 1;
 
@@ -108,9 +116,8 @@ class VideoProvider with ChangeNotifier {
       return;
     }
 
-    // ilk iki cevabı alıyoruz (mevcut ekran mantığına göre)
-    aButton = question!.answers[0].answerText;
-    bButton = question!.answers[1].answerText;
+    aButton = question!.answers[0].answerText ?? "";
+    bButton = question!.answers[1].answerText ?? "";
     textColor = const Color(0xFF5F5CEF);
     buttonsColor = {
       aButton: Colors.transparent,
@@ -131,14 +138,18 @@ class VideoProvider with ChangeNotifier {
           .firstWhere((x) => x.isCorrect == true)
           .answerText!;
     } catch (ex) {
-      // fallback (hata durumunda çık)
       return;
     }
 
+    // Önce hangi butona basıldığını ve doğruluğunu kaydet
+    lastPressedButton = pressedButton;
+    lastAnswerCorrect = (correctAnswerText == pressedButton);
+
+    // Sonra isFinished'i true yap (UI bu durumda butonları devre dışı bırakıyor)
     isFinished.value = true;
 
-    if (correctAnswerText != pressedButton) {
-      // yanlış
+    if (!lastAnswerCorrect) {
+      // yanlış cevap
       var apiResponse = await userService.updateScoreById(-1);
       if (apiResponse.errorCode == null) {
         streak = 0;
@@ -150,21 +161,22 @@ class VideoProvider with ChangeNotifier {
 
         notifyListeners();
       }
-      return;
+    } else {
+      // doğru cevap
+      var apiResponse = await userService.updateScoreById(1);
+      if (apiResponse.errorCode == null) {
+        streak += 1;
+        duration.value = 0;
+        await userService.scoreWithLivesById(context);
+
+        await Future.delayed(Duration(milliseconds: 20));
+        timeBarResetNotifier.value += 1;
+
+      }
     }
+    notifyListeners();
 
-    // doğru
-    var apiResponse = await userService.updateScoreById(1);
-    if (apiResponse.errorCode == null) {
-      streak += 1;
-      duration.value = 0;
-      await userService.scoreWithLivesById(context);
-
-      await Future.delayed(Duration(milliseconds: 20));
-      timeBarResetNotifier.value += 1;
-
-      notifyListeners();
-    }
+    updateButtonBorder();
   }
 
   /// isFinished true olduğunda buton border'larını güncelle
@@ -180,15 +192,30 @@ class VideoProvider with ChangeNotifier {
       return;
     }
 
-    buttonsColor = {
-      aButton: (aButton == correctAnswerText) ? const Color(0xFF67D445) : const Color(0xFFFF6536),
-      bButton: (bButton == correctAnswerText) ? const Color(0xFF67D445) : const Color(0xFFFF6536),
-    };
+    if (lastAnswerCorrect) {
+      // Eğer son cevap doğruysa: sadece doğru cevabı yeşile boya,
+      buttonsColor = {
+        aButton: (aButton == correctAnswerText) ? Color(0xFF67D445) : Colors.black26.withOpacity(0.15),
+        bButton: (bButton == correctAnswerText) ? Color(0xFF67D445) : Colors.black26.withOpacity(0.15),
+      };
+    } else {
+      // Eğer son cevap yanlışsa: doğru cevabı yeşil, basılan yanlış butonu kırmızı yap.
+      buttonsColor = {
+        aButton: (aButton == correctAnswerText) ? Color(0xFF67D445) : Color(0xFFFF6536),
+        bButton: (bButton == correctAnswerText) ? Color(0xFF67D445) : Color(0xFFFF6536),
+      };
+    }
+
     textColor = Colors.white;
   }
 
   Future<void> nextVideo(BuildContext context) async {
     await getQuestion(context);
+
+    // temizle seçim bilgilerini
+    lastPressedButton = null;
+    lastAnswerCorrect = false;
+
     isFinished.value = false;
 
     // yeni videoya geçtiğinde süreyi ayarla

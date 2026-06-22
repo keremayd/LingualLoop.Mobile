@@ -21,7 +21,7 @@ class SignUpInputField extends StatelessWidget {
   InputDecoration _inputDecoration(String hint, bool hasError) {
     final OutlineInputBorder commonBorder = OutlineInputBorder(
       borderSide: BorderSide(
-        color: hasError ? const Color(0xFFD84848) : const Color(0xFF5F5CF0),
+        color: hasError ? const Color(0xFFD84848) : const Color(0xFF1B84B5),
         width: 4,
       ),
       borderRadius: BorderRadius.circular(20),
@@ -29,7 +29,7 @@ class SignUpInputField extends StatelessWidget {
 
     return InputDecoration(
       filled: true,
-      fillColor: const Color(0xFF7875FC),
+      fillColor: const Color(0xFF1CB1F5),
       enabledBorder: commonBorder,
       focusedBorder: commonBorder,
       errorBorder: commonBorder,

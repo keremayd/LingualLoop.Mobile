@@ -15,8 +15,8 @@ class PressableButton extends StatefulWidget {
     required this.onPressed,
     this.height = 65,
     this.borderRadius = 20,
-    this.backgroundColor = const Color(0xFF7875FC),
-    this.shadowColor = const Color(0xFF5F5CF0),
+    this.backgroundColor = const Color(0xFF93D334),
+    this.shadowColor = const Color(0xFF628C22),
     this.textStyle,
   });
 

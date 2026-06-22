@@ -129,15 +129,15 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
                             ),
                             child: provider.duration.value == 0 || value
                                 ? Align(
-                              alignment: Alignment.centerRight,
-                              child: CustomIconButton(
-                                img: 'next',
-                                backgroundColor: Colors.white,
-                                iconColor: const Color(0xFF5F5CEF),
-                                ontap: () => provider.nextVideo(context),
-                              ),
-                            )
-                                : null,
+                                  alignment: Alignment.centerRight,
+                                  child: CustomIconButton(
+                                    img: 'next',
+                                    backgroundColor: Colors.white,
+                                    iconColor: const Color(0xFF5F5CEF),
+                                    ontap: () => provider.nextVideo(context),
+                                  ),
+                                )
+                                  : null,
                           ),
                         );
                       },
