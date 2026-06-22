@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:lingualloop/providers/BadgeProvider.dart';
 import 'package:lingualloop/providers/KartyProvider.dart';
@@ -23,6 +25,13 @@ import 'package:provider/provider.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
+String get apiBaseUrl {
+  if (Platform.isAndroid) {
+    return 'http://10.0.2.2:5213/ll-api/';
+  }
+
+  return 'http://localhost:5214/ll-api/';
+}
 
 void main() {
   runApp(
@@ -32,7 +41,7 @@ void main() {
           create: (context) {
             final dio = Dio(
               BaseOptions(
-                baseUrl: 'http://10.0.2.2:5213/ll-api/',
+                baseUrl: apiBaseUrl,
               ),
             );
             final authService = AuthService(dio);
@@ -93,7 +102,6 @@ void main() {
   );
 }
 
-
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -106,13 +114,11 @@ class MyApp extends StatelessWidget {
         '/home': (context) => NavbarWidget(),
         '/videoquiz': (context) => VideoQuizScreen(),
         '/kartyquiz': (context) => KartyQuizScreen(),
+        '/kartyreview': (context) => KartyQuizScreen(reviewMode: true),
         '/profile': (context) => ProfileScreen(),
         '/welcome': (context) => WelcomeScreen(),
         '/signup': (context) => SignUpScreen(),
       },
-
-
-
       theme: ThemeData(
         scaffoldBackgroundColor: Color(0xFFF9FBFF),
         fontFamily: 'Roboto',
@@ -120,7 +126,6 @@ class MyApp extends StatelessWidget {
           backgroundColor: Color(0xFFF9FBFF), // AppBar arka plan rengi
         ),
       ),
-
     );
   }
 }

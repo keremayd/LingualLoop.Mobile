@@ -1,199 +1,208 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
+import 'package:lingualloop/services/AuthenticationService.dart';
 import 'package:lingualloop/ui/widgets/ProfilePhoto.dart';
 import 'package:provider/provider.dart';
-import '../../models/User.dart';
+
 import '../../providers/UserProvider.dart';
-import '../../services/AuthenticationService.dart';
-import 'CustomIconButton.dart'; // CustomIconButton widget'ının bulunduğu dosya
 
 class ProfileCard extends StatelessWidget {
+  const ProfileCard({super.key, required this.color});
+
   final Color color;
 
-  ProfileCard({
-    required this.color,
-  });
+  static const _backgroundColor = Color(0xFF041227);
 
   @override
   Widget build(BuildContext context) {
-    User? user = Provider.of<UserProvider>(context).user;
-    final authService = AuthService(Dio());
+    final user = Provider.of<UserProvider>(context).user;
+    final scale = MediaQuery.sizeOf(context).width / 750;
 
-    return Card(
-      color: color,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: LayoutBuilder( // Card'ın boyutlarını ölçmek için
-        builder: (context, constraints) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.center, // Öğeleri hizalayın
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(right: 20.0, top: 20.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    CustomIconButton(
-                      img: 'logout',
-                      backgroundColor: Color(0xFFF7F9FD),
-                      iconColor: Color(0xFF5F5CF0),
-                      buttonSize: 18,
-                      padding: 9,
-                      ontap: () async {
-                        await authService.signOut(context);
-                      },
-                    ),
-                  ],
+    return Container(
+      height: 660 * scale,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(40 * scale),
+      ),
+      child: Stack(
+        alignment: Alignment.topCenter,
+        children: [
+          Positioned(
+            top: 44 * scale,
+            right: 45 * scale,
+            child: GestureDetector(
+              onTap: () => AuthService(Dio()).signOut(context),
+              child: Container(
+                width: 76 * scale,
+                height: 75 * scale,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF041227),
+                  borderRadius: BorderRadius.circular(20 * scale),
                 ),
-
+                child: Icon(
+                  Icons.settings,
+                  color: Colors.white,
+                  size: 47 * scale,
+                ),
               ),
-              ProfilePhotoWidget(),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(height: 5),
-                  Text(
-                    textAlign: TextAlign.center,
-                    '@${user?.userNickname}',
-                    style: TextStyle(fontSize: 14, color: Colors.white),
+            ),
+          ),
+          Positioned(
+            top: 120 * scale,
+            child: ProfilePhotoWidget(
+              width: 157 * scale,
+              height: 162 * scale,
+              borderRadius: 28 * scale,
+              editable: false,
+            ),
+          ),
+          Positioned(
+            top: 311 * scale,
+            left: 20 * scale,
+            right: 20 * scale,
+            child: Column(
+              children: [
+                Text(
+                  '@${user?.userNickname ?? ''}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'Inter',
+                    fontSize: 25 * scale,
+                    fontWeight: FontWeight.w600,
+                    height: 1.1,
                   ),
-                  Text(
-                    textAlign: TextAlign.center,
-                    '${user?.displayName}',
-                    style: TextStyle(
-                        fontSize: 20,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 18 * scale),
+                Text(
+                  user?.displayName ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'Inter',
+                    fontSize: 38 * scale,
+                    fontWeight: FontWeight.w600,
+                    height: 1,
                   ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: 25, top: 15, bottom: 25, left: 25),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white, // Arka plan rengini beyaz yapıyoruz
-                    borderRadius: BorderRadius.circular(18), // Ovallık için köşe yuvarlama
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Color(0xFF5F5CF0),
-                        width: 4,
-                      ),
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 10, top: 10),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      crossAxisAlignment: CrossAxisAlignment.center, // Öğeleri dikeyde hizalamak için
-                      children: [
-                        // Kupa bölümü
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center, // Yatayda ortalama
-                          crossAxisAlignment: CrossAxisAlignment.center, // Dikeyde ortalama
-                          children: [
-                            Image.asset(
-                              'assets/icons/cup.png',
-                              height: 26,
-                            ),
-                            Text(
-                              'Kupa',
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  color: Color(0xFF7875FC),
-                                  fontWeight: FontWeight.bold),
-                            ),
-                            Consumer<ScoreWithLivesProvider>(
-                              builder: (context, scoreWithLivesProvider, child) {
-                                return Text(
-                                  '${scoreWithLivesProvider.scoreWithLives?.score ?? 0}',
-                                  style: TextStyle(
-                                      fontSize: 19,
-                                      color: Color(0xFF5F5CF0),
-                                      fontWeight: FontWeight.w800),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                        Container(
-                          height: 60, // Çizginin yüksekliği
-                          width: 1, // Çizginin kalınlığı
-                          color: Color(0xFF7875FC), // Çizginin mor rengi
-                        ),
-                        // Liderlik bölümü
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center, // Yatayda ortalama
-                          crossAxisAlignment: CrossAxisAlignment.center, // Dikeyde ortalama
-                          children: [
-                            Image.asset(
-                              'assets/icons/leader.png',
-                              height: 26,
-                            ),
-                            Text(
-                              'Sıralama',
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  color: Color(0xFF7875FC),
-                                  fontWeight: FontWeight.bold),
-                            ),
-                            Consumer<UserProvider>(
-                              builder: (context, userProvider, child) {
-                                return Text(
-                                  '#${userProvider.user?.userRank ?? 0}',
-                                  style: TextStyle(
-                                      fontSize: 19,
-                                      color: Color(0xFF5F5CF0),
-                                      fontWeight: FontWeight.w800),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                        Container(
-                          height: 60, // Çizginin yüksekliği
-                          width: 1, // Çizginin kalınlığı
-                          color: Color(0xFF7875FC), // Çizginin mor rengi
-                        ),
-                        // Bilet bölümü
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center, // Yatayda ortalama
-                          crossAxisAlignment: CrossAxisAlignment.center, // Dikeyde ortalama
-                          children: [
-                            Image.asset(
-                              'assets/icons/ticket.png',
-                              height: 19,
-                            ),
-                            Text(
-                              'Bilet',
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  color: Color(0xFF7875FC),
-                                  fontWeight: FontWeight.bold),
-                            ),
-                            Consumer<ScoreWithLivesProvider>(
-                              builder: (context, scoreWithLivesProvider, child) {
-                                return Text(
-                                  '${scoreWithLivesProvider.scoreWithLives?.lives ?? 0}',
-                                  style: TextStyle(
-                                      fontSize: 19,
-                                      color: Color(0xFF5F5CF0),
-                                      fontWeight: FontWeight.w800),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            left: 48 * scale,
+            right: 48 * scale,
+            bottom: 32 * scale,
+            height: 174 * scale,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Consumer<ScoreWithLivesProvider>(
+                    builder: (context, provider, child) => _StatCard(
+                      scale: scale,
+                      imagePath: 'assets/icons/score.png',
+                      imageHeight: 66,
+                      label: 'Toplam Puan',
+                      value: '${provider.scoreWithLives?.score ?? 0}',
                     ),
                   ),
                 ),
-              )
+                SizedBox(width: 7 * scale),
+                Expanded(
+                  child: Consumer<UserProvider>(
+                    builder: (context, provider, child) => _StatCard(
+                      scale: scale,
+                      imagePath: 'assets/icons/league.png',
+                      imageHeight: 64,
+                      label: 'Lig',
+                      value: '#${provider.user?.userRank ?? 0}',
+                    ),
+                  ),
+                ),
+                SizedBox(width: 7 * scale),
+                Expanded(
+                  child: Consumer<ScoreWithLivesProvider>(
+                    builder: (context, provider, child) => _StatCard(
+                      scale: scale,
+                      imagePath: 'assets/icons/ticket.png',
+                      imageHeight: 48,
+                      label: 'Bilet',
+                      value: '${provider.scoreWithLives?.lives ?? 0}',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-            ],
-          );
-        },
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.scale,
+    required this.imagePath,
+    required this.imageHeight,
+    required this.label,
+    required this.value,
+  });
+
+  final double scale;
+  final String imagePath;
+  final double imageHeight;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: ProfileCard._backgroundColor,
+        borderRadius: BorderRadius.circular(28 * scale),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            height: 66 * scale,
+            child: Center(
+              child: Image.asset(
+                imagePath,
+                height: imageHeight * scale,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+          SizedBox(height: 8 * scale),
+          Text(
+            label,
+            maxLines: 1,
+            style: TextStyle(
+              color: Colors.white,
+              fontFamily: 'Inter',
+              fontSize: 24 * scale,
+              fontWeight: FontWeight.w600,
+              height: 1,
+            ),
+          ),
+          SizedBox(height: 8 * scale),
+          Text(
+            value,
+            style: TextStyle(
+              color: Colors.white,
+              fontFamily: 'Inter',
+              fontSize: 38 * scale,
+              fontWeight: FontWeight.w600,
+              height: 0.9,
+            ),
+          ),
+        ],
       ),
     );
   }

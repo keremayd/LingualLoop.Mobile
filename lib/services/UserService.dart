@@ -18,14 +18,16 @@ class UserService {
 
   UserService(this._dio);
 
-  Future<ApiResponse<ScoreWithLivesResponse>> scoreWithLivesById(BuildContext context) async {
-    final scoreWithLivesProvider = Provider.of<ScoreWithLivesProvider>(context, listen: false);
+  Future<ApiResponse<ScoreWithLivesResponse>> scoreWithLivesById(
+      BuildContext context) async {
+    final scoreWithLivesProvider =
+        Provider.of<ScoreWithLivesProvider>(context, listen: false);
     final userId = await _storage.read(key: 'userId');
     final response = await _dio.get('users/$userId/score-with-lives');
 
     var apiResponse = ApiResponse<ScoreWithLivesResponse>.fromJson(
       response.data,
-          (data) => ScoreWithLivesResponse.fromJson(data as Map<String, dynamic>),
+      (data) => ScoreWithLivesResponse.fromJson(data as Map<String, dynamic>),
     );
 
     scoreWithLivesProvider.setScoreWithLives(apiResponse.data!);
@@ -33,16 +35,18 @@ class UserService {
     return apiResponse;
   }
 
-  Future<ApiResponse<UpdateScoreResponse>> updateScoreById(int point) async {
+  Future<ApiResponse<UpdateScoreResponse>> updateScoreById(int point,
+      {int? kartyId}) async {
     final userId = await _storage.read(key: 'userId');
     final response = await _dio.post('users/update-score', data: {
       'userId': userId,
       'point': point,
+      'kartyId': kartyId,
     });
 
     var apiResponse = ApiResponse<UpdateScoreResponse>.fromJson(
       response.data,
-          (data) => UpdateScoreResponse.fromJson(data as Map<String, dynamic>),
+      (data) => UpdateScoreResponse.fromJson(data as Map<String, dynamic>),
     );
 
     return apiResponse;
@@ -50,19 +54,19 @@ class UserService {
 
   Future<ApiResponse<UpdateLivesResponse>> updateLivesById() async {
     final userId = await _storage.read(key: 'userId');
-    final response = await _dio.post('users/update-lives', data: {
-      'userId': userId
-    });
+    final response =
+        await _dio.post('users/update-lives', data: {'userId': userId});
 
     var apiResponse = ApiResponse<UpdateLivesResponse>.fromJson(
       response.data,
-          (data) => UpdateLivesResponse.fromJson(data as Map<String, dynamic>),
+      (data) => UpdateLivesResponse.fromJson(data as Map<String, dynamic>),
     );
 
     return apiResponse;
   }
 
-  Future<ApiResponse<UploadUserFileResponse>> updateProfilePhotoById(File file) async {
+  Future<ApiResponse<UploadUserFileResponse>> updateProfilePhotoById(
+      File file) async {
     final userId = await _storage.read(key: 'userId');
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(
@@ -70,14 +74,14 @@ class UserService {
         filename: file.path.split('/').last,
       ),
     });
-    final response = await _dio.post('users/$userId/upload-profile-photo', data: formData);
+    final response =
+        await _dio.post('users/$userId/upload-profile-photo', data: formData);
 
     var apiResponse = ApiResponse<UploadUserFileResponse>.fromJson(
       response.data,
-          (data) => UploadUserFileResponse.fromJson(data as Map<String, dynamic>),
+      (data) => UploadUserFileResponse.fromJson(data as Map<String, dynamic>),
     );
 
     return apiResponse;
   }
-
 }

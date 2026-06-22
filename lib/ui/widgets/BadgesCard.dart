@@ -1,122 +1,147 @@
-import 'dart:ui';
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:lingualloop/models/Badge.dart' as mein;
+import 'package:lingualloop/models/Badge.dart' as model;
 import 'package:provider/provider.dart';
 
 import '../../providers/BadgeProvider.dart';
 import 'Popups/BadgePopup.dart';
 
-
 class BadgesCard extends StatelessWidget {
-  final Color color;
-  final VoidCallback onTap;
-  late List<mein.Badge> badges;
-
-  BadgesCard({
+  const BadgesCard({
+    super.key,
     required this.color,
     required this.onTap,
   });
 
+  final Color color;
+  final VoidCallback onTap;
+
+  static const _shadowColor = Color(0xFF07182F);
+  static const _secondaryTextColor = Color(0xFFB7B7B7);
+
   @override
   Widget build(BuildContext context) {
-    final badgeProvider = Provider.of<BadgeProvider>(context, listen: false);
-    badges = badgeProvider.badges;
+    final badges = Provider.of<BadgeProvider>(context, listen: false).badges;
+    final scale = MediaQuery.sizeOf(context).width / 750;
 
-    return LayoutBuilder(builder: (context, constraints) {
-      double screenHeight = constraints.maxHeight; // 218.697
-      double screenWidth = constraints.maxWidth; // 170.384
-
-      return GestureDetector(
-        onTap: onTap, // Tıklama işlemi burada işleniyor
-        child: Card(
-            color: color,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            child: Column(
-                // Öğeleri hizalayın
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Color(0xFF7875FC),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(20),
-                        topRight: Radius.circular(20),
-                        bottomLeft: Radius.circular(12),
-                        bottomRight: Radius.circular(12),
-                      ),
-                      border: Border(
-                        bottom: BorderSide(
-                          color: Color(0xFF5F5CF0),
-                          width: 4,
-                        ),
-                      ),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.only(right: 17, top: 7, left: 17, bottom: 7), // 10, 10, 12
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        // Elemanları sağa ve sola hizala
-                        children: [
-                          Text(
-                            "Başarılar",
-                            style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.w700, height: 0),
-                          ),
-                          SizedBox(
-                            child:
-                            Text(
-                              "Tümünü Gör",
-                              style: TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        physics: BouncingScrollPhysics(),
-                        itemCount: badges.length,
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        itemBuilder: (context, index) {
-                          return GestureDetector(
-                            onTap: () {
-                              showBadgePopup(context, index);
-                            },
-                            child: Padding(
-                              padding: EdgeInsets.only(right: 12),
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  Transform.translate(
-                                    offset: Offset(0, 4),
-                                    child: Image.asset(
-                                      'assets/badges/${badges[index].badgeUrl}.png',
-                                      height: 83,
-                                      color: Color(0xFF5F5CF0).withOpacity(0.8), //Colors.black.withOpacity(0.3) hangisi karar ver
-                                    ),
-                                  ),
-                                  Image.asset(
-                                    'assets/badges/${badges[index].badgeUrl}.png',
-                                    height: 80,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      )
-
-                    ),
-                  ),
-                ]
-            ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 282 * scale,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(38 * scale),
         ),
-      );
-    });
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: [
+            _SectionHeader(
+              scale: scale,
+              title: 'Başarılar',
+            ),
+            Expanded(
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: badges.length,
+                padding: EdgeInsets.symmetric(horizontal: 28 * scale),
+                itemBuilder: (context, index) => _BadgeItem(
+                  scale: scale,
+                  badge: badges[index],
+                  index: index,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.scale, required this.title});
+
+  final double scale;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 66 * scale,
+      padding: EdgeInsets.symmetric(horizontal: 27 * scale),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: BadgesCard._shadowColor,
+            width: 3 * scale,
+          ),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: Colors.white,
+              fontFamily: 'Inter',
+              fontSize: 36 * scale,
+              fontWeight: FontWeight.w600,
+              height: 1,
+            ),
+          ),
+          Text(
+            'Tümünü Gör',
+            style: TextStyle(
+              color: BadgesCard._secondaryTextColor,
+              fontFamily: 'Inter',
+              fontSize: 30 * scale,
+              fontWeight: FontWeight.w600,
+              height: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BadgeItem extends StatelessWidget {
+  const _BadgeItem({
+    required this.scale,
+    required this.badge,
+    required this.index,
+  });
+
+  final double scale;
+  final model.Badge badge;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => showBadgePopup(context, index),
+      child: SizedBox(
+        width: 204 * scale,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Transform.translate(
+              offset: Offset(0, 9 * scale),
+              child: Image.asset(
+                'assets/badges/${badge.badgeUrl}.png',
+                height: 177 * scale,
+                color: BadgesCard._shadowColor.withOpacity(0.75),
+              ),
+            ),
+            Image.asset(
+              'assets/badges/${badge.badgeUrl}.png',
+              height: 170 * scale,
+              fit: BoxFit.contain,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

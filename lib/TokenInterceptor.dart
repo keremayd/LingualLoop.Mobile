@@ -5,7 +5,6 @@ import 'package:lingualloop/Utils/AppNotifier.dart';
 import 'services/AuthenticationService.dart';
 import 'main.dart';
 
-
 class TokenInterceptor extends Interceptor {
   final AuthService authService;
   final _storage = const FlutterSecureStorage();
@@ -19,17 +18,16 @@ class TokenInterceptor extends Interceptor {
         err.type == DioErrorType.sendTimeout ||
         err.type == DioErrorType.receiveTimeout ||
         err.type == DioErrorType.other) {
-
       AppNotifier.showMessage("Timeout hatası! Daha sonra tekrar deneyin.");
 
       return handler.next(err);
     }
-    
-    
+
     if (err.response?.statusCode == 401) {
       var response = await authService.refreshToken();
-      if(!response){
-        navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
+      if (!response) {
+        navigatorKey.currentState
+            ?.pushNamedAndRemoveUntil('/signin', (route) => false);
       }
 
       // Hatalı isteği tekrar gönderiyoruz
@@ -39,9 +37,10 @@ class TokenInterceptor extends Interceptor {
         requestOptions.headers['Authorization'] = 'Bearer $accessToken';
 
         final updatedHeaders = Map<String, dynamic>.from(requestOptions.headers)
-        ..['Authorization'] = 'Bearer $accessToken';
+          ..['Authorization'] = 'Bearer $accessToken';
 
-        final result = await _dio.request(requestOptions.baseUrl+requestOptions.path,
+        final result = await _dio.request(
+          requestOptions.baseUrl + requestOptions.path,
           options: Options(
             method: requestOptions.method, // (POST, GET, etc.)
             headers: updatedHeaders,
@@ -55,7 +54,8 @@ class TokenInterceptor extends Interceptor {
         handler.resolve(result); // Hatalı isteği başarıyla sonuçlandırıyoruz
       } catch (e) {
         // Yeniden deneyemediğinde, token refresh başarısızsa login sayfasına yönlendir
-        navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
+        navigatorKey.currentState
+            ?.pushNamedAndRemoveUntil('/signin', (route) => false);
       }
       return;
     }

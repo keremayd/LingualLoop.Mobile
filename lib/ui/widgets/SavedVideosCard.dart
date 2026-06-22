@@ -1,134 +1,133 @@
-import 'dart:ui';
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'Popups/VideoPopup.dart';
 
-
 class SavedVideosCard extends StatelessWidget {
-  final Color color;
-  final List<String> videoTitle;
-  final VoidCallback onTap;
-
-  SavedVideosCard({
+  const SavedVideosCard({
+    super.key,
     required this.color,
     required this.videoTitle,
     required this.onTap,
   });
 
+  final Color color;
+  final List<String> videoTitle;
+  final VoidCallback onTap;
+
+  static const _shadowColor = Color(0xFF07182F);
+  static const _secondaryTextColor = Color(0xFFB7B7B7);
+
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      double screenHeight = constraints.maxHeight; // 218.697
-      double screenWidth = constraints.maxWidth; // 170.384
+    final scale = MediaQuery.sizeOf(context).width / 750;
 
-      return GestureDetector(
-        onTap: onTap, // Tıklama işlemi burada işleniyor
-        child: Card(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 281 * scale,
+        decoration: BoxDecoration(
           color: color,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          child: Column(
-            // Öğeleri hizalayın
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: Color(0xFF7875FC),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
-                      bottomLeft: Radius.circular(12),
-                      bottomRight: Radius.circular(12),
+          borderRadius: BorderRadius.circular(38 * scale),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: [
+            Container(
+              height: 66 * scale,
+              padding: EdgeInsets.symmetric(horizontal: 27 * scale),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: _shadowColor,
+                    width: 3 * scale,
+                  ),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Kaydedilenler',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontFamily: 'Inter',
+                      fontSize: 36 * scale,
+                      fontWeight: FontWeight.w600,
+                      height: 1,
                     ),
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Color(0xFF5F5CF0),
-                        width: 4,
+                  ),
+                  Text(
+                    'Tümünü Gör',
+                    style: TextStyle(
+                      color: _secondaryTextColor,
+                      fontFamily: 'Inter',
+                      fontSize: 30 * scale,
+                      fontWeight: FontWeight.w600,
+                      height: 1,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: videoTitle.length,
+                padding: EdgeInsets.symmetric(horizontal: 46 * scale),
+                itemBuilder: (context, index) => GestureDetector(
+                  onTap: () => showVideoPopup(context, index),
+                  child: SizedBox(
+                    width: 204 * scale,
+                    child: Center(
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Transform.translate(
+                            offset: Offset(0, 12 * scale),
+                            child: Container(
+                              width: 170 * scale,
+                              height: 170 * scale,
+                              decoration: BoxDecoration(
+                                color: _shadowColor,
+                                borderRadius: BorderRadius.circular(35 * scale),
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: 170 * scale,
+                            height: 170 * scale,
+                            alignment: Alignment.center,
+                            padding:
+                                EdgeInsets.symmetric(horizontal: 10 * scale),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF7F9FD),
+                              borderRadius: BorderRadius.circular(35 * scale),
+                            ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                videoTitle[index],
+                                maxLines: 1,
+                                style: TextStyle(
+                                  color: const Color(0xFF5F5CF0),
+                                  fontFamily: 'Inter',
+                                  fontSize: 40 * scale,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  child: Padding(
-                    padding: EdgeInsets.only(right: 17, top: 7, left: 17, bottom: 7), // 10, 10, 12
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      // Elemanları sağa ve sola hizala
-                      children: [
-                        Text(
-                          "Kaydedilenler",
-                          style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.w700, height: 0),
-                        ),
-                        SizedBox(
-                          child:
-                          Text(
-                            "Tümünü Gör",
-                            style: TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
-
-                Expanded(
-                  child: Align(
-                      alignment: Alignment.center,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        physics: BouncingScrollPhysics(),
-                        itemCount: videoTitle.length,
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        itemBuilder: (context, index) {
-                          return GestureDetector(
-                            onTap: () {
-                              showVideoPopup(context, index);
-                            },
-                            child: Padding(
-                              padding: EdgeInsets.only(right: 21),
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  Transform.translate(
-                                      offset: Offset(0, 4),
-                                      child: Container(
-                                        width: 74,
-                                        height: 74,
-                                        decoration: BoxDecoration(
-                                          color: Color(0xFF5F5CF0).withOpacity(0.8), //Colors.black.withOpacity(0.3) hangisi karar ver
-                                          borderRadius: BorderRadius.circular(18), // ← oval köşeler buradan geliyor
-                                        ),
-                                      )
-                                  ),
-
-                                  Container(
-                                    width: 70,
-                                    height: 70,
-                                    decoration: BoxDecoration(
-                                      color: Color(0xFFF9FBFF),
-                                      borderRadius: BorderRadius.circular(18), // ← oval köşeler buradan geliyor
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      videoTitle[index],
-                                      style: TextStyle(
-                                        color: Color(0xFF7875FC),
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 18,
-                                      ),
-                                    ),
-                                  )
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      )
-
-                  ),
-                ),
-              ]
-          ),
+              ),
+            ),
+          ],
         ),
-      );
-    });
+      ),
+    );
   }
 }

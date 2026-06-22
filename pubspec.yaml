@@ -57,6 +57,8 @@ flutter:
     - assets/icons/next.png
     - assets/icons/ticket-one.png
     - assets/icons/leader.png
+    - assets/icons/league.png
+    - assets/icons/boost-bolt.png
     - assets/icons/google-logo.png
     - assets/icons/apple-logo.png
     - assets/icons/logout.png
@@ -65,6 +67,7 @@ flutter:
     - assets/images/otta.png
     - assets/images/otta_login.png
     - assets/images/karty.png
+    - assets/images/review_history.png
     - assets/images/catsbattle.png
     - assets/gifs/diamond1.gif
 

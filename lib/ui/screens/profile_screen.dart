@@ -5,15 +5,11 @@ import 'package:lingualloop/providers/VideoProvider.dart';
 import 'package:lingualloop/ui/widgets/BadgesCard.dart';
 import 'package:lingualloop/ui/widgets/ProfileCard.dart';
 import 'package:lingualloop/ui/widgets/SavedVideosCard.dart';
-import '../../services/AuthenticationService.dart';
 import 'package:provider/provider.dart';
 
-import '../widgets/LessonCard.dart';
-import '../widgets/MainLessonCard.dart';
-import 'login_screen.dart';
-
-
 class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key});
+
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
 }
@@ -33,14 +29,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     videoProvider = Provider.of<VideoProvider>(context, listen: false);
 
     Future.microtask(() async {
-
       final isLoaded = await badgeProvider.loadBadges(context);
-      if (!isLoaded)
+      if (!isLoaded) {
         print("Rozetler yüklenirken bir hata oluştu.");
+      }
 
-      final resp = await videoProvider.getSavedVideos(context);
+      await videoProvider.getSavedVideos(context);
 
-
+      if (!mounted) return;
       setState(() {
         isLoading = false;
       });
@@ -50,81 +46,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return Center(child: CircularProgressIndicator());
+      return const ColoredBox(
+        color: Color(0xFF041227),
+        child: Center(child: CircularProgressIndicator()),
+      );
     }
 
+    final scale = MediaQuery.sizeOf(context).width / 750;
+
     return Scaffold(
-      body: Padding(
-        padding: EdgeInsets.only(
-          top: 50,  // 13
-          left: 16, // 16
-          right: 16, // 16
+      backgroundColor: const Color(0xFF041227),
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(
+          38 * scale,
+          24 * scale,
+          40 * scale,
+          52 * scale,
         ),
         child: Column(
-            children: [
-              SizedBox(
-                child: ProfileCard(
-                  color: Color(0xFF7875FC),
-                ),
+          children: [
+            const ProfileCard(color: Color(0xFF0C2244)),
+            SizedBox(height: 54 * scale),
+            Consumer<BadgeProvider>(
+              builder: (context, badgeProvider, child) => BadgesCard(
+                color: const Color(0xFF0C2244),
+                onTap: () async {},
               ),
-              SizedBox(height: 10),
-
-              SizedBox(
-                child: Column(
-                    children: [
-                      SizedBox(
-                        height: 150, // 218.7
-                        child: Row(
-                          children: [
-                            Expanded(
-                              flex: 1, // Eşit alan kaplaması için
-                              child: Consumer<BadgeProvider>(
-                                builder: (context, badgeProvider, child) {
-                                  return BadgesCard(
-                                    color: Color(0xFF7875FC),
-                                    onTap: () async {},
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ]
-                ),
+            ),
+            SizedBox(height: 58 * scale),
+            Consumer<VideoProvider>(
+              builder: (context, videoProvider, child) => SavedVideosCard(
+                color: const Color(0xFF0C2244),
+                videoTitle: videoProvider.savedVideos
+                    .map((v) => v.video.videoTitle.substring(0, 7))
+                    .toList(),
+                onTap: () async {},
               ),
-              SizedBox(height: 10),
-
-              SizedBox(
-                child: Column(
-                    children: [
-                      SizedBox(
-                        height: 150, // 218.7
-                        child: Row(
-                          children: [
-                            Expanded(
-                              flex: 1, // Eşit alan kaplaması için
-                              child: Consumer<VideoProvider>(
-                                builder: (context, videoProvider, child) {
-                                  return SavedVideosCard(
-                                    color: Color(0xFF7875FC),
-                                    videoTitle: videoProvider.savedVideos.map((v) => v.video.videoTitle.substring(0, 7)).toList(),
-                                    onTap: () async {},
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ]
-                ),
-              ),
-
-
-            ]
+            ),
+          ],
         ),
-      )
+      ),
     );
   }
 }
