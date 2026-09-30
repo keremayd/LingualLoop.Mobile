@@ -1,14 +1,26 @@
+import 'package:lingualloop/ui/app_typography.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:lingualloop/ui/widgets/karty_boost_palette.dart';
+import 'package:lingualloop/ui/widgets/karty_boost_bolt_mark.dart';
 
+/// Aktif boost sırasında üç puanın lig sayacına aktarıldığını gösterir.
+///
+/// Sağ-alt köşeden kopan küçük şimşek üst satırdaki lig puanına gider.
+/// Temasta yalnız üç iri kırık ve `+3` kalır; genel halka, nokta yağmuru,
+/// "Harika" metni veya ikinci bir kutlama sistemi üretilmez.
 class KartySuccessCelebration extends StatefulWidget {
   const KartySuccessCelebration({
     super.key,
     required this.scale,
+    this.sourceKey,
+    this.targetKey,
   });
 
   final double scale;
+  final GlobalKey? sourceKey;
+  final GlobalKey? targetKey;
 
   @override
   State<KartySuccessCelebration> createState() =>
@@ -18,16 +30,17 @@ class KartySuccessCelebration extends StatefulWidget {
 class KartySuccessCelebrationState extends State<KartySuccessCelebration>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  int _streak = 1;
   int _awardedPoints = 1;
   bool _isReviewMode = false;
+  Offset? _source;
+  Offset? _target;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1050),
+      duration: const Duration(milliseconds: 760),
     );
   }
 
@@ -36,19 +49,31 @@ class KartySuccessCelebrationState extends State<KartySuccessCelebration>
     required int awardedPoints,
     bool isReviewMode = false,
   }) {
-    setState(() {
-      _streak = streak;
-      _awardedPoints = awardedPoints;
-      _isReviewMode = isReviewMode;
-    });
+    _awardedPoints = awardedPoints;
+    _isReviewMode = isReviewMode;
+    if (isReviewMode || awardedPoints <= 1) return;
+
+    final ownBox = context.findRenderObject() as RenderBox?;
+    _source = _centerInLocal(widget.sourceKey, ownBox);
+    _target = _centerInLocal(widget.targetKey, ownBox);
     _controller.forward(from: 0).whenComplete(() {
       if (mounted) _controller.reset();
     });
   }
 
+  Offset? _centerInLocal(GlobalKey? key, RenderBox? ownBox) {
+    if (key == null || ownBox == null || !ownBox.hasSize) return null;
+    final targetBox = key.currentContext?.findRenderObject() as RenderBox?;
+    if (targetBox == null || !targetBox.hasSize) return null;
+    final globalCenter =
+        targetBox.localToGlobal(targetBox.size.center(Offset.zero));
+    return ownBox.globalToLocal(globalCenter);
+  }
+
   void stop() {
-    _controller.stop();
-    _controller.reset();
+    _controller
+      ..stop()
+      ..reset();
   }
 
   @override
@@ -60,274 +85,143 @@ class KartySuccessCelebrationState extends State<KartySuccessCelebration>
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          if (_controller.value == 0) return const SizedBox.shrink();
-          return RepaintBoundary(
-            child: CustomPaint(
-              painter: _KartySuccessPainter(
-                progress: _controller.value,
-                scale: widget.scale,
-                streak: _streak,
-                awardedPoints: _awardedPoints,
-                isReviewMode: _isReviewMode,
-              ),
-              size: Size.infinite,
-            ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final size = constraints.biggest;
+          if (!size.isFinite || size.isEmpty) return const SizedBox.shrink();
+
+          return AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              if (_controller.value == 0 ||
+                  _isReviewMode ||
+                  _awardedPoints <= 1) {
+                return const SizedBox.shrink();
+              }
+
+              final progress = _controller.value;
+              final source =
+                  _source ?? Offset(size.width * 0.73, size.height * 0.43);
+              final target =
+                  _target ?? Offset(size.width * 0.78, size.height * 0.12);
+              final control = Offset(
+                math.max(source.dx, target.dx) + 54 * widget.scale,
+                (source.dy + target.dy) * 0.50,
+              );
+              final travel =
+                  _interval(progress, 0, 0.68, Curves.easeInOutCubic);
+              final projectileFade =
+                  1 - _interval(progress, 0.66, 0.76, Curves.easeIn);
+              final arrival =
+                  _interval(progress, 0.61, 0.82, Curves.easeOutBack);
+              final arrivalFade =
+                  1 - _interval(progress, 0.84, 1, Curves.easeInCubic);
+
+              return RepaintBoundary(
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _BoostArrivalPainter(
+                          progress: progress,
+                          scale: widget.scale,
+                          target: target,
+                        ),
+                      ),
+                    ),
+                    for (var trail = 2; trail >= 0; trail--)
+                      _projectile(
+                        start: source,
+                        control: control,
+                        target: target,
+                        travel: (travel - trail * 0.075).clamp(0.0, 1.0),
+                        opacity: projectileFade *
+                            (trail == 0 ? 1 : 0.12 * (3 - trail)),
+                        height:
+                            (trail == 0 ? 54 : 43 - trail * 4) * widget.scale,
+                        bubblePhase: trail == 0 ? progress * 760 / 2400 : null,
+                      ),
+                    if (arrival > 0)
+                      Positioned(
+                        left: target.dx + 15 * widget.scale,
+                        top: target.dy - 43 * widget.scale,
+                        child: Opacity(
+                          opacity: arrivalFade,
+                          child: Transform.scale(
+                            scale: arrival,
+                            alignment: Alignment.bottomLeft,
+                            child: Text(
+                              '+$_awardedPoints',
+                              style: TextStyle(
+                                color: KartyBoostPalette.blue,
+                                fontFamily: AppTypography.family,
+                                fontSize: 28 * widget.scale,
+                                fontWeight: AppTypography.number,
+                                height: 1,
+                                shadows: [
+                                  Shadow(
+                                    color: const Color(0xFF041227)
+                                        .withValues(alpha: 0.82),
+                                    blurRadius: 2 * widget.scale,
+                                    offset: Offset(0, 2 * widget.scale),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
           );
         },
       ),
     );
   }
-}
 
-class _KartySuccessPainter extends CustomPainter {
-  const _KartySuccessPainter({
-    required this.progress,
-    required this.scale,
-    required this.streak,
-    required this.awardedPoints,
-    required this.isReviewMode,
-  });
-
-  final double progress;
-  final double scale;
-  final int streak;
-  final int awardedPoints;
-  final bool isReviewMode;
-
-  static const _yellow = Color(0xFFFFD52F);
-  static const _orange = Color(0xFFFF9300);
-  static const _lime = Color(0xFF93D334);
-  static const _navy = Color(0xFF0B2143);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (size.isEmpty) return;
-    if (!isReviewMode) {
-      _drawScoreTransfer(
-        canvas,
-        size,
-        Offset(size.width / 2 + 205 * scale, 535 * scale),
-      );
-    }
-    _drawSuccessBadge(canvas, size);
-  }
-
-  void _drawScoreTransfer(Canvas canvas, Size size, Offset start) {
-    final travel = _interval(progress, 0.18, 0.7, Curves.easeInOutCubic);
-    if (travel <= 0) return;
-
-    final target = Offset(size.width - 167 * scale, 187 * scale);
-    final control = Offset(size.width * 0.84, start.dy * 0.58);
-    final energyPosition = _quadraticBezier(start, control, target, travel);
-    final previousPosition = _quadraticBezier(
+  Widget _projectile({
+    required Offset start,
+    required Offset control,
+    required Offset target,
+    required double travel,
+    required double opacity,
+    required double height,
+    double? bubblePhase,
+  }) {
+    final position = _quadraticBezier(start, control, target, travel);
+    final ahead = _quadraticBezier(
       start,
       control,
       target,
-      math.max(0, travel - 0.065),
+      (travel + 0.015).clamp(0.0, 1.0),
     );
-    final travelOpacity =
-        1 - _interval(progress, 0.7, 0.82, Curves.easeInCubic);
+    final angle = math.atan2(ahead.dy - position.dy, ahead.dx - position.dx) +
+        math.pi / 2;
+    final width = height * 0.74;
 
-    final trailPath = Path()..moveTo(previousPosition.dx, previousPosition.dy);
-    trailPath.quadraticBezierTo(
-      (previousPosition.dx + energyPosition.dx) / 2 + 7 * scale,
-      (previousPosition.dy + energyPosition.dy) / 2,
-      energyPosition.dx,
-      energyPosition.dy,
-    );
-    canvas.drawPath(
-      trailPath,
-      Paint()
-        ..color = _yellow.withValues(alpha: 0.26 * travelOpacity)
-        ..strokeWidth = 15 * scale
-        ..strokeCap = StrokeCap.round
-        ..style = PaintingStyle.stroke
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 11 * scale),
-    );
-    canvas.drawPath(
-      trailPath,
-      Paint()
-        ..shader = LinearGradient(
-          colors: [_lime.withValues(alpha: 0), Colors.white, _yellow],
-        ).createShader(Rect.fromPoints(previousPosition, energyPosition))
-        ..strokeWidth = 4.5 * scale
-        ..strokeCap = StrokeCap.round
-        ..style = PaintingStyle.stroke,
-    );
-    _drawEnergyComet(
-      canvas,
-      energyPosition,
-      previousPosition,
-      travelOpacity,
-    );
-
-    final arrival = _interval(progress, 0.65, 0.84, Curves.easeOutBack);
-    if (arrival <= 0) return;
-    final arrivalFade = 1 - _interval(progress, 0.8, 0.94, Curves.easeInCubic);
-    canvas.drawCircle(
-      target,
-      (18 + arrival * 34) * scale,
-      Paint()
-        ..color = _yellow.withValues(alpha: 0.3 * arrivalFade)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 7 * scale,
-    );
-
-    final pointOpacity =
-        (arrival * (1 - _interval(progress, 0.76, 0.94, Curves.easeIn)))
-            .clamp(0.0, 1.0);
-    _drawText(
-      canvas,
-      '+$awardedPoints',
-      Offset(target.dx + 14 * scale, target.dy - 34 * scale),
-      fontSize: 31 * scale,
-      color: _yellow.withValues(alpha: pointOpacity),
-      strokeColor: _navy.withValues(alpha: pointOpacity),
-      strokeWidth: 5 * scale,
-    );
-  }
-
-  void _drawEnergyComet(
-    Canvas canvas,
-    Offset center,
-    Offset previous,
-    double opacity,
-  ) {
-    final direction = center - previous;
-    final length = math.max(direction.distance, 0.001);
-    final unit = direction / length;
-    for (var index = 4; index >= 1; index--) {
-      final beadCenter = center - unit * index.toDouble() * 10 * scale;
-      final beadRadius = (7 - index * 1.05) * scale;
-      canvas.drawCircle(
-        beadCenter,
-        beadRadius,
-        Paint()
-          ..color = Color.lerp(_lime, _yellow, index / 4)!
-              .withValues(alpha: opacity * (0.16 + index * 0.08))
-          ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4 * scale),
-      );
-    }
-    canvas.drawCircle(
-      center,
-      24 * scale,
-      Paint()
-        ..color = _yellow.withValues(alpha: 0.22 * opacity)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 13 * scale),
-    );
-    canvas.drawCircle(
-      center,
-      9 * scale,
-      Paint()
-        ..shader = RadialGradient(
-          colors: [
-            Colors.white.withValues(alpha: opacity),
-            _yellow.withValues(alpha: opacity),
-            _orange.withValues(alpha: opacity * 0.72),
-          ],
-        ).createShader(
-          Rect.fromCircle(center: center, radius: 9 * scale),
-        ),
-    );
-  }
-
-  void _drawSuccessBadge(Canvas canvas, Size size) {
-    final appear = _interval(progress, 0.08, 0.28, Curves.easeOutBack);
-    final disappear = 1 - _interval(progress, 0.66, 0.9, Curves.easeInCubic);
-    final opacity = (appear * disappear).clamp(0.0, 1.0);
-    if (opacity <= 0) return;
-
-    final isStreakMoment = streak >= 3;
-    final title = isReviewMode
-        ? 'ÖĞRENDİN!'
-        : isStreakMoment
-            ? 'SERİ $streak!'
-            : 'HARİKA!';
-    final center = Offset(size.width / 2, 270 * scale);
-    final badgeRect = Rect.fromCenter(
-      center: center,
-      width: (isStreakMoment ? 230 : 205) * scale * appear,
-      height: 58 * scale * appear,
-    );
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(badgeRect, Radius.circular(24 * scale)),
-      Paint()
-        ..color = _yellow.withValues(alpha: 0.18 * opacity)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 18 * scale),
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(badgeRect, Radius.circular(24 * scale)),
-      Paint()
-        ..shader = LinearGradient(
-          colors: [
-            _yellow.withValues(alpha: opacity),
-            _orange.withValues(alpha: opacity),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ).createShader(badgeRect),
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(badgeRect, Radius.circular(24 * scale)),
-      Paint()
-        ..color = Colors.white.withValues(alpha: 0.62 * opacity)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3 * scale,
-    );
-    _drawText(
-      canvas,
-      title,
-      center,
-      fontSize: 27 * scale * appear,
-      color: Colors.white.withValues(alpha: opacity),
-      strokeColor: _navy.withValues(alpha: 0.3 * opacity),
-      strokeWidth: 2.5 * scale,
-      centered: true,
-    );
-  }
-
-  void _drawText(
-    Canvas canvas,
-    String text,
-    Offset position, {
-    required double fontSize,
-    required Color color,
-    required Color strokeColor,
-    required double strokeWidth,
-    bool centered = false,
-  }) {
-    final style = TextStyle(
-      fontSize: fontSize,
-      fontWeight: FontWeight.w900,
-      fontFamily: 'Inter',
-      height: 1,
-    );
-    final strokePainter = TextPainter(
-      text: TextSpan(
-        text: text,
-        style: style.copyWith(
-          foreground: Paint()
-            ..color = strokeColor
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = strokeWidth,
+    return Positioned(
+      left: position.dx - width / 2,
+      top: position.dy - height / 2,
+      child: Opacity(
+        opacity: opacity.clamp(0.0, 1.0),
+        child: Transform.rotate(
+          angle: angle,
+          child: KartyBoostBoltMark(
+            height: height,
+            face: KartyBoostPalette.blue,
+            depth: KartyBoostPalette.blueDepth,
+            highlight: trailHighlight(opacity),
+            bubblePhase: bubblePhase,
+          ),
         ),
       ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    final fillPainter = TextPainter(
-      text: TextSpan(text: text, style: style.copyWith(color: color)),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    final offset = centered
-        ? position - Offset(fillPainter.width / 2, fillPainter.height / 2)
-        : position;
-    strokePainter.paint(canvas, offset);
-    fillPainter.paint(canvas, offset);
+    );
   }
+
+  double trailHighlight(double opacity) => opacity > 0.6 ? 0.08 : 0.02;
 
   Offset _quadraticBezier(Offset start, Offset control, Offset end, double t) {
     final inverse = 1 - t;
@@ -346,13 +240,88 @@ class _KartySuccessPainter extends CustomPainter {
     if (value >= end) return 1;
     return curve.transform((value - begin) / (end - begin));
   }
+}
+
+class _BoostArrivalPainter extends CustomPainter {
+  const _BoostArrivalPainter({
+    required this.progress,
+    required this.scale,
+    required this.target,
+  });
+
+  final double progress;
+  final double scale;
+  final Offset target;
 
   @override
-  bool shouldRepaint(covariant _KartySuccessPainter oldDelegate) {
+  void paint(Canvas canvas, Size size) {
+    final fly = _interval(progress, 0.63, 0.84, Curves.easeOutCubic);
+    final fade = 1 - _interval(progress, 0.82, 1, Curves.easeInCubic);
+    if (fly <= 0 || fade <= 0) return;
+
+    const data = [
+      (-2.55, 35.0, -0.25),
+      (-1.47, 42.0, 0.35),
+      (-0.37, 37.0, -0.42),
+    ];
+    for (var index = 0; index < data.length; index++) {
+      final item = data[index];
+      final direction = Offset(math.cos(item.$1), math.sin(item.$1));
+      final center = target +
+          direction * item.$2 * fly * scale +
+          Offset(0, 8 * fly * fly * scale);
+      final shard = Path()
+        ..moveTo(0, -11 * scale)
+        ..lineTo(7 * scale, -1 * scale)
+        ..lineTo(-1 * scale, 13 * scale)
+        ..lineTo(-6 * scale, 2 * scale)
+        ..close();
+      canvas.save();
+      canvas.translate(center.dx, center.dy);
+      canvas.rotate(item.$1 + item.$3 * fly);
+      canvas.drawPath(
+        shard,
+        Paint()
+          ..color =
+              (index == 1 ? KartyBoostPalette.white : KartyBoostPalette.blue)
+                  .withValues(alpha: 0.92 * fade),
+      );
+      canvas.restore();
+    }
+
+    final snap = _interval(progress, 0.62, 0.72, Curves.easeOutBack) * fade;
+    if (snap > 0) {
+      final burst = Path();
+      const points = 7;
+      for (var index = 0; index < points * 2; index++) {
+        final angle = math.pi * index / points;
+        final radius = (index.isEven ? 18 : 8) * snap * scale;
+        final point =
+            target + Offset(math.cos(angle), math.sin(angle)) * radius;
+        if (index == 0) {
+          burst.moveTo(point.dx, point.dy);
+        } else {
+          burst.lineTo(point.dx, point.dy);
+        }
+      }
+      burst.close();
+      canvas.drawPath(
+        burst,
+        Paint()..color = KartyBoostPalette.white.withValues(alpha: fade),
+      );
+    }
+  }
+
+  double _interval(double value, double begin, double end, Curve curve) {
+    if (value <= begin) return 0;
+    if (value >= end) return 1;
+    return curve.transform((value - begin) / (end - begin));
+  }
+
+  @override
+  bool shouldRepaint(covariant _BoostArrivalPainter oldDelegate) {
     return oldDelegate.progress != progress ||
         oldDelegate.scale != scale ||
-        oldDelegate.streak != streak ||
-        oldDelegate.awardedPoints != awardedPoints ||
-        oldDelegate.isReviewMode != isReviewMode;
+        oldDelegate.target != target;
   }
 }

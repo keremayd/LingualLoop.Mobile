@@ -1,6 +1,9 @@
+import 'package:lingualloop/ui/app_typography.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:lingualloop/Utils/AppNotifier.dart';
 import 'package:lingualloop/main.dart';
+import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:provider/provider.dart';
 
 import '../../Enums/LoginMethod.dart';
@@ -15,13 +18,20 @@ class _LoginScreenState extends State<LoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  static const _backgroundColor = Color(0xFF00142E);
-  static const _titleColor = Color(0xFFA7A7A7);
-  static const _inputFillColor = Color(0xFF29ABE2);
-  static const _inputBorderColor = Color(0xFF1179AE);
+  // Renkler §2.2'ye çekildi. Eskiden ekranın kendi paleti vardı ve
+  // uygulamanın hiçbir yerinde karşılığı yoktu: zemin `#00142E`, giriş
+  // kutuları `#29ABE2` parlak mavi dolgu + `#1179AE` kontur. Ekranın en
+  // büyük iki yüzeyi palet dışı olduğu için ekran uygulamaya ait
+  // hissettirmiyordu.
+  static const _backgroundColor = Color(0xFF041227);
+  static const _titleColor = Color(0xFFE9EEF5);
+  static const _mutedColor = Color(0xFF8FA0B5);
+  static const _accentColor = Color(0xFF1CB1F5);
+  static const _inputFillColor = Color(0xFF0C2244);
+  static const _inputBorderColor = Color(0xFF163258);
   static const _buttonColor = Color(0xFF98DE25);
   static const _buttonShadowColor = Color(0xFF6EA51C);
-  static const _dividerColor = Color(0xFF0A2A5D);
+  static const _dividerColor = Color(0xFF0B2143);
   static const _socialBackground = Color(0xFFE9E9E9);
 
   Future<void> _login(BuildContext context, LoginMethod method) async {
@@ -55,6 +65,14 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Widget _dividerLine(double scale) => Container(
+        height: 5 * scale,
+        decoration: BoxDecoration(
+          color: _dividerColor,
+          borderRadius: BorderRadius.circular(4 * scale),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -74,15 +92,6 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Stack(
                 children: [
                   Positioned(
-                    left: -12 * scale,
-                    top: 1168 * scale,
-                    child: Image.asset(
-                      'assets/images/otta_login.png',
-                      width: 500 * scale,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  Positioned(
                     left: 0,
                     right: 0,
                     top: 140 * scale,
@@ -93,46 +102,65 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   Positioned(
                     left: 32 * scale,
-                    top: 260 * scale,
+                    top: 300 * scale,
                     child: _LoginInput(
                       controller: _usernameController,
+                      hint: 'E-posta',
+                      keyboardType: TextInputType.emailAddress,
                       width: 686 * scale,
-                      height: 145 * scale,
-                      radius: 46 * scale,
-                      borderWidth: 7 * scale,
-                      fontSize: 28 * scale,
+                      height: 112 * scale,
+                      radius: 26 * scale,
+                      borderWidth: 3.5 * scale,
+                      // Form sıkılaştırıldı. Kutular 83pt yüksek, 26pt
+                      // yuvarlak ve 4pt konturluydu — tipik form ölçüsü
+                      // 48–56pt / r12–16 / 1–2pt. O geometri "çocuk
+                      // uygulaması" hissi veriyordu ve asıl sebep metin
+                      // değil kutuydu.
+                      //
+                      // Oyuncaklık depth-press butonda yaşamalı (§2.4).
+                      // Form da aynı ölçüde şişince aradaki hiyerarşi kayboluyor.
+                      fontSize: 30 * scale,
                       textInputAction: TextInputAction.next,
                     ),
                   ),
                   Positioned(
                     left: 32 * scale,
-                    top: 423 * scale,
+                    top: 430 * scale,
                     child: _LoginInput(
                       controller: _passwordController,
+                      hint: 'Şifre',
                       width: 686 * scale,
-                      height: 145 * scale,
-                      radius: 46 * scale,
-                      borderWidth: 7 * scale,
-                      fontSize: 28 * scale,
+                      height: 112 * scale,
+                      radius: 26 * scale,
+                      borderWidth: 3.5 * scale,
+                      // Form sıkılaştırıldı. Kutular 83pt yüksek, 26pt
+                      // yuvarlak ve 4pt konturluydu — tipik form ölçüsü
+                      // 48–56pt / r12–16 / 1–2pt. O geometri "çocuk
+                      // uygulaması" hissi veriyordu ve asıl sebep metin
+                      // değil kutuydu.
+                      //
+                      // Oyuncaklık depth-press butonda yaşamalı (§2.4).
+                      // Form da aynı ölçüde şişince aradaki hiyerarşi kayboluyor.
+                      fontSize: 30 * scale,
                       obscureText: true,
                       textInputAction: TextInputAction.done,
                     ),
                   ),
                   Positioned(
-                    left: 40 * scale,
+                    left: 48 * scale,
                     top: 620 * scale,
                     child: _PrimaryLoginButton(
-                      width: 670 * scale,
-                      height: 130 * scale,
-                      radius: 38 * scale,
-                      shadowOffset: 7 * scale,
-                      fontSize: 44 * scale,
+                      width: 654 * scale,
+                      height: 96 * scale,
+                      radius: 26 * scale,
+                      shadowOffset: 10 * scale,
+                      fontSize: 28 * scale,
                       onPressed: () =>
                           _login(context, LoginMethod.usernamePassword),
                     ),
                   ),
                   Positioned(
-                    top: 814 * scale,
+                    top: 770 * scale,
                     left: 0,
                     right: 0,
                     child: TextButton(
@@ -142,32 +170,52 @@ class _LoginScreenState extends State<LoginScreen> {
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
+                      // Büyük harf + gri, bölüm başlığı gibi okunuyordu.
+                      // Accent renk ve normal yazım onu tıklanabilir bir
+                      // bağlantıya çeviriyor.
                       child: Text(
-                        "PAROLAMI UNUTTUM",
+                        "Parolamı unuttum",
                         style: TextStyle(
-                          color: _titleColor,
+                          color: _accentColor,
                           fontSize: 29 * scale,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: 'Inter',
+                          fontWeight: AppTypography.action,
+                          fontFamily: AppTypography.family,
                         ),
                       ),
                     ),
                   ),
+                  // Çıplak bir çizgi neyi ayırdığını söylemiyordu; ortasına
+                  // "veya" gelince alttaki sosyal girişler bir **alternatif**
+                  // olarak okunuyor.
                   Positioned(
                     left: 121 * scale,
-                    top: 897 * scale,
-                    child: Container(
+                    top: 900 * scale,
+                    child: SizedBox(
                       width: 508 * scale,
-                      height: 7 * scale,
-                      decoration: BoxDecoration(
-                        color: _dividerColor,
-                        borderRadius: BorderRadius.circular(4 * scale),
+                      child: Row(
+                        children: [
+                          Expanded(child: _dividerLine(scale)),
+                          Padding(
+                            padding:
+                                EdgeInsets.symmetric(horizontal: 24 * scale),
+                            child: Text(
+                              'veya',
+                              style: TextStyle(
+                                color: _mutedColor,
+                                fontSize: 26 * scale,
+                                fontWeight: AppTypography.caption,
+                                fontFamily: AppTypography.family,
+                              ),
+                            ),
+                          ),
+                          Expanded(child: _dividerLine(scale)),
+                        ],
                       ),
                     ),
                   ),
                   Positioned(
                     left: 226 * scale,
-                    top: 976 * scale,
+                    top: 990 * scale,
                     child: _SocialButton(
                       assetPath: 'assets/icons/google-logo.png',
                       size: 120 * scale,
@@ -178,13 +226,48 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   Positioned(
                     left: 400 * scale,
-                    top: 976 * scale,
+                    top: 990 * scale,
                     child: _SocialButton(
                       assetPath: 'assets/icons/apple-logo.png',
                       size: 120 * scale,
                       radius: 34 * scale,
                       iconSize: 62 * scale,
                       onTap: () => _login(context, LoginMethod.apple),
+                    ),
+                  ),
+                  // Karşılıklı yönlendirme. Kayıt ekranında "Hesabın var mı?
+                  // Giriş yap" vardı ama dönüşü yoktu; hesabı olmayan
+                  // kullanıcı geri tuşuna basmak zorunda kalıyordu.
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: 1460 * scale,
+                    child: Text.rich(
+                      textAlign: TextAlign.center,
+                      TextSpan(
+                        text: 'Hesabın yok mu? ',
+                        style: TextStyle(
+                          fontSize: 30 * scale,
+                          fontWeight: AppTypography.body,
+                          color: _mutedColor,
+                          fontFamily: AppTypography.family,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: 'Kayıt ol',
+                            style: TextStyle(
+                              fontSize: 30 * scale,
+                              fontWeight: AppTypography.action,
+                              color: _accentColor,
+                              fontFamily: AppTypography.family,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                Navigator.pushNamed(context, '/signup');
+                              },
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -200,6 +283,7 @@ class _LoginScreenState extends State<LoginScreen> {
 class _LoginInput extends StatelessWidget {
   const _LoginInput({
     required this.controller,
+    required this.hint,
     required this.width,
     required this.height,
     required this.radius,
@@ -207,9 +291,16 @@ class _LoginInput extends StatelessWidget {
     required this.fontSize,
     this.obscureText = false,
     this.textInputAction,
+    this.keyboardType,
   });
 
   final TextEditingController controller;
+
+  /// **Kullanılabilirlik düzeltmesi.** İki kutu da boş ve özdeşti; hangisinin
+  /// e-posta hangisinin şifre olduğu ancak dokununca anlaşılıyordu.
+  final String hint;
+
+  final TextInputType? keyboardType;
   final double width;
   final double height;
   final double radius;
@@ -240,11 +331,21 @@ class _LoginInput extends StatelessWidget {
           style: TextStyle(
             color: Colors.white,
             fontSize: fontSize,
-            fontWeight: FontWeight.w600,
-            fontFamily: 'Inter',
+            fontWeight: AppTypography.body,
+            fontFamily: AppTypography.family,
           ),
-          decoration: const InputDecoration(
+          keyboardType: keyboardType,
+          cursorColor: _LoginScreenState._accentColor,
+          decoration: InputDecoration(
             border: InputBorder.none,
+            isCollapsed: true,
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: _LoginScreenState._mutedColor,
+              fontSize: fontSize,
+              fontWeight: AppTypography.body,
+              fontFamily: AppTypography.family,
+            ),
           ),
         ),
       ),
@@ -293,8 +394,8 @@ class _LoginHeader extends StatelessWidget {
             style: TextStyle(
               color: titleColor,
               fontSize: 45 * scale,
-              fontWeight: FontWeight.w700,
-              fontFamily: 'Inter',
+              fontWeight: AppTypography.heading,
+              fontFamily: AppTypography.displayFamily,
             ),
           ),
         ],
@@ -373,7 +474,7 @@ class _BackArrowPainter extends CustomPainter {
   }
 }
 
-class _PrimaryLoginButton extends StatefulWidget {
+class _PrimaryLoginButton extends StatelessWidget {
   const _PrimaryLoginButton({
     required this.width,
     required this.height,
@@ -391,71 +492,17 @@ class _PrimaryLoginButton extends StatefulWidget {
   final VoidCallback onPressed;
 
   @override
-  State<_PrimaryLoginButton> createState() => _PrimaryLoginButtonState();
-}
-
-class _PrimaryLoginButtonState extends State<_PrimaryLoginButton> {
-  bool _isPressed = false;
-
-  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapCancel: () => setState(() => _isPressed = false),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        widget.onPressed();
-      },
-      child: SizedBox(
-        width: widget.width,
-        height: widget.height + widget.shadowOffset,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned(
-              left: 0,
-              top: widget.shadowOffset,
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 60),
-                opacity: _isPressed ? 0 : 1,
-                child: Container(
-                  width: widget.width,
-                  height: widget.height,
-                  decoration: BoxDecoration(
-                    color: _LoginScreenState._buttonShadowColor,
-                    borderRadius: BorderRadius.circular(widget.radius),
-                  ),
-                ),
-              ),
-            ),
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 80),
-              curve: Curves.easeOut,
-              left: 0,
-              top: _isPressed ? widget.shadowOffset : 0,
-              width: widget.width,
-              height: widget.height,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: _LoginScreenState._buttonColor,
-                  borderRadius: BorderRadius.circular(widget.radius),
-                ),
-                child: Center(
-                  child: Text(
-                    "GİRİŞ YAP",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: widget.fontSize,
-                      fontWeight: FontWeight.w800,
-                      fontFamily: 'Inter',
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return DepthPressableButton(
+      text: 'Giriş yap',
+      width: width,
+      height: height,
+      radius: radius,
+      shadowOffset: shadowOffset,
+      backgroundColor: _LoginScreenState._buttonColor,
+      shadowColor: _LoginScreenState._buttonShadowColor,
+      fontSize: fontSize,
+      onPressed: onPressed,
     );
   }
 }
@@ -476,26 +523,16 @@ class _SocialButton extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(radius),
-      child: Ink(
+  Widget build(BuildContext context) => DepthPressableButton(
         width: size,
         height: size,
-        decoration: BoxDecoration(
-          color: _LoginScreenState._socialBackground,
-          borderRadius: BorderRadius.circular(radius),
-        ),
-        child: Center(
-          child: Image.asset(
-            assetPath,
-            width: iconSize,
-            height: iconSize,
-            fit: BoxFit.contain,
-          ),
-        ),
-      ),
-    );
-  }
+        radius: radius,
+        shadowOffset: 0,
+        backgroundColor: _LoginScreenState._socialBackground,
+        shadowColor: const Color(0xFF0B2143),
+        fontSize: 0,
+        onPressed: onTap,
+        child: Image.asset(assetPath,
+            width: iconSize, height: iconSize, fit: BoxFit.contain),
+      );
 }

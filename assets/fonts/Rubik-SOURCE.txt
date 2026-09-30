@@ -1,0 +1,11 @@
+Rubik — 30 Eylül 2026
+
+Resmî Google Fonts kaynağından alınan ve onaylanan önizlemede kullanılan dosyalar.
+Kaynak: https://raw.githubusercontent.com/google/fonts/main/ofl/rubik/Rubik%5Bwght%5D.ttf
+Kaynak SHA-256: 1b3a7437ba2af80e465e773ed60c5036d1ba6ace492d89046dbcf18fb31e4e88
+Lisans: SIL Open Font License 1.1; Rubik-LICENSE.txt
+
+Statik ağırlıklar: 600, 700, 800
+fontTools instantiateVariableFont(updateFontNames=True) ile gerçek wght örnekleri.
+Önizlemeden uygulamaya dosyalar değiştirilmeden kopyalandı.
+TR/DE kontrolü: ÇçĞğIıİiÖöŞşÜüÄäÖöÜüßẞ — tümü mevcut.

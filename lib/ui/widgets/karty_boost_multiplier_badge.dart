@@ -1,3 +1,4 @@
+import 'package:lingualloop/ui/app_typography.dart';
 import 'package:flutter/material.dart';
 
 class KartyBoostMultiplierBadge extends StatefulWidget {
@@ -59,8 +60,8 @@ class _KartyBoostMultiplierBadgeState extends State<KartyBoostMultiplierBadge>
             style: TextStyle(
               color: const Color(0xFF07182F),
               fontSize: 12 * widget.scale,
-              fontWeight: FontWeight.w900,
-              fontFamily: 'Inter',
+              fontWeight: AppTypography.number,
+              fontFamily: AppTypography.family,
               height: 1,
             ),
           ),

@@ -1,11 +1,8 @@
+import 'package:lingualloop/ui/app_typography.dart';
 import 'package:flutter/material.dart';
+import 'depth_pressable_button.dart';
 
-class AnswerButton extends StatefulWidget {
-  final String text;
-  final Color textColor;
-  final Color buttonDisabledColor;
-  final VoidCallback? onPressed;
-
+class AnswerButton extends StatelessWidget {
   const AnswerButton({
     super.key,
     required this.text,
@@ -14,54 +11,32 @@ class AnswerButton extends StatefulWidget {
     required this.onPressed,
   });
 
-  @override
-  State<AnswerButton> createState() => _AnswerButtonState();
-}
-
-class _AnswerButtonState extends State<AnswerButton> {
-  bool _isPressed = false;
+  final String text;
+  final Color textColor;
+  final Color buttonDisabledColor;
+  final VoidCallback? onPressed;
 
   @override
-  Widget build(BuildContext context) {
-    final bool isDisabled = widget.onPressed == null;
-    // Eğer buton devre dışıysa, görsel olarak "pressed" etkisini engelle
-    final bool effectivePressed = _isPressed && !isDisabled;
-
-    return Expanded(
-      child: GestureDetector(
-        // Handler'ları yalnızca aktif ise ata (null verince GestureDetector tetiklemiyor)
-        onTapDown: isDisabled ? null : (_) => setState(() => _isPressed = true),
-        onTapUp: isDisabled
-            ? null
-            : (_) {
-          setState(() => _isPressed = false);
-          widget.onPressed?.call();
-        },
-        onTapCancel: isDisabled ? null : () => setState(() => _isPressed = false),
-
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 40),
-          transform: Matrix4.translationValues(0, effectivePressed ? 4 : 0, 0),
-          height: MediaQuery.of(context).size.height * 0.085,
-          decoration: BoxDecoration(
-            color: isDisabled ? widget.buttonDisabledColor : const Color(0xFFF9FBFF),
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: isDisabled
-                ? [] : effectivePressed
-                ? [const BoxShadow(color: Color(0xFF5F5CF0), offset: Offset(0, 2))]
-                : [const BoxShadow(color: Color(0xFF5F5CF0), offset: Offset(0, 6))],
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            widget.text,
-            style: TextStyle(
-              color: widget.textColor,
-              fontSize: 20,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Expanded(
+        child: LayoutBuilder(builder: (context, constraints) {
+          return DepthPressableButton(
+            width: constraints.maxWidth,
+            height: MediaQuery.sizeOf(context).height * .085,
+            radius: 14,
+            shadowOffset: 6,
+            backgroundColor: onPressed == null
+                ? buttonDisabledColor
+                : const Color(0xFFF9FBFF),
+            shadowColor: const Color(0xFF5F5CF0),
+            fontSize: 20,
+            enabled: onPressed != null,
+            onPressed: () => onPressed?.call(),
+            child: Text(text,
+                style: TextStyle(
+                    color: textColor,
+                    fontSize: 20,
+                    fontWeight: AppTypography.action)),
+          );
+        }),
+      );
 }

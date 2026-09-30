@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:lingualloop/models/responses/GetKartyByScoreResponse.dart';
+import 'package:lingualloop/models/responses/ResolveWrongKartyReviewResponse.dart';
 
 import '../models/ApiResponse.dart';
 
@@ -73,11 +74,34 @@ class KartyService {
     );
   }
 
-  Future<void> resolveWrongKartyReview(int kartyId, bool isMastered) async {
+  /// Tanışma kartındaki "Anladım" onayı. Bundan sonra o kelime yazım sorusu
+  /// olarak gelmeye başlar.
+  Future<void> recordKartyIntroduction(int kartyId) async {
     final token = await _storage.read(key: 'accessToken');
     final userId = await _storage.read(key: 'userId');
 
     await _dio.post(
+      'karty/introduced',
+      data: {
+        'userId': userId,
+        'kartyId': kartyId,
+      },
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      ),
+    );
+  }
+
+  Future<ResolveWrongKartyReviewResponse?> resolveWrongKartyReview(
+    int kartyId,
+    bool isMastered,
+  ) async {
+    final token = await _storage.read(key: 'accessToken');
+    final userId = await _storage.read(key: 'userId');
+
+    final response = await _dio.post(
       'karty/wrong/review',
       data: {
         'userId': userId,
@@ -90,5 +114,14 @@ class KartyService {
         },
       ),
     );
+
+    final apiResponse = ApiResponse<ResolveWrongKartyReviewResponse>.fromJson(
+      response.data,
+      (data) => ResolveWrongKartyReviewResponse.fromJson(
+        data as Map<String, dynamic>,
+      ),
+    );
+
+    return apiResponse.data;
   }
 }

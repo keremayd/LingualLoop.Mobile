@@ -1,6 +1,8 @@
+import 'package:lingualloop/ui/app_typography.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:lingualloop/models/Requests/SignUpRequest.dart';
+import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:provider/provider.dart';
 import 'package:lingualloop/Utils/AppNotifier.dart';
 import '../../services/AuthenticationService.dart';
@@ -26,13 +28,17 @@ class _SignUpScreenState extends State<SignUpScreen>
     'password': null,
   };
 
-  static const _backgroundColor = Color(0xFF00142E);
-  static const _titleColor = Color(0xFFA7A7A7);
-  static const _inputFillColor = Color(0xFF29ABE2);
-  static const _inputBorderColor = Color(0xFF1179AE);
+  // Renkler §2.2'ye çekildi — giriş ekranıyla aynı revizyon. Ekranın kendi
+  // paleti vardı ve uygulamanın hiçbir yerinde karşılığı yoktu.
+  static const _backgroundColor = Color(0xFF041227);
+  static const _titleColor = Color(0xFFE9EEF5);
+  static const _mutedColor = Color(0xFF8FA0B5);
+  static const _accentColor = Color(0xFF1CB1F5);
+  static const _inputFillColor = Color(0xFF0C2244);
+  static const _inputBorderColor = Color(0xFF163258);
   static const _buttonColor = Color(0xFF98DE25);
   static const _buttonShadowColor = Color(0xFF6EA51C);
-  static const _dividerColor = Color(0xFF0A2A5D);
+  static const _dividerColor = Color(0xFF0B2143);
   static const _socialBackground = Color(0xFFE9E9E9);
   static const _warningColor = Color(0xFFFF4D5E);
   static const _warningBackgroundColor = Color(0xFF102948);
@@ -117,6 +123,14 @@ class _SignUpScreenState extends State<SignUpScreen>
     }
   }
 
+  Widget _dividerLine(double scale) => Container(
+        height: 5 * scale,
+        decoration: BoxDecoration(
+          color: _dividerColor,
+          borderRadius: BorderRadius.circular(4 * scale),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -151,21 +165,21 @@ class _SignUpScreenState extends State<SignUpScreen>
                     ),
                     Positioned(
                       left: 32 * scale,
-                      top: 260 * scale,
+                      top: 300 * scale,
                       child: _SignUpInput(
                         controller: _firstNameController,
                         hint: "İsim",
                         width: 335 * scale,
-                        height: 145 * scale,
-                        radius: 42 * scale,
+                        height: 112 * scale,
+                        radius: 26 * scale,
                         borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(46 * scale),
-                          bottomLeft: Radius.circular(46 * scale),
-                          topRight: Radius.circular(10 * scale),
-                          bottomRight: Radius.circular(10 * scale),
+                          topLeft: Radius.circular(26 * scale),
+                          bottomLeft: Radius.circular(26 * scale),
+                          topRight: Radius.circular(8 * scale),
+                          bottomRight: Radius.circular(8 * scale),
                         ),
-                        borderWidth: 7 * scale,
-                        fontSize: 35 * scale,
+                        borderWidth: 3.5 * scale,
+                        fontSize: 30 * scale,
                         hasError: _errors['firstName'] != null,
                         keyboardType: TextInputType.name,
                         onChanged: (_) =>
@@ -174,21 +188,21 @@ class _SignUpScreenState extends State<SignUpScreen>
                     ),
                     Positioned(
                       left: 382 * scale,
-                      top: 260 * scale,
+                      top: 300 * scale,
                       child: _SignUpInput(
                         controller: _lastNameController,
                         hint: "Soyisim",
                         width: 336 * scale,
-                        height: 145 * scale,
-                        radius: 42 * scale,
+                        height: 112 * scale,
+                        radius: 26 * scale,
                         borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(10 * scale),
-                          bottomLeft: Radius.circular(10 * scale),
-                          topRight: Radius.circular(46 * scale),
-                          bottomRight: Radius.circular(46 * scale),
+                          topLeft: Radius.circular(8 * scale),
+                          bottomLeft: Radius.circular(8 * scale),
+                          topRight: Radius.circular(26 * scale),
+                          bottomRight: Radius.circular(26 * scale),
                         ),
-                        borderWidth: 7 * scale,
-                        fontSize: 35 * scale,
+                        borderWidth: 3.5 * scale,
+                        fontSize: 30 * scale,
                         hasError: _errors['lastName'] != null,
                         keyboardType: TextInputType.name,
                         onChanged: (_) =>
@@ -197,15 +211,15 @@ class _SignUpScreenState extends State<SignUpScreen>
                     ),
                     Positioned(
                       left: 32 * scale,
-                      top: 421 * scale,
+                      top: 430 * scale,
                       child: _SignUpInput(
                         controller: _emailController,
-                        hint: "Email",
+                        hint: "E-posta",
                         width: 686 * scale,
-                        height: 145 * scale,
-                        radius: 46 * scale,
-                        borderWidth: 7 * scale,
-                        fontSize: 35 * scale,
+                        height: 112 * scale,
+                        radius: 26 * scale,
+                        borderWidth: 3.5 * scale,
+                        fontSize: 30 * scale,
                         hasError: _errors['email'] != null,
                         keyboardType: TextInputType.emailAddress,
                         onChanged: (_) =>
@@ -214,15 +228,15 @@ class _SignUpScreenState extends State<SignUpScreen>
                     ),
                     Positioned(
                       left: 32 * scale,
-                      top: 585 * scale,
+                      top: 560 * scale,
                       child: _SignUpInput(
                         controller: _passwordController,
                         hint: "Şifre",
                         width: 686 * scale,
-                        height: 145 * scale,
-                        radius: 46 * scale,
-                        borderWidth: 7 * scale,
-                        fontSize: 35 * scale,
+                        height: 112 * scale,
+                        radius: 26 * scale,
+                        borderWidth: 3.5 * scale,
+                        fontSize: 30 * scale,
                         hasError: _errors['password'] != null,
                         obscureText: true,
                         onChanged: (_) =>
@@ -232,7 +246,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                     if (errorMessage != null)
                       Positioned(
                         left: 40 * scale,
-                        top: 746 * scale,
+                        top: 686 * scale,
                         child: _FormWarning(
                           message: errorMessage,
                           width: 670 * scale,
@@ -242,32 +256,49 @@ class _SignUpScreenState extends State<SignUpScreen>
                         ),
                       ),
                     Positioned(
-                      left: 40 * scale,
-                      top: 766 * scale + errorOffset,
+                      left: 48 * scale,
+                      top: 706 * scale + errorOffset,
                       child: _PrimarySignUpButton(
-                        width: 670 * scale,
-                        height: 130 * scale,
-                        radius: 38 * scale,
-                        shadowOffset: 7 * scale,
-                        fontSize: 45 * scale,
+                        width: 654 * scale,
+                        height: 96 * scale,
+                        radius: 26 * scale,
+                        shadowOffset: 10 * scale,
+                        fontSize: 28 * scale,
                         onPressed: () => _signUp(context),
                       ),
                     ),
+                    // Çıplak çizgi neyi ayırdığını söylemiyordu; "veya"
+                    // gelince alttaki sosyal girişler alternatif olarak
+                    // okunuyor.
                     Positioned(
                       left: 106 * scale,
-                      top: 996 * scale + errorOffset,
-                      child: Container(
+                      top: 940 * scale + errorOffset,
+                      child: SizedBox(
                         width: 508 * scale,
-                        height: 7 * scale,
-                        decoration: BoxDecoration(
-                          color: _dividerColor,
-                          borderRadius: BorderRadius.circular(4 * scale),
+                        child: Row(
+                          children: [
+                            Expanded(child: _dividerLine(scale)),
+                            Padding(
+                              padding:
+                                  EdgeInsets.symmetric(horizontal: 24 * scale),
+                              child: Text(
+                                'veya',
+                                style: TextStyle(
+                                  color: _mutedColor,
+                                  fontSize: 26 * scale,
+                                  fontWeight: AppTypography.caption,
+                                  fontFamily: AppTypography.family,
+                                ),
+                              ),
+                            ),
+                            Expanded(child: _dividerLine(scale)),
+                          ],
                         ),
                       ),
                     ),
                     Positioned(
                       left: 211 * scale,
-                      top: 1072 * scale + errorOffset,
+                      top: 1030 * scale + errorOffset,
                       child: _SocialButton(
                         assetPath: 'assets/icons/google-logo.png',
                         size: 120 * scale,
@@ -278,7 +309,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                     ),
                     Positioned(
                       left: 384 * scale,
-                      top: 1072 * scale + errorOffset,
+                      top: 1030 * scale + errorOffset,
                       child: _SocialButton(
                         assetPath: 'assets/icons/apple-logo.png',
                         size: 120 * scale,
@@ -290,28 +321,28 @@ class _SignUpScreenState extends State<SignUpScreen>
                     Positioned(
                       left: 0,
                       right: 0,
-                      top: 1475 * scale,
+                      top: 1460 * scale,
                       child: Text.rich(
                         textAlign: TextAlign.center,
                         TextSpan(
-                          text: 'Hesabınız var mı? ',
+                          text: 'Hesabın var mı? ',
                           style: TextStyle(
                             fontSize: 30 * scale,
-                            fontWeight: FontWeight.w700,
-                            color: _titleColor,
-                            fontFamily: 'Inter',
+                            fontWeight: AppTypography.body,
+                            color: _mutedColor,
+                            fontFamily: AppTypography.family,
                           ),
                           children: [
                             TextSpan(
+                              // Altı çizili gri yerine accent mavi: cümlenin
+                              // tıklanabilir kısmı renkle ayrılıyor, "Parolamı
+                              // unuttum" ile aynı dil.
                               text: 'Giriş yap',
                               style: TextStyle(
-                                decoration: TextDecoration.underline,
-                                decorationColor: _titleColor,
-                                decorationThickness: 2 * scale,
                                 fontSize: 30 * scale,
-                                fontWeight: FontWeight.w700,
-                                color: _titleColor,
-                                fontFamily: 'Inter',
+                                fontWeight: AppTypography.action,
+                                color: _accentColor,
+                                fontFamily: AppTypography.family,
                               ),
                               recognizer: TapGestureRecognizer()
                                 ..onTap = () {
@@ -394,18 +425,20 @@ class _SignUpInput extends StatelessWidget {
               style: TextStyle(
                 color: Colors.white,
                 fontSize: fontSize,
-                fontWeight: FontWeight.w700,
-                fontFamily: 'Inter',
+                fontWeight: AppTypography.body,
+                fontFamily: AppTypography.family,
               ),
               decoration: InputDecoration(
                 border: InputBorder.none,
                 isCollapsed: true,
                 hintText: hint,
+                // Beyazdı — yani ipucu ile girilen değer aynı renkteydi ve
+                // kutunun dolu mu boş mu olduğu anlaşılmıyordu.
                 hintStyle: TextStyle(
-                  color: Colors.white,
+                  color: _SignUpScreenState._mutedColor,
                   fontSize: fontSize,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Inter',
+                  fontWeight: AppTypography.body,
+                  fontFamily: AppTypography.family,
                 ),
               ),
             ),
@@ -462,8 +495,8 @@ class _FormWarning extends StatelessWidget {
               style: TextStyle(
                 color: _SignUpScreenState._backgroundColor,
                 fontSize: 17 * scale,
-                fontWeight: FontWeight.w900,
-                fontFamily: 'Inter',
+                fontWeight: AppTypography.label,
+                fontFamily: AppTypography.family,
               ),
             ),
           ),
@@ -476,8 +509,8 @@ class _FormWarning extends StatelessWidget {
               style: TextStyle(
                 color: _SignUpScreenState._warningColor,
                 fontSize: fontSize,
-                fontWeight: FontWeight.w800,
-                fontFamily: 'Inter',
+                fontWeight: AppTypography.caption,
+                fontFamily: AppTypography.family,
               ),
             ),
           ),
@@ -519,8 +552,8 @@ class _SignUpHeader extends StatelessWidget {
             style: TextStyle(
               color: titleColor,
               fontSize: 45 * scale,
-              fontWeight: FontWeight.w700,
-              fontFamily: 'Inter',
+              fontWeight: AppTypography.heading,
+              fontFamily: AppTypography.displayFamily,
             ),
           ),
         ],
@@ -599,7 +632,7 @@ class _BackArrowPainter extends CustomPainter {
   }
 }
 
-class _PrimarySignUpButton extends StatefulWidget {
+class _PrimarySignUpButton extends StatelessWidget {
   const _PrimarySignUpButton({
     required this.width,
     required this.height,
@@ -617,71 +650,17 @@ class _PrimarySignUpButton extends StatefulWidget {
   final VoidCallback onPressed;
 
   @override
-  State<_PrimarySignUpButton> createState() => _PrimarySignUpButtonState();
-}
-
-class _PrimarySignUpButtonState extends State<_PrimarySignUpButton> {
-  bool _isPressed = false;
-
-  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapCancel: () => setState(() => _isPressed = false),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        widget.onPressed();
-      },
-      child: SizedBox(
-        width: widget.width,
-        height: widget.height + widget.shadowOffset,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned(
-              left: 0,
-              top: widget.shadowOffset,
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 60),
-                opacity: _isPressed ? 0 : 1,
-                child: Container(
-                  width: widget.width,
-                  height: widget.height,
-                  decoration: BoxDecoration(
-                    color: _SignUpScreenState._buttonShadowColor,
-                    borderRadius: BorderRadius.circular(widget.radius),
-                  ),
-                ),
-              ),
-            ),
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 80),
-              curve: Curves.easeOut,
-              left: 0,
-              top: _isPressed ? widget.shadowOffset : 0,
-              width: widget.width,
-              height: widget.height,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: _SignUpScreenState._buttonColor,
-                  borderRadius: BorderRadius.circular(widget.radius),
-                ),
-                child: Center(
-                  child: Text(
-                    "KAYIT OL",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: widget.fontSize,
-                      fontWeight: FontWeight.w800,
-                      fontFamily: 'Inter',
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return DepthPressableButton(
+      text: 'Kayıt ol',
+      width: width,
+      height: height,
+      radius: radius,
+      shadowOffset: shadowOffset,
+      backgroundColor: _SignUpScreenState._buttonColor,
+      shadowColor: _SignUpScreenState._buttonShadowColor,
+      fontSize: fontSize,
+      onPressed: onPressed,
     );
   }
 }
@@ -702,26 +681,16 @@ class _SocialButton extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(radius),
-      child: Ink(
+  Widget build(BuildContext context) => DepthPressableButton(
         width: size,
         height: size,
-        decoration: BoxDecoration(
-          color: _SignUpScreenState._socialBackground,
-          borderRadius: BorderRadius.circular(radius),
-        ),
-        child: Center(
-          child: Image.asset(
-            assetPath,
-            width: iconSize,
-            height: iconSize,
-            fit: BoxFit.contain,
-          ),
-        ),
-      ),
-    );
-  }
+        radius: radius,
+        shadowOffset: 0,
+        backgroundColor: _SignUpScreenState._socialBackground,
+        shadowColor: const Color(0xFF0B2143),
+        fontSize: 0,
+        onPressed: onTap,
+        child: Image.asset(assetPath,
+            width: iconSize, height: iconSize, fit: BoxFit.contain),
+      );
 }

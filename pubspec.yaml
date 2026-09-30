@@ -20,6 +20,8 @@ dependencies:
   google_sign_in: ^6.0.0
   path_provider: ^2.0.0
   image_picker: ^1.0.5
+  just_audio: ^0.10.6
+  audio_session: ^0.2.4
 
 dev_dependencies:
   build_runner: ^2.3.3
@@ -31,15 +33,47 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   fonts:
-    - family: Inter
+    - family: Rubik
       fonts:
-        - asset: assets/fonts/Inter-SemiBold.ttf
-        - asset: assets/fonts/Roboto-Black.ttf
+        - asset: assets/fonts/Rubik-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Rubik-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Rubik-ExtraBold.ttf
+          weight: 800
+    - family: Baloo 2
+      fonts:
+        - asset: assets/fonts/Baloo2-ExtraBold.ttf
+          weight: 800
   assets:
+    - assets/fonts/Rubik-LICENSE.txt
+    - assets/fonts/Baloo2-LICENSE.txt
     # Icons
+    # Maskot — seri 0 hâlinde teşvik pozu. 1x yolu yazılır,
+    # 2.0x/3.0x varyantlarını Flutter otomatik toplar (§2.12).
+    # Güne özel seri sahneleri (§2.12 yoğunluk varyantlarıyla)
+    - assets/scenes/welcome_hero.png
+    - assets/scenes/gun_100.png
+    - assets/scenes/ritmi_koru.png
+    - assets/scenes/harika_gidiyorsun.png
+    - assets/scenes/hedefe_dogru.png
+    - assets/scenes/beyni_esnet.png
+    - assets/scenes/madalyani_kazan.png
+    - assets/scenes/bugun_geri_don.png
+    - assets/scenes/istikrar_guclendirir.png
+    - assets/scenes/seni_ozledik.png
+    - assets/scenes/ruzgari_yakala.png
+    - assets/scenes/serin_korundu.png
+    - assets/scenes/kendi_rekorun.png
+    - assets/scenes/karty_review_complete.png
+    - assets/scenes/league_promotion_lift.png
+    - assets/scenes/league_promotion_steps.png
+    - assets/icons/mascot_flex.png
+    - assets/icons/mascot_hello.png
+    - assets/icons/mascot_ticket_melt.png
+    - assets/icons/fire-freeze-relax.png
     - assets/icons/home.png
     - assets/icons/profile.png
-    - assets/icons/score.png
     - assets/icons/cup.png
     - assets/icons/fire.png
     - assets/icons/profilephoto.png
@@ -59,9 +93,12 @@ flutter:
     - assets/icons/leader.png
     - assets/icons/league.png
     - assets/icons/boost-bolt.png
+    - assets/icons/profile-word-achievement.png
+    - assets/icons/profile-article-achievement.png
     - assets/icons/google-logo.png
     - assets/icons/apple-logo.png
     - assets/icons/logout.png
+    - assets/icons/quest.png
 
     # Images
     - assets/images/otta.png

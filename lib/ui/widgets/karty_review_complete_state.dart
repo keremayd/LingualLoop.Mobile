@@ -1,17 +1,18 @@
-import 'dart:math' as math;
-
+import 'package:lingualloop/ui/app_typography.dart';
+import 'package:lingualloop/ui/widgets/app_shape_style.dart';
 import 'package:flutter/material.dart';
+import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 
 class KartyReviewCompleteState extends StatefulWidget {
   const KartyReviewCompleteState({
     super.key,
     required this.scale,
-    required this.didCompleteSession,
+    required this.rewardTickets,
     required this.onClose,
   });
 
   final double scale;
-  final bool didCompleteSession;
+  final int rewardTickets;
   final VoidCallback onClose;
 
   @override
@@ -21,20 +22,20 @@ class KartyReviewCompleteState extends StatefulWidget {
 
 class _KartyReviewCompleteStateState extends State<KartyReviewCompleteState>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+  late final AnimationController _entranceController;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _entranceController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2600),
-    )..repeat();
+      duration: const Duration(milliseconds: 1050),
+    )..forward();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _entranceController.dispose();
     super.dispose();
   }
 
@@ -44,129 +45,146 @@ class _KartyReviewCompleteStateState extends State<KartyReviewCompleteState>
     return Stack(
       children: [
         Positioned(
+          left: 0,
+          right: 0,
+          top: 58 * scale,
+          child: _ReviewEntrance(
+            controller: _entranceController,
+            interval: const Interval(0, 0.62),
+            offset: const Offset(0, 0.035),
+            child: _KartyReviewCompleteScene(scale: scale),
+          ),
+        ),
+        Positioned(
           left: 40 * scale,
           top: 155 * scale,
-          child: GestureDetector(
-            onTap: widget.onClose,
-            child: Container(
-              width: 56 * scale,
-              height: 56 * scale,
-              decoration: BoxDecoration(
-                color: const Color(0xFF0B2143),
-                borderRadius: BorderRadius.circular(8 * scale),
-              ),
-              child: Icon(
-                Icons.close_rounded,
-                color: Colors.white,
-                size: 48 * scale,
+          child: _ReviewEntrance(
+            controller: _entranceController,
+            interval: const Interval(0.28, 0.58),
+            offset: const Offset(-0.08, 0),
+            child: GestureDetector(
+              onTap: widget.onClose,
+              child: Container(
+                width: 56 * scale,
+                height: 56 * scale,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0B2143),
+                  borderRadius: BorderRadius.circular(8 * scale),
+                ),
+                child: Icon(
+                  Icons.close_rounded,
+                  color: Colors.white,
+                  size: 48 * scale,
+                ),
               ),
             ),
           ),
         ),
         Positioned(
-          left: 54 * scale,
-          right: 54 * scale,
-          top: 278 * scale,
+          left: 50 * scale,
+          right: 50 * scale,
+          top: 792 * scale,
           child: Column(
             children: [
-              AnimatedBuilder(
-                animation: _controller,
-                builder: (context, child) {
-                  return _ClearedKartyDeck(
-                    scale: scale,
-                    phase: _controller.value,
-                  );
-                },
-              ),
-              SizedBox(height: 42 * scale),
-              Text(
-                widget.didCompleteSession
-                    ? 'Rövanşı tamamladın!'
-                    : 'Rövanşlar tamam!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 52 * scale,
-                  fontWeight: FontWeight.w900,
-                  fontFamily: 'Inter',
-                  height: 1,
+              _ReviewEntrance(
+                controller: _entranceController,
+                interval: const Interval(0.30, 0.60),
+                offset: const Offset(0, 0.22),
+                child: Text(
+                  'Rövanşı tamamladın!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 52 * scale,
+                    fontWeight: AppTypography.heading,
+                    fontFamily: AppTypography.displayFamily,
+                    height: 1,
+                  ),
                 ),
               ),
               SizedBox(height: 18 * scale),
-              Text(
-                widget.didCompleteSession
-                    ? 'Karty\'lerle yeniden karşılaştın ve öğrendiklerini güçlendirdin.'
-                    : 'Şu anda rövanş için bekleyen bir Karty bulunmuyor.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.74),
-                  fontSize: 27 * scale,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Inter',
-                  height: 1.25,
+              _ReviewEntrance(
+                controller: _entranceController,
+                interval: const Interval(0.40, 0.70),
+                offset: const Offset(0, 0.20),
+                child: Text(
+                  'Karty\'lerle yeniden karşılaştın ve öğrendiklerini güçlendirdin.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.74),
+                    fontSize: 27 * scale,
+                    fontWeight: AppTypography.body,
+                    fontFamily: AppTypography.family,
+                    height: 1.25,
+                  ),
                 ),
               ),
               SizedBox(height: 30 * scale),
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 24 * scale,
-                  vertical: 12 * scale,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0B2143),
-                  borderRadius: BorderRadius.circular(22 * scale),
-                  border: Border.all(
-                    color: const Color(0xFF93D334).withValues(alpha: 0.48),
-                    width: 2 * scale,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.auto_awesome_rounded,
-                      color: const Color(0xFFFFD52F),
-                      size: 27 * scale,
-                    ),
-                    SizedBox(width: 10 * scale),
-                    Text(
-                      'Bilgilerin güçlendi',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 23 * scale,
-                        fontWeight: FontWeight.w900,
-                        fontFamily: 'Inter',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 46 * scale),
-              GestureDetector(
-                onTap: widget.onClose,
+              _ReviewEntrance(
+                controller: _entranceController,
+                interval: const Interval(0.52, 0.82),
+                offset: const Offset(0, 0.20),
                 child: Container(
-                  width: 410 * scale,
-                  height: 82 * scale,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 24 * scale,
+                    vertical: 12 * scale,
+                  ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF93D334),
-                    borderRadius: BorderRadius.circular(22 * scale),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF659D22),
-                        offset: Offset(0, 8 * scale),
+                    color: const Color(0xFF0B2143),
+                    borderRadius: BorderRadius.circular(
+                        AppShapeStyle.cardRadius(22 * scale)),
+                    border: Border.all(
+                      color: const Color(0xFF93D334).withValues(alpha: 0.48),
+                      width: AppShapeStyle.outline(2 * scale),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (widget.rewardTickets > 0)
+                        Image.asset(
+                          'assets/icons/ticket-one.png',
+                          width: 37 * scale,
+                          fit: BoxFit.contain,
+                        )
+                      else
+                        Icon(
+                          Icons.auto_awesome_rounded,
+                          color: const Color(0xFFFFD52F),
+                          size: 27 * scale,
+                        ),
+                      SizedBox(width: 10 * scale),
+                      Text(
+                        widget.rewardTickets > 0
+                            ? '+${widget.rewardTickets} bilet kazandın'
+                            : 'Bilgilerin güçlendi',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 23 * scale,
+                          fontWeight: AppTypography.label,
+                          fontFamily: AppTypography.family,
+                        ),
                       ),
                     ],
                   ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'ANA MENÜYE DÖN',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 27 * scale,
-                      fontWeight: FontWeight.w900,
-                      fontFamily: 'Inter',
-                    ),
-                  ),
+                ),
+              ),
+              SizedBox(height: 46 * scale),
+              _ReviewEntrance(
+                controller: _entranceController,
+                interval: const Interval(0.68, 1),
+                offset: const Offset(0, 0.18),
+                child: DepthPressableButton(
+                  text: 'ANA MENÜYE DÖN',
+                  width: 410 * scale,
+                  height: 82 * scale,
+                  radius: 22 * scale,
+                  shadowOffset: 8 * scale,
+                  backgroundColor: const Color(0xFF93D334),
+                  shadowColor: const Color(0xFF628C22),
+                  fontSize: 27 * scale,
+                  fontWeight: AppTypography.action,
+                  onPressed: widget.onClose,
                 ),
               ),
             ],
@@ -177,180 +195,75 @@ class _KartyReviewCompleteStateState extends State<KartyReviewCompleteState>
   }
 }
 
-class _ClearedKartyDeck extends StatelessWidget {
-  const _ClearedKartyDeck({
-    required this.scale,
-    required this.phase,
+class _ReviewEntrance extends StatelessWidget {
+  const _ReviewEntrance({
+    required this.controller,
+    required this.interval,
+    required this.offset,
+    required this.child,
   });
 
-  final double scale;
-  final double phase;
-
-  static const _cardGradient = LinearGradient(
-    colors: [
-      Color(0xFF68D73D),
-      Color(0xFF56BEEA),
-      Color(0xFFA647F0),
-      Color(0xFFFDC041),
-    ],
-    stops: [0.02, 0.38, 0.68, 1],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
+  final AnimationController controller;
+  final Interval interval;
+  final Offset offset;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final pulse = math.sin(phase * math.pi * 2) * 0.5 + 0.5;
-    return SizedBox(
-      width: 350 * scale,
-      height: 405 * scale,
-      child: Stack(
-        alignment: Alignment.center,
-        clipBehavior: Clip.none,
-        children: [
-          Transform.translate(
-            offset: Offset(-38 * scale, 14 * scale),
-            child: Transform.rotate(
-              angle: -0.095,
-              child: _deckCard(scale, 250, 330, 0.64),
-            ),
-          ),
-          Transform.translate(
-            offset: Offset(38 * scale, 13 * scale),
-            child: Transform.rotate(
-              angle: 0.095,
-              child: _deckCard(scale, 250, 330, 0.78),
-            ),
-          ),
-          Container(
-            width: 270 * scale,
-            height: 350 * scale,
-            padding: EdgeInsets.all(17 * scale),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(38 * scale),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF93D334)
-                      .withValues(alpha: 0.18 + pulse * 0.16),
-                  blurRadius: (20 + pulse * 18) * scale,
-                  spreadRadius: pulse * 3 * scale,
-                ),
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.28),
-                  blurRadius: 22 * scale,
-                  offset: Offset(7 * scale, 14 * scale),
-                ),
-              ],
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: _cardGradient,
-                borderRadius: BorderRadius.circular(25 * scale),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.24),
-                    blurRadius: 7 * scale,
-                    offset: Offset(0, 4 * scale),
-                  ),
-                ],
-              ),
-              child: Stack(
-                children: [
-                  Center(
-                    child: Transform.scale(
-                      scale: 1 + pulse * 0.04,
-                      child: Container(
-                        width: 138 * scale,
-                        height: 138 * scale,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF659D22),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white,
-                            width: 9 * scale,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF93D334)
-                                  .withValues(alpha: 0.5),
-                              blurRadius: 18 * scale,
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          Icons.check_rounded,
-                          color: Colors.white,
-                          size: 96 * scale,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    left: 18 * scale,
-                    top: 18 * scale,
-                    child: _bolt(scale, -0.12),
-                  ),
-                  Positioned(
-                    right: 18 * scale,
-                    bottom: 18 * scale,
-                    child: _bolt(scale, 0.12),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          for (var index = 0; index < 5; index++)
-            Positioned(
-              left: (28 + index * 68) * scale,
-              top: (24 + (index.isEven ? 10 : 55)) * scale,
-              child: Transform.rotate(
-                angle: phase * math.pi * 2 + index,
-                child: Icon(
-                  Icons.auto_awesome_rounded,
-                  color: index.isEven
-                      ? const Color(0xFFFFD52F)
-                      : const Color(0xFF93D334),
-                  size: (18 + index % 3 * 5) * scale,
-                ),
-              ),
-            ),
-        ],
-      ),
+    final animation = CurvedAnimation(
+      parent: controller,
+      curve: interval,
     );
-  }
 
-  Widget _deckCard(
-    double scale,
-    double width,
-    double height,
-    double opacity,
-  ) {
-    return Container(
-      width: width * scale,
-      height: height * scale,
-      padding: EdgeInsets.all(15 * scale),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: opacity),
-        borderRadius: BorderRadius.circular(36 * scale),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: _cardGradient,
-          borderRadius: BorderRadius.circular(24 * scale),
+    return AnimatedBuilder(
+      animation: controller,
+      child: FadeTransition(
+        opacity: animation,
+        child: SlideTransition(
+          position: Tween<Offset>(begin: offset, end: Offset.zero).animate(
+            CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+          ),
+          child: child,
         ),
       ),
+      builder: (context, animatedChild) => IgnorePointer(
+        ignoring: controller.value < interval.end,
+        child: animatedChild,
+      ),
     );
   }
+}
 
-  Widget _bolt(double scale, double angle) {
-    return Transform.rotate(
-      angle: angle,
-      child: Image.asset(
-        'assets/icons/boost-bolt.png',
-        width: 48 * scale,
-        height: 64 * scale,
-        fit: BoxFit.contain,
+class _KartyReviewCompleteScene extends StatelessWidget {
+  const _KartyReviewCompleteScene({required this.scale});
+
+  final double scale;
+
+  @override
+  Widget build(BuildContext context) {
+    return ShaderMask(
+      blendMode: BlendMode.dstIn,
+      shaderCallback: (bounds) => const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Colors.transparent,
+          Colors.white,
+          Colors.white,
+          Colors.white,
+          Colors.transparent,
+        ],
+        stops: [0, 0.09, 0.20, 0.70, 0.98],
+      ).createShader(bounds),
+      child: SizedBox(
+        width: 750 * scale,
+        height: 1002 * scale,
+        child: Image.asset(
+          'assets/scenes/karty_review_complete.png',
+          fit: BoxFit.fitWidth,
+          alignment: Alignment.topCenter,
+          filterQuality: FilterQuality.high,
+        ),
       ),
     );
   }

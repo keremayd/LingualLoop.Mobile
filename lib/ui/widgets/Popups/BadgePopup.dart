@@ -1,3 +1,4 @@
+import 'package:lingualloop/ui/app_typography.dart';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -55,12 +56,11 @@ void showBadgePopup(BuildContext context, int badgeIndex) {
                     badge.badgeTitle,
                     style: TextStyle(
                       fontSize: 22,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: AppTypography.label,
                       color: Color(0xFF5F5CF0),
                     ),
                   ),
                   SizedBox(height: 16),
-
                   Stack(
                     children: [
                       Transform.translate(
@@ -77,7 +77,6 @@ void showBadgePopup(BuildContext context, int badgeIndex) {
                       ),
                     ],
                   ),
-
                   SizedBox(height: 16),
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -90,12 +89,14 @@ void showBadgePopup(BuildContext context, int badgeIndex) {
                       style: TextStyle(color: Colors.white, fontSize: 14),
                     ),
                   ),
-
                   SizedBox(height: 16),
                   Text(
                     badge.badgeDescription,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, color: Color(0xFF5F5CF0), fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        fontSize: 16,
+                        color: Color(0xFF5F5CF0),
+                        fontWeight: AppTypography.label),
                   ),
                 ],
               ),

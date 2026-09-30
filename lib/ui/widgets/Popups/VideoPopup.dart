@@ -1,3 +1,4 @@
+import 'package:lingualloop/ui/app_typography.dart';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -56,16 +57,18 @@ void showVideoPopup(BuildContext context, int badgeIndex) {
                     savedVideo.video.videoTitle,
                     style: TextStyle(
                       fontSize: 22,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: AppTypography.label,
                       color: Color(0xFF5F5CF0),
                     ),
                   ),
                   SizedBox(height: 16),
-
                   Text(
                     savedVideo.video.videoDescription,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, color: Color(0xFF5F5CF0), fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        fontSize: 16,
+                        color: Color(0xFF5F5CF0),
+                        fontWeight: AppTypography.label),
                   ),
                 ],
               ),

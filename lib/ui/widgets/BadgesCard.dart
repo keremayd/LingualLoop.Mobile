@@ -1,3 +1,4 @@
+import 'package:lingualloop/ui/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:lingualloop/models/Badge.dart' as model;
 import 'package:provider/provider.dart';
@@ -84,9 +85,9 @@ class _SectionHeader extends StatelessWidget {
             title,
             style: TextStyle(
               color: Colors.white,
-              fontFamily: 'Inter',
+              fontFamily: AppTypography.family,
               fontSize: 36 * scale,
-              fontWeight: FontWeight.w600,
+              fontWeight: AppTypography.caption,
               height: 1,
             ),
           ),
@@ -94,9 +95,9 @@ class _SectionHeader extends StatelessWidget {
             'Tümünü Gör',
             style: TextStyle(
               color: BadgesCard._secondaryTextColor,
-              fontFamily: 'Inter',
+              fontFamily: AppTypography.family,
               fontSize: 30 * scale,
-              fontWeight: FontWeight.w600,
+              fontWeight: AppTypography.caption,
               height: 1,
             ),
           ),

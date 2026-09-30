@@ -1,29 +1,73 @@
+import 'package:lingualloop/ui/app_typography.dart';
+import 'package:lingualloop/ui/widgets/Buttons/app_button_style.dart';
+import 'dart:async';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
+import 'package:lingualloop/Utils/AppNotifier.dart';
 import 'package:lingualloop/services/UserService.dart';
-import 'package:lingualloop/ui/widgets/ProfilePhoto.dart';
+import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
+import 'package:lingualloop/providers/QuestsProvider.dart';
+import 'package:lingualloop/ui/widgets/NavbarWidget.dart';
+import 'package:lingualloop/ui/widgets/home_top_bar.dart';
+import 'package:lingualloop/ui/widgets/Popups/out_of_tickets_popup.dart';
+import 'package:lingualloop/models/responses/DailyActivityResponse.dart';
+import 'package:lingualloop/models/responses/ProfileLearningStatsResponse.dart';
+import 'package:lingualloop/ui/widgets/Popups/streak_at_risk_popup.dart';
+import 'package:lingualloop/ui/widgets/article_practice_home_card.dart';
+import 'package:lingualloop/ui/widgets/home_streak_strip.dart';
+import 'package:lingualloop/ui/widgets/pressable_layered_card.dart';
+import 'package:lingualloop/ui/widgets/streak_day_card.dart';
+import 'package:lingualloop/ui/widgets/streak_day_scenes.dart';
+import 'package:lingualloop/ui/flows/league_promotion_flow.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/ScoreWithLivesProvider.dart';
-import '../../providers/UserProvider.dart';
 
 class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
   @override
-  _HomeScreenScreenState createState() => _HomeScreenScreenState();
+  State<HomeScreen> createState() => _HomeScreenScreenState();
 }
 
 class _HomeScreenScreenState extends State<HomeScreen> {
   bool isLoading = true;
+  bool _isShowingLeaguePromotion = false;
+  bool _isHoldingLearningCardState = false;
+  ProfileLearningStatsResponse? _heldLearningStats;
+
+  /// Tasarım aracı (yalnız debug): seri kartını "bugün oynanmamış" hâline
+  /// zorlar, sonra bırakır — böylece geçiş yeniden oynar.
+  ///
+  /// Gerek var çünkü gün bir kez oynandıktan sonra `playedToday` kalıcı olarak
+  /// true; gerçek `false → true` anı günde yalnızca **bir kez** yaşanıyor ve
+  /// tasarımı denemek için ertesi günü beklemek gerekiyor.
+  bool _debugForceNotPlayed = false;
+
+  /// Kilometre taşı hâlini denemek için seriyi geçici olarak 7 yapar.
+  bool _debugMilestone = false;
+
+  /// Güne özel sahne kartını denemek için sahneyi elle seçer. Gerekli çünkü
+  /// gerçek veriyle görmek o gün sayısına ulaşmayı beklemek demek.
+  String? _debugSceneKey = 'kendi_rekorun';
+
+  Future<void> _replayStreakTransition({required bool milestone}) async {
+    setState(() {
+      _debugForceNotPlayed = true;
+      _debugMilestone = milestone;
+    });
+    await Future<void>.delayed(const Duration(milliseconds: 700));
+    if (!mounted) return;
+    setState(() => _debugForceNotPlayed = false);
+  }
 
   static const _backgroundColor = Color(0xFF041227);
-  static const _panelBorderColor = Color(0xFF0C2244);
   static const _textColor = Colors.white;
   static const _soloColor = Color(0xFF1CB1F5);
   static const _kartyColor = _soloColor;
   static const _kartyBaseColor = Color(0xFF1B84B5);
-  static const _battleColor = Color(0xFFF52A2A);
-  static const _battleBaseColor = Color(0xFFAA1C1C);
   static const _reviewColor = Color(0xFF0C2244);
   static const _reviewBaseColor = Color(0xFF07182F);
 
@@ -37,7 +81,12 @@ class _HomeScreenScreenState extends State<HomeScreen> {
     setState(() {
       isLoading = true;
     });
-    await _getScoreWithLives(context);
+    await Future.wait([
+      _getScoreWithLives(context),
+      context.read<ProfileLearningStatsProvider>().load(context),
+    ]);
+
+    if (!mounted) return;
     setState(() {
       isLoading = false;
     });
@@ -48,14 +97,184 @@ class _HomeScreenScreenState extends State<HomeScreen> {
     await userService.scoreWithLivesById(context);
   }
 
-  Future<void> _updateLivesAndRouter(
-      BuildContext context, String routeUrl) async {
+  /// Rövanş bilet harcamaz; yanlışları tekrar ederek oyuna dönüş yolu açar.
+  /// Dönüşte hem bilet hem seri/profil istatistikleri tazelenir.
+  Future<void> _openReview() async {
+    _holdLearningCardState();
+    try {
+      await Navigator.pushNamed(context, '/kartyreview');
+      if (!mounted) return;
+      final userService = context.read<UserService>();
+      await _refreshAfterGameplayReturn(userService);
+    } finally {
+      _releaseLearningCardState();
+    }
+  }
+
+  /// Biletin yetmediği durumda sunucu E4116 döndürür ve oyun açılmaz.
+  static const _noLivesErrorCode = 'E4116';
+
+  Future<void> _updateLivesAndRouter(String routeUrl) async {
     final userService = Provider.of<UserService>(context, listen: false);
 
     var apiResponse = await userService.updateLivesById();
     if (apiResponse.errorCode == null) {
-      Navigator.pushNamed(context, '/$routeUrl');
-      await userService.scoreWithLivesById(context);
+      if (!mounted) return;
+      // **Beklenmesi şart.** `pushNamed` route kapanınca tamamlanan bir Future
+      // döndürüyor; beklenmezse tazeleme oyun *açılırken* çalışır ve
+      // kullanıcı oynayıp döndüğünde hiçbir şey güncellenmez. Seri kartının
+      // geçişi de bu yüzden hiç tetiklenemiyordu.
+      _holdLearningCardState();
+      try {
+        await Navigator.pushNamed(context, '/$routeUrl');
+        if (!mounted) return;
+        await _refreshAfterGameplayReturn(userService);
+      } finally {
+        _releaseLearningCardState();
+      }
+      if (!mounted) return;
+      await _showPendingLeaguePromotion();
+      return;
+    }
+
+    // Giriş reddedildi. Bilet duvarı düz bir uyarı mesajı değil, kendi
+    // penceresini hak ediyor: kullanıcıya neden oynayamadığını, ne zaman
+    // oynayabileceğini ve beklemek istemiyorsa ne olduğunu birlikte anlatır.
+    if (apiResponse.errorCode != _noLivesErrorCode) {
+      AppNotifier.showMessage('Oyun açılamadı. Daha sonra tekrar dene.');
+      return;
+    }
+
+    // Geri sayımı doğru gösterebilmek için önce güncel bileti çek.
+    if (!mounted) return;
+    await userService.scoreWithLivesById(context);
+    if (!mounted) return;
+
+    // Popup, yolların yalnız adını değil o anki gerçek değerini gösterir:
+    // bekleyen Rövanş yoksa yol pasifleşir; görev satırında bugün hâlâ
+    // kazanılabilecek toplam bilet görünür.
+    final questsProvider = context.read<QuestsProvider>();
+    final profileStatsProvider = context.read<ProfileLearningStatsProvider>();
+    await Future.wait([
+      questsProvider.load(silent: questsProvider.data != null),
+      profileStatsProvider.refreshFromService(userService),
+    ]);
+    if (!mounted) return;
+
+    final questTickets = questsProvider.data?.quests
+        .where((quest) => !quest.isClaimed)
+        .fold<int>(0, (total, quest) => total + quest.rewardTickets);
+    final reviewAvailable =
+        (profileStatsProvider.stats?.reviewPendingCount ?? 0) > 0;
+
+    final scoreProvider = context.read<ScoreWithLivesProvider>();
+    await showOutOfTicketsPopup(
+      context,
+      nextTicketAt: scoreProvider.scoreWithLives?.nextTicketAt,
+      onRefreshTickets: () async {
+        if (!mounted) return false;
+        final refreshed = await userService.scoreWithLivesById(context);
+        return (refreshed.data?.lives ?? 0) > 0;
+      },
+      questTickets: questTickets,
+      reviewAvailable: reviewAvailable,
+      onGoToReview: () => unawaited(_openReview()),
+      onGoToQuests: () =>
+          NavbarWidget.requestedTab.value = NavbarWidget.questsTabIndex,
+      onGoPremium: () {
+        // Premium akışı henüz yok; niyet kaydı burada duruyor ki pencere
+        // hazır olduğunda tek yerden bağlansın.
+        AppNotifier.showMessage('Premium yakında!');
+      },
+    );
+  }
+
+  /// `Navigator.push` dönüş değeri, üst rota kapanış animasyonunu bitirmeden
+  /// tamamlanabilir. Veriyi o anda uygularsak ana ekrandaki etkinleşme
+  /// animasyonları hâlâ kapanan ekranın arkasında oynar. Ana rotanın yeniden
+  /// tamamen görünür olmasını bekleyip güncellemeyi ondan sonra başlatırız.
+  Future<void> _waitUntilHomeIsVisible() async {
+    final animation = ModalRoute.of(context)?.secondaryAnimation;
+    if (animation != null && animation.status != AnimationStatus.dismissed) {
+      final completer = Completer<void>();
+
+      void listener(AnimationStatus status) {
+        if (status == AnimationStatus.dismissed && !completer.isCompleted) {
+          completer.complete();
+        }
+      }
+
+      animation.addStatusListener(listener);
+      try {
+        if (animation.status == AnimationStatus.dismissed &&
+            !completer.isCompleted) {
+          completer.complete();
+        }
+        await completer.future.timeout(const Duration(milliseconds: 800));
+      } on TimeoutException {
+        // Özel bir rota animasyonu durum bildirmese bile akışı kilitleme.
+      } finally {
+        animation.removeStatusListener(listener);
+      }
+    }
+
+    if (mounted) await WidgetsBinding.instance.endOfFrame;
+  }
+
+  Future<void> _refreshAfterGameplayReturn(UserService userService) async {
+    final statsProvider = context.read<ProfileLearningStatsProvider>();
+
+    // İki istek de kapanış geçişi sürerken çalışır. Rövanş sonucu çoğunlukla
+    // Karty içinde zaten hazırlanmıştır; bu durumda Future anında tamamlanır.
+    final statsFuture = statsProvider.consumePrefetchOrFetch(userService);
+    final scoreFuture = userService.scoreWithLivesById(context);
+
+    await _waitUntilHomeIsVisible();
+    if (!mounted) return;
+
+    final stats = await statsFuture;
+    if (!mounted) return;
+    if (stats != null) statsProvider.applyFetchedStats(stats);
+
+    // Kartın kilidini bilet/üst çubuk isteğini beklemeden aç. Böylece Home
+    // görünür olur olmaz pasif → aktif geçişi başlar.
+    _releaseLearningCardState();
+    await scoreFuture;
+  }
+
+  /// Home kapalıyken provider değişse bile rövanş kartının görünür durumu
+  /// sabit kalır. Kilit Home yeniden görünür olduktan ve güncel veri alındıktan
+  /// sonra açılır; böylece pasif → aktif animasyonu doğru sahnede başlar.
+  void _holdLearningCardState() {
+    if (!mounted) return;
+    setState(() {
+      _heldLearningStats = context.read<ProfileLearningStatsProvider>().stats;
+      _isHoldingLearningCardState = true;
+    });
+  }
+
+  void _releaseLearningCardState() {
+    if (!mounted || !_isHoldingLearningCardState) return;
+    setState(() {
+      _isHoldingLearningCardState = false;
+      _heldLearningStats = null;
+    });
+  }
+
+  Future<void> _showPendingLeaguePromotion() async {
+    if (!mounted || _isShowingLeaguePromotion) return;
+    final promotion = context
+        .read<ScoreWithLivesProvider>()
+        .scoreWithLives
+        ?.league
+        ?.pendingPromotion;
+    if (promotion == null) return;
+
+    _isShowingLeaguePromotion = true;
+    try {
+      await showPendingLeaguePromotion(context);
+    } finally {
+      _isShowingLeaguePromotion = false;
     }
   }
 
@@ -74,80 +293,202 @@ class _HomeScreenScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: _backgroundColor,
+      floatingActionButton: kDebugMode
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: GestureDetector(
+                onTap: () => _replayStreakTransition(milestone: false),
+                onLongPress: () => _replayStreakTransition(milestone: true),
+                // Çift dokunuş: sahne kartları arasında dolaşır (kapalı →
+                // sırayla bütün sahneler → kapalı).
+                onDoubleTap: () => setState(() {
+                  const cycle = [
+                    null,
+                    'gun_100',
+                    'ritmi_koru',
+                    'harika_gidiyorsun',
+                    'hedefe_dogru',
+                    'madalyani_kazan',
+                    'ruzgari_yakala',
+                    'istikrar_guclendirir',
+                    'kendi_rekorun',
+                    'serin_korundu',
+                    'bugun_geri_don',
+                    'beyni_esnet',
+                    'seni_ozledik',
+                  ];
+                  _debugSceneKey =
+                      cycle[(cycle.indexOf(_debugSceneKey) + 1) % cycle.length];
+                }),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: _soloColor,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: const Text(
+                    'SERİ',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontFamily: AppTypography.family,
+                      fontSize: 15,
+                      fontWeight: AppTypography.label,
+                    ),
+                  ),
+                ),
+              ),
+            )
+          : null,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final scale = constraints.maxWidth / 750;
-          final contentHeight = 1567 * scale;
 
+          // İçerik hedef cihazda tam bir ekran. `SingleChildScrollView` yine
+          // de duruyor: sığdığı sürece kaydırma olmuyor, daha kısa bir ekranda
+          // ise taşma hatası vermek yerine kayıyor.
           return SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            child: SizedBox(
-              height: contentHeight > constraints.maxHeight
-                  ? contentHeight
-                  : constraints.maxHeight,
-              child: Stack(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                40 * scale,
+                40 * scale,
+                40 * scale,
+                28 * scale,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Positioned(
-                    left: 40 * scale,
-                    top: 24 * scale,
-                    child: _ProfileSummaryCard(scale: scale),
-                  ),
-                  Positioned(
-                    left: 40 * scale,
-                    top: 304 * scale,
-                    child: _SectionTitle(
-                      text: "Yolculuğunu Sürdür",
-                      scale: scale,
-                    ),
-                  ),
-                  Positioned(
-                    left: 40 * scale,
-                    top: 368 * scale,
-                    child: _KartyFeatureCard(
-                      scale: scale,
-                      onTap: () async {
-                        await _updateLivesAndRouter(context, 'kartyquiz');
-                      },
-                    ),
-                  ),
-                  Positioned(
-                    left: 40 * scale,
-                    top: 859 * scale,
-                    child: _SectionTitle(
-                      text: "Diğer modlar",
-                      scale: scale,
-                      fontSize: 32,
-                    ),
-                  ),
-                  Positioned(
-                    left: 40 * scale,
-                    top: 917 * scale,
-                    child: Row(
-                      children: [
-                        _ModeCard(
+                  _ProfileSummaryCard(scale: scale),
+                  SizedBox(height: 34 * scale),
+
+                  // Seri şeridi üst şeritle Karty arasında. Bilet şeridi buradan
+                  // kaldırıldı: üst çubuktaki sayıyı tekrarlıyordu ve tavandayken
+                  // hiçbir eylem önermiyordu. Bu şerit ise ekranda bugüne ait tek
+                  // öğe — üst çubuktaki "2" serinin bugün kurtarılıp
+                  // kurtarılmadığını söylemiyor.
+                  Consumer<ScoreWithLivesProvider>(
+                    builder: (context, provider, child) {
+                      final data = provider.scoreWithLives;
+                      final week =
+                          data?.streakWeek ?? const <DailyActivityDay>[];
+
+                      // Veri gelmeden boş bir kutu göstermek kartı "bozuk"
+                      // gösteriyor; şerit yoksa hiç çizilmiyor
+                      // (ProfileStreakCard ile aynı davranış).
+                      if (week.isEmpty) return const SizedBox.shrink();
+
+                      final streak = _debugMilestone ? 7 : (data?.streak ?? 0);
+                      final doneToday = _debugForceNotPlayed
+                          ? false
+                          : (data?.playedToday ?? false);
+
+                      // Hangi sahnenin gösterileceğine kural listesi karar
+                      // veriyor; ekran filtreleri bilmiyor. Çakışma olduğunda
+                      // öncelik kazanıyor (bkz. `StreakScene`).
+                      final scene = _debugSceneKey != null
+                          ? StreakScene.byKey(_debugSceneKey!)
+                          : StreakScene.resolve(
+                              StreakSceneContext(
+                                streak: streak,
+                                playedToday: doneToday,
+                                // `score-with-lives` `longestStreak`
+                                // taşımıyor; alan eklenene kadar "hiç seri
+                                // olmamış" varsayılıyor, yani seri sıfırken
+                                // hep `beyni_esnet` çıkıyor (bugünkü
+                                // davranışın aynısı).
+                                hasEverStreaked: false,
+                                // Koruma bayrağı zaten şeritte geliyor
+                                // (`user_daily_activity.frozen`); ek alan
+                                // gerekmiyor.
+                                freezeUsedRecently: week.freezeUsedRecently,
+                                // `longestStreak` yanıtta yok; alan eklenene
+                                // kadar rekor kartı yalnız debug'dan görünür.
+                                isPersonalRecord: false,
+                              ),
+                            );
+
+                      if (scene != null) {
+                        return StreakDayCard(
                           scale: scale,
-                          title: "Battle",
-                          childTitle: "1v1",
-                          description: "Rakiplerinle 10\nsoruda kapış!",
-                          color: _battleColor,
-                          baseColor: _battleBaseColor,
-                          imageAsset: 'assets/images/catsbattle.png',
-                          imageWidth: 255,
-                          imageBottom: 38,
-                          imageLeft: 26,
-                          onTap: () async {
-                            await _updateLivesAndRouter(context, 'videoquiz');
-                          },
-                        ),
-                        SizedBox(width: 54 * scale),
-                        _ReviewMistakesCard(
-                          scale: scale,
-                          onTap: () {
-                            Navigator.pushNamed(context, '/kartyreview');
-                          },
-                        ),
-                      ],
-                    ),
+                          days: streak,
+                          message: scene.message,
+                          sceneAsset: scene.asset,
+                          sceneAspect: scene.aspect,
+                          cardColor: scene.cardColor,
+                          sceneEdgeColor: scene.sceneEdgeColor,
+                          faceOpacity: scene.faceOpacity,
+                          sceneZoom: scene.zoom,
+                          sceneAnchorY: scene.anchorY,
+                          sceneFadeEnd: scene.fadeEnd,
+                          week: week.toStrip(),
+                          playedToday: doneToday,
+                          onTap: () => NavbarWidget.requestedTab.value =
+                              NavbarWidget.profileTabIndex,
+                        );
+                      }
+
+                      return HomeStreakStrip(
+                        scale: scale,
+                        streak: streak,
+                        days: week.toStrip(),
+                        doneToday: doneToday,
+                        onTap: () => NavbarWidget.requestedTab.value =
+                            NavbarWidget.profileTabIndex,
+                      );
+                    },
+                  ),
+                  SizedBox(height: 34 * scale),
+                  _KartyFeatureCard(
+                    scale: scale,
+                    onTap: () async {
+                      await _updateLivesAndRouter('kartyquiz');
+                    },
+                  ),
+                  SizedBox(height: 34 * scale),
+                  Consumer<ProfileLearningStatsProvider>(
+                    builder: (context, provider, child) {
+                      final stats = _isHoldingLearningCardState
+                          ? _heldLearningStats
+                          : provider.stats;
+                      final articlePracticeAvailable = stats != null &&
+                          stats.learnedWordCount >= 2 &&
+                          stats.learnedArticleCount < stats.learnedWordCount;
+                      final articlePendingCount = stats == null
+                          ? null
+                          : stats.learnedWordCount - stats.learnedArticleCount;
+                      final articleDisabledMessage = stats == null
+                          ? 'Kelimelerin kontrol ediliyor.'
+                          : stats.learnedWordCount < 2
+                              ? '2 farklı Karty öğrenince açılır.'
+                              : 'Yeni bir Karty öğrenince yeniden açılır.';
+                      final reviewCount = stats?.reviewPendingCount;
+
+                      return Row(
+                        children: [
+                          ArticlePracticeHomeCard(
+                            scale: scale,
+                            pendingCount: articlePendingCount,
+                            disabledMessage: articleDisabledMessage,
+                            onTap: articlePracticeAvailable
+                                ? () async {
+                                    await _updateLivesAndRouter(
+                                      'articlepractice',
+                                    );
+                                  }
+                                : null,
+                          ),
+                          SizedBox(width: 54 * scale),
+                          _ReviewMistakesCard(
+                            scale: scale,
+                            reviewCount: reviewCount,
+                            onTap: reviewCount != null && reviewCount > 0
+                                ? _openReview
+                                : null,
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),
@@ -159,6 +500,19 @@ class _HomeScreenScreenState extends State<HomeScreen> {
   }
 }
 
+/// Ana ekranın üst şeridi.
+///
+/// Eskiden profil fotoğrafı + "Merhaba, {ad}" + lig rozeti taşıyan bir kart
+/// vardı, altında bilet ve seviye. Selamlama ve fotoğraf yer kaplıyor ama
+/// hiçbir karar verdirmiyordu; üst şerit "şimdi ne yapabilirim" sorusuna cevap
+/// vermeli. Duolingo'nun üst şeridi gibi kart da kaldırıldı — öğeler doğrudan
+/// sayfa zemininde duruyor.
+///
+/// **Seri buradan çıkarıldı, yerine lig kondu.** Seri artık kendi şeridine
+/// sahip (`HomeStreakStrip`) ve orada yalnız sayıyı değil bugünün durumunu da
+/// söylüyor; üst çubuktaki alev aynı sayıyı tekrarlıyordu. Lig bir ara "sayısı
+/// olmayan tek öğe" diye çıkarılmıştı, o itiraz artık geçersiz: rozetin
+/// yanında sıralama duruyor.
 class _ProfileSummaryCard extends StatelessWidget {
   const _ProfileSummaryCard({required this.scale});
 
@@ -166,115 +520,21 @@ class _ProfileSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: 670 * scale,
-      height: 233 * scale,
-      decoration: BoxDecoration(
-        color: _HomeScreenScreenState._panelBorderColor,
-        borderRadius: BorderRadius.circular(26 * scale),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            left: 8 * scale,
-            top: 8 * scale,
-            right: 8 * scale,
-            height: 166 * scale,
-            child: Container(
-              decoration: BoxDecoration(
-                color: _HomeScreenScreenState._backgroundColor,
-                borderRadius: BorderRadius.circular(20 * scale),
-              ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16 * scale),
-                child: Row(
-                  children: [
-                    ProfilePhotoWidget(
-                      width: 96 * scale,
-                      height: 96 * scale,
-                      borderRadius: 28 * scale,
-                      editable: false,
-                    ),
-                    SizedBox(width: 16 * scale),
-                    Expanded(
-                      child: Consumer<UserProvider>(
-                        builder: (context, provider, child) {
-                          final firstName = provider.user?.firstName ?? "";
+      child: Consumer<ScoreWithLivesProvider>(
+        builder: (context, provider, child) {
+          final data = provider.scoreWithLives;
 
-                          return Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Merhaba, $firstName",
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: _HomeScreenScreenState._textColor,
-                                  fontSize: 43 * scale,
-                                  fontWeight: FontWeight.w800,
-                                  fontFamily: 'Inter',
-                                  height: 1.05,
-                                ),
-                              ),
-                              SizedBox(height: 6 * scale),
-                              Text(
-                                "Almanca’ya devam et!",
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: _HomeScreenScreenState._textColor,
-                                  fontSize: 29 * scale,
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: 'Inter',
-                                  height: 1.05,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-                    SizedBox(width: 14 * scale),
-                    Container(
-                      width: 96 * scale,
-                      height: 96 * scale,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0C2243),
-                        borderRadius: BorderRadius.circular(24 * scale),
-                      ),
-                      alignment: Alignment.center,
-                      child: _GemIcon(scale: scale),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            left: 39 * scale,
-            bottom: 9 * scale,
-            child: Row(
-              children: [
-                _ScoreItem(
-                  scale: scale,
-                  iconAsset: 'assets/icons/score.png',
-                  valueBuilder: (provider) =>
-                      "${provider.scoreWithLives?.score ?? ""}",
-                  iconWidth: 44,
-                ),
-                SizedBox(width: 19 * scale),
-                _ScoreItem(
-                  scale: scale,
-                  iconAsset: 'assets/icons/ticket.png',
-                  valueBuilder: (provider) =>
-                      "${provider.scoreWithLives?.lives ?? ""}",
-                  iconWidth: 58,
-                ),
-              ],
-            ),
-          ),
-        ],
+          return HomeTopBar(
+            scale: scale,
+            leagueKey: data?.league?.leagueKey ?? 'kuyruklu',
+            leagueRank: data?.league?.leaderboardRank,
+            tickets: data?.lives ?? 0,
+            level: data?.level ?? 1,
+            freezeCount: data?.freezeCount ?? 0,
+          );
+        },
       ),
     );
   }
@@ -283,20 +543,25 @@ class _ProfileSummaryCard extends StatelessWidget {
 class _ReviewMistakesCard extends StatelessWidget {
   const _ReviewMistakesCard({
     required this.scale,
+    required this.reviewCount,
     required this.onTap,
   });
 
   final double scale;
-  final VoidCallback onTap;
+  final int? reviewCount;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final isLoaded = reviewCount != null;
+    final hasPendingReview = (reviewCount ?? 0) > 0;
+    final isInteractive = onTap != null;
     final width = 307 * scale;
     final height = 438 * scale;
-    final baseOffset = 8 * scale;
-    final radius = BorderRadius.circular(28 * scale);
+    final baseOffset = AppButtonStyle.tileDepth(8 * scale);
+    final radius = BorderRadius.circular(AppButtonStyle.tileRadius(28 * scale));
 
-    return _PressableLayeredCard(
+    return PressableLayeredCard(
       width: width,
       height: height,
       shadowOffset: baseOffset,
@@ -338,8 +603,8 @@ class _ReviewMistakesCard extends StatelessWidget {
                 style: TextStyle(
                   color: _HomeScreenScreenState._textColor,
                   fontSize: 38 * scale,
-                  fontWeight: FontWeight.w900,
-                  fontFamily: 'Inter',
+                  fontWeight: AppTypography.heading,
+                  fontFamily: AppTypography.displayFamily,
                   height: 0.98,
                 ),
               ),
@@ -349,12 +614,16 @@ class _ReviewMistakesCard extends StatelessWidget {
               top: 112 * scale,
               width: 252 * scale,
               child: Text(
-                "Karty'lerle yeniden\nkarşılaş, bilgini\ngüçlendir.",
+                !isLoaded
+                    ? 'Rövanşların kontrol\nediliyor.'
+                    : hasPendingReview
+                        ? '$reviewCount rövanş kartı\nseni bekliyor.'
+                        : 'Rövanş kartın yok.\nYanlış cevapların\nburada birikir.',
                 style: TextStyle(
                   color: _HomeScreenScreenState._textColor,
                   fontSize: 25 * scale,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Inter',
+                  fontWeight: AppTypography.body,
+                  fontFamily: AppTypography.family,
                   height: 1.12,
                 ),
               ),
@@ -364,170 +633,14 @@ class _ReviewMistakesCard extends StatelessWidget {
               top: 22 * scale,
               child: Icon(
                 Icons.refresh_rounded,
-                color: const Color(0xFF93D334),
+                color: isInteractive
+                    ? const Color(0xFF93D334)
+                    : const Color(0xFF8FA0B5),
                 size: 52 * scale,
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _ScoreItem extends StatelessWidget {
-  const _ScoreItem({
-    required this.scale,
-    required this.iconAsset,
-    required this.valueBuilder,
-    required this.iconWidth,
-  });
-
-  final double scale;
-  final String iconAsset;
-  final String Function(ScoreWithLivesProvider provider) valueBuilder;
-  final double iconWidth;
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<ScoreWithLivesProvider>(
-      builder: (context, provider, child) {
-        return Row(
-          children: [
-            Image.asset(
-              iconAsset,
-              width: iconWidth * scale,
-              fit: BoxFit.contain,
-            ),
-            SizedBox(width: 9 * scale),
-            Text(
-              valueBuilder(provider),
-              style: TextStyle(
-                color: _HomeScreenScreenState._textColor,
-                fontSize: 27 * scale,
-                fontWeight: FontWeight.w800,
-                fontFamily: 'Inter',
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _GemIcon extends StatelessWidget {
-  const _GemIcon({required this.scale});
-
-  final double scale;
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size(62 * scale, 46 * scale),
-      painter: _GemPainter(),
-    );
-  }
-}
-
-class _GemPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-
-    final outline = Path()
-      ..moveTo(w * 0.17, h * 0.02)
-      ..lineTo(w * 0.83, h * 0.02)
-      ..lineTo(w, h * 0.34)
-      ..lineTo(w * 0.50, h)
-      ..lineTo(0, h * 0.34)
-      ..close();
-
-    canvas.drawPath(outline, Paint()..color = const Color(0xFFFFA629));
-
-    canvas.drawPath(
-      Path()
-        ..moveTo(w * 0.17, h * 0.02)
-        ..lineTo(w * 0.38, h * 0.02)
-        ..lineTo(w * 0.30, h * 0.38)
-        ..lineTo(0, h * 0.34)
-        ..close(),
-      Paint()..color = const Color(0xFFFFC357),
-    );
-
-    canvas.drawPath(
-      Path()
-        ..moveTo(w * 0.38, h * 0.02)
-        ..lineTo(w * 0.62, h * 0.02)
-        ..lineTo(w * 0.70, h * 0.38)
-        ..lineTo(w * 0.30, h * 0.38)
-        ..close(),
-      Paint()..color = const Color(0xFFFFE074),
-    );
-
-    canvas.drawPath(
-      Path()
-        ..moveTo(w * 0.62, h * 0.02)
-        ..lineTo(w * 0.83, h * 0.02)
-        ..lineTo(w, h * 0.34)
-        ..lineTo(w * 0.70, h * 0.38)
-        ..close(),
-      Paint()..color = const Color(0xFFFF8F1F),
-    );
-
-    canvas.drawPath(
-      Path()
-        ..moveTo(0, h * 0.34)
-        ..lineTo(w * 0.30, h * 0.38)
-        ..lineTo(w * 0.50, h)
-        ..close(),
-      Paint()..color = const Color(0xFFFF9826),
-    );
-
-    canvas.drawPath(
-      Path()
-        ..moveTo(w * 0.30, h * 0.38)
-        ..lineTo(w * 0.70, h * 0.38)
-        ..lineTo(w * 0.50, h)
-        ..close(),
-      Paint()..color = const Color(0xFFFFB731),
-    );
-
-    canvas.drawPath(
-      Path()
-        ..moveTo(w, h * 0.34)
-        ..lineTo(w * 0.70, h * 0.38)
-        ..lineTo(w * 0.50, h)
-        ..close(),
-      Paint()..color = const Color(0xFFFF7C16),
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _GemPainter oldDelegate) => false;
-}
-
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({
-    required this.text,
-    required this.scale,
-    this.fontSize = 38,
-  });
-
-  final String text;
-  final double scale;
-  final double fontSize;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: TextStyle(
-        color: _HomeScreenScreenState._textColor,
-        fontSize: fontSize * scale,
-        fontWeight: FontWeight.w800,
-        fontFamily: 'Inter',
       ),
     );
   }
@@ -546,10 +659,10 @@ class _KartyFeatureCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = 670 * scale;
     final height = 438 * scale;
-    final baseOffset = 8 * scale;
-    final radius = BorderRadius.circular(28 * scale);
+    final baseOffset = AppButtonStyle.tileDepth(8 * scale);
+    final radius = BorderRadius.circular(AppButtonStyle.tileRadius(28 * scale));
 
-    return _PressableLayeredCard(
+    return PressableLayeredCard(
       width: width,
       height: height,
       shadowOffset: baseOffset,
@@ -654,8 +767,8 @@ class _KartyFeatureCard extends StatelessWidget {
                     style: TextStyle(
                       color: _HomeScreenScreenState._textColor,
                       fontSize: 64 * scale,
-                      fontWeight: FontWeight.w900,
-                      fontFamily: 'Inter',
+                      fontWeight: AppTypography.heading,
+                      fontFamily: AppTypography.displayFamily,
                       height: 1,
                     ),
                   ),
@@ -666,207 +779,12 @@ class _KartyFeatureCard extends StatelessWidget {
                     style: TextStyle(
                       color: _HomeScreenScreenState._textColor,
                       fontSize: 31 * scale,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'Inter',
+                      fontWeight: AppTypography.body,
+                      fontFamily: AppTypography.family,
                       height: 1.22,
                     ),
                   ),
                 ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ModeCard extends StatelessWidget {
-  const _ModeCard({
-    required this.scale,
-    required this.title,
-    required this.description,
-    required this.color,
-    required this.baseColor,
-    required this.imageAsset,
-    required this.imageWidth,
-    required this.imageBottom,
-    required this.imageLeft,
-    required this.onTap,
-    this.childTitle,
-  });
-
-  final double scale;
-  final String title;
-  final String? childTitle;
-  final String description;
-  final Color color;
-  final Color baseColor;
-  final String imageAsset;
-  final double imageWidth;
-  final double imageBottom;
-  final double imageLeft;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final width = 307 * scale;
-    final height = 438 * scale;
-    final baseOffset = 8 * scale;
-    final radius = BorderRadius.circular(28 * scale);
-
-    return _PressableLayeredCard(
-      width: width,
-      height: height,
-      shadowOffset: baseOffset,
-      radius: radius,
-      baseColor: baseColor,
-      onPressed: onTap,
-      face: Container(
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: radius,
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          children: [
-            Positioned(
-              left: 23 * scale,
-              top: 22 * scale,
-              child: Text(
-                title,
-                style: TextStyle(
-                  color: _HomeScreenScreenState._textColor,
-                  fontSize: 42 * scale,
-                  fontWeight: FontWeight.w900,
-                  fontFamily: 'Inter',
-                  height: 0.95,
-                ),
-              ),
-            ),
-            if (childTitle != null)
-              Positioned(
-                left: 24 * scale,
-                top: 72 * scale,
-                child: Text(
-                  childTitle!,
-                  style: TextStyle(
-                    color: _HomeScreenScreenState._textColor,
-                    fontSize: 26 * scale,
-                    fontWeight: FontWeight.w900,
-                    fontFamily: 'Inter',
-                    height: 1,
-                  ),
-                ),
-              ),
-            Positioned(
-              right: 18 * scale,
-              top: 20 * scale,
-              child: Image.asset(
-                'assets/icons/ticket-one.png',
-                width: 66 * scale,
-                fit: BoxFit.contain,
-              ),
-            ),
-            Positioned(
-              left: 24 * scale,
-              top: childTitle == null ? 106 * scale : 108 * scale,
-              width: 260 * scale,
-              child: Text(
-                description,
-                style: TextStyle(
-                  color: _HomeScreenScreenState._textColor,
-                  fontSize: 27 * scale,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Inter',
-                  height: 1.12,
-                ),
-              ),
-            ),
-            Positioned(
-              left: imageLeft * scale,
-              bottom: imageBottom * scale,
-              child: Image.asset(
-                imageAsset,
-                width: imageWidth * scale,
-                fit: BoxFit.contain,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PressableLayeredCard extends StatefulWidget {
-  const _PressableLayeredCard({
-    required this.width,
-    required this.height,
-    required this.shadowOffset,
-    required this.radius,
-    required this.baseColor,
-    required this.face,
-    required this.onPressed,
-  });
-
-  final double width;
-  final double height;
-  final double shadowOffset;
-  final BorderRadius radius;
-  final Color baseColor;
-  final Widget face;
-  final VoidCallback onPressed;
-
-  @override
-  State<_PressableLayeredCard> createState() => _PressableLayeredCardState();
-}
-
-class _PressableLayeredCardState extends State<_PressableLayeredCard> {
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final faceHeight = widget.height - widget.shadowOffset;
-
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapCancel: () => setState(() => _isPressed = false),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        widget.onPressed();
-      },
-      child: SizedBox(
-        width: widget.width,
-        height: widget.height,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned(
-              left: 0,
-              top: widget.shadowOffset,
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 60),
-                opacity: _isPressed ? 0 : 1,
-                child: Container(
-                  width: widget.width,
-                  height: faceHeight,
-                  decoration: BoxDecoration(
-                    color: widget.baseColor,
-                    borderRadius: widget.radius,
-                  ),
-                ),
-              ),
-            ),
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 60),
-              curve: Curves.easeOut,
-              left: 0,
-              top: _isPressed ? widget.shadowOffset : 0,
-              child: SizedBox(
-                width: widget.width,
-                height: faceHeight,
-                child: widget.face,
               ),
             ),
           ],

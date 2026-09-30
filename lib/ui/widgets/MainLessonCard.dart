@@ -1,3 +1,4 @@
+import 'package:lingualloop/ui/app_typography.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -21,16 +22,21 @@ class MainLessonCard extends StatelessWidget {
       child: Card(
         color: color,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        child: LayoutBuilder( // Card'ın boyutlarını ölçmek için
+        child: LayoutBuilder(
+          // Card'ın boyutlarını ölçmek için
           builder: (context, constraints) {
-            double cardHeight = constraints.maxHeight; // Card'ın toplam yüksekliği
-            double ticketHeight = cardHeight * 0.106; // ticket-one.png'nin yüksekliği
-            double ottaHeight = cardHeight - ticketHeight - 10; // Kalan yükseklik
+            double cardHeight =
+                constraints.maxHeight; // Card'ın toplam yüksekliği
+            double ticketHeight =
+                cardHeight * 0.106; // ticket-one.png'nin yüksekliği
+            double ottaHeight =
+                cardHeight - ticketHeight - 10; // Kalan yükseklik
 
             return Padding(
               padding: const EdgeInsets.only(right: 10.0, top: 10.0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start, // Öğeleri hizalayın
+                crossAxisAlignment:
+                    CrossAxisAlignment.start, // Öğeleri hizalayın
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -42,13 +48,15 @@ class MainLessonCard extends StatelessWidget {
                     ],
                   ),
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.start, // Satır içi dikey hizalamayı başa al
+                    crossAxisAlignment: CrossAxisAlignment
+                        .start, // Satır içi dikey hizalamayı başa al
                     children: [
                       Flexible(
                         flex: 1,
                         child: Align(
                           alignment: Alignment.topLeft, // Resmi sola hizala
-                          child: Image.asset('assets/images/otta.png', height: ottaHeight),
+                          child: Image.asset('assets/images/otta.png',
+                              height: ottaHeight),
                         ),
                       ),
                       Flexible(
@@ -63,18 +71,20 @@ class MainLessonCard extends StatelessWidget {
                               style: TextStyle(
                                   fontSize: 30,
                                   color: Colors.white,
-                                  fontWeight: FontWeight.bold),
+                                  fontWeight: AppTypography.label),
                             ),
                             Text(
                               textAlign: TextAlign.right,
                               description,
-                              style: TextStyle(fontSize: 16, color: Colors.white),
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.white),
                             ),
                           ],
                         ),
                       ),
                     ],
-                  )],
+                  )
+                ],
               ),
             );
           },

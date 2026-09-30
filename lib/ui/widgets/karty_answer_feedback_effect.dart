@@ -1,22 +1,34 @@
+import 'package:lingualloop/ui/app_typography.dart';
 import 'dart:math' as math;
 import 'dart:ui' show PathMetric;
 
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
+import 'package:lingualloop/ui/widgets/pronunciation_button.dart';
 
 class KartyFeedbackWord extends StatefulWidget {
   const KartyFeedbackWord({
     super.key,
+    required this.article,
     required this.text,
     required this.scale,
     required this.isCorrectActive,
     required this.isWrongActive,
+    this.onPronounce,
   });
 
+  final String article;
   final String text;
   final double scale;
   final ValueListenable<bool> isCorrectActive;
   final ValueListenable<bool> isWrongActive;
+
+  /// Telaffuz butonunun eylemi. `null` ise buton çizilmiyor.
+  ///
+  /// Buton **kelimenin yanında** duruyor çünkü telaffuz karta değil kelimeye
+  /// ait. Bir dönem kartla "ANLADIM" arasında tek başına duruyordu ve
+  /// hiçbir şeye ait olmayan öksüz bir öğe gibi okunuyordu.
+  final VoidCallback? onPronounce;
 
   @override
   State<KartyFeedbackWord> createState() => _KartyFeedbackWordState();
@@ -87,64 +99,62 @@ class _KartyFeedbackWordState extends State<KartyFeedbackWord>
         final wrongEnvelope = math.sin(wrong * math.pi).clamp(0.0, 1.0);
         final shake =
             math.sin(wrong * math.pi * 10) * 7 * widget.scale * wrongEnvelope;
-        final textColor = Color.lerp(
-          Colors.white,
-          const Color(0xFFFF6A55),
-          wrongEnvelope * 0.85,
-        )!;
+        final nounColor = wrongEnvelope > 0
+            ? Color.lerp(
+                const Color(0xFFE9EEF5),
+                // Paletin kırmızısından türetilmiş yumuşak ton.
+                Color.lerp(
+                    const Color(0xFFE9EEF5), const Color(0xFFF52A2A), 0.62)!,
+                wrongEnvelope * 0.85,
+              )!
+            : Color.lerp(
+                const Color(0xFFE9EEF5),
+                const Color(0xFF93D334),
+                correctEnvelope,
+              )!;
 
         return Transform.translate(
           offset: Offset(shake, 0),
           child: Transform.scale(
             scale: 1 + correctEnvelope * 0.035 - wrongEnvelope * 0.018,
-            child: Stack(
-              alignment: Alignment.center,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (correctEnvelope > 0)
-                  Text(
-                    widget.text,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: _textStyle.copyWith(
-                      foreground: Paint()
-                        ..color = const Color(0xFFFFD52F).withValues(
-                          alpha: 0.45 * correctEnvelope,
-                        )
-                        ..style = PaintingStyle.stroke
-                        ..strokeWidth = 9 * widget.scale
-                        ..maskFilter = MaskFilter.blur(
-                          BlurStyle.normal,
-                          (7 + correct * 5) * widget.scale,
-                        ),
+                if (widget.article.trim().isNotEmpty) ...[
+                  _KartyArticleBadge(
+                    article: widget.article,
+                    scale: widget.scale,
+                  ),
+                  SizedBox(width: 21 * widget.scale),
+                ],
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      widget.text,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      style: _textStyle.copyWith(color: nounColor),
                     ),
                   ),
-                ShaderMask(
-                  blendMode: BlendMode.srcIn,
-                  shaderCallback: (bounds) {
-                    if (correctEnvelope == 0) {
-                      return LinearGradient(colors: [textColor, textColor])
-                          .createShader(bounds);
-                    }
-                    return LinearGradient(
-                      begin: Alignment(-1.8 + correct * 3.6, -1),
-                      end: Alignment(-0.6 + correct * 3.6, 1),
-                      colors: const [
-                        Colors.white,
-                        Color(0xFFFFF3A3),
-                        Colors.white,
-                      ],
-                      stops: const [0, 0.5, 1],
-                    ).createShader(bounds);
-                  },
-                  child: Text(
-                    widget.text,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: _textStyle.copyWith(color: Colors.white),
-                  ),
                 ),
+                if (widget.onPronounce != null) ...[
+                  SizedBox(width: 13 * widget.scale),
+                  PronunciationButton(
+                    // Ölçü **dokunma hedefinden** geliyor, optik
+                    // dengeden değil. Buton gövdesi 96 birim; 0.84
+                    // katsayısı 80 birim ≈ 46pt eder ve 44pt sınırının
+                    // üstünde kalır.
+                    //
+                    // Bir tur 0.66 denendi (63 birim ≈ 36pt): kelimeyle
+                    // orantısı hoştu ama basması zordu. Küçük bir
+                    // kontrolü "daha zarif" diye sınırın altına indirmek
+                    // erişilebilirlik borcudur.
+                    scale: widget.scale * 0.84,
+                    onTap: widget.onPronounce!,
+                  ),
+                ],
               ],
             ),
           ),
@@ -155,23 +165,69 @@ class _KartyFeedbackWordState extends State<KartyFeedbackWord>
 
   TextStyle get _textStyle => TextStyle(
         color: Colors.white,
-        fontSize: 78 * widget.scale,
-        fontWeight: FontWeight.w900,
-        fontFamily: 'Inter',
-        height: 1.05,
+        fontSize: 88.5 * widget.scale,
+        fontWeight: AppTypography.word,
+        fontFamily: AppTypography.family,
+        height: 1.1,
+        letterSpacing: -0.9 * widget.scale,
       );
+}
+
+/// Approved article pill: 4.6 cqw type, 1.8/2.3 cqw padding, 1 cqw depth.
+class _KartyArticleBadge extends StatelessWidget {
+  const _KartyArticleBadge({
+    required this.article,
+    required this.scale,
+  });
+
+  final String article;
+  final double scale;
+
+  @override
+  Widget build(BuildContext context) {
+    final (face, base) = _tonesFor(article);
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+          horizontal: 17.25 * scale, vertical: 13.5 * scale),
+      decoration: BoxDecoration(
+        color: face,
+        borderRadius: BorderRadius.circular(18 * scale),
+        boxShadow: [BoxShadow(color: base, offset: Offset(0, 7.5 * scale))],
+      ),
+      child: Text(article.trim(),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 34.5 * scale,
+            fontWeight: AppTypography.label,
+            fontFamily: AppTypography.family,
+            height: 1.2,
+          )),
+    );
+  }
+
+  /// Yüz ve taban tonları; pusuladaki değerlerin birebir aynısı
+  /// (`article_practice_screen.dart`).
+  (Color, Color) _tonesFor(String article) {
+    return switch (article.trim().toLowerCase()) {
+      'der' => (const Color(0xFF1CB1F5), const Color(0xFF1B84B5)),
+      'die' => (const Color(0xFFF52A2A), const Color(0xFFAA1C1C)),
+      'das' => (const Color(0xFFFFB000), const Color(0xFFC97800)),
+      // Beyaz yüz + beyaz metin okunmaz; bilinmeyen artikel sönük griye
+      // düşüyor.
+      _ => (const Color(0xFF8FA0B5), const Color(0xFF5A6B80)),
+    };
+  }
 }
 
 class KartyCardFeedbackEffect extends StatefulWidget {
   const KartyCardFeedbackEffect({
     super.key,
     required this.scale,
-    required this.isCorrectActive,
     required this.isWrongActive,
   });
 
   final double scale;
-  final ValueListenable<bool> isCorrectActive;
   final ValueListenable<bool> isWrongActive;
 
   @override
@@ -180,29 +236,17 @@ class KartyCardFeedbackEffect extends StatefulWidget {
 }
 
 class _KartyCardFeedbackEffectState extends State<KartyCardFeedbackEffect>
-    with TickerProviderStateMixin {
-  late final AnimationController _correctController;
+    with SingleTickerProviderStateMixin {
   late final AnimationController _wrongController;
 
   @override
   void initState() {
     super.initState();
-    _correctController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1050),
-    );
     _wrongController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1450),
     );
-    widget.isCorrectActive.addListener(_handleCorrectState);
     widget.isWrongActive.addListener(_handleWrongState);
-  }
-
-  void _handleCorrectState() {
-    widget.isCorrectActive.value
-        ? _correctController.forward(from: 0)
-        : _correctController.reset();
   }
 
   void _handleWrongState() {
@@ -214,10 +258,6 @@ class _KartyCardFeedbackEffectState extends State<KartyCardFeedbackEffect>
   @override
   void didUpdateWidget(covariant KartyCardFeedbackEffect oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.isCorrectActive != widget.isCorrectActive) {
-      oldWidget.isCorrectActive.removeListener(_handleCorrectState);
-      widget.isCorrectActive.addListener(_handleCorrectState);
-    }
     if (oldWidget.isWrongActive != widget.isWrongActive) {
       oldWidget.isWrongActive.removeListener(_handleWrongState);
       widget.isWrongActive.addListener(_handleWrongState);
@@ -226,9 +266,7 @@ class _KartyCardFeedbackEffectState extends State<KartyCardFeedbackEffect>
 
   @override
   void dispose() {
-    widget.isCorrectActive.removeListener(_handleCorrectState);
     widget.isWrongActive.removeListener(_handleWrongState);
-    _correctController.dispose();
     _wrongController.dispose();
     super.dispose();
   }
@@ -238,14 +276,13 @@ class _KartyCardFeedbackEffectState extends State<KartyCardFeedbackEffect>
     return IgnorePointer(
       child: RepaintBoundary(
         child: AnimatedBuilder(
-          animation: Listenable.merge([_correctController, _wrongController]),
+          animation: _wrongController,
           builder: (context, child) {
-            if (_correctController.value == 0 && _wrongController.value == 0) {
+            if (_wrongController.value == 0) {
               return const SizedBox.shrink();
             }
             return CustomPaint(
               painter: _KartyCardFeedbackPainter(
-                correctProgress: _correctController.value,
                 wrongProgress: _wrongController.value,
                 scale: widget.scale,
               ),
@@ -260,20 +297,14 @@ class _KartyCardFeedbackEffectState extends State<KartyCardFeedbackEffect>
 
 class _KartyCardFeedbackPainter extends CustomPainter {
   const _KartyCardFeedbackPainter({
-    required this.correctProgress,
     required this.wrongProgress,
     required this.scale,
   });
 
-  final double correctProgress;
   final double wrongProgress;
   final double scale;
 
-  static const _yellow = Color(0xFFFFD52F);
-  static const _lime = Color(0xFF93D334);
-  static const _deepGreen = Color(0xFF659D22);
   static const _wrongRed = Color(0xFFFF4D3D);
-  static const _wrongOrange = Color(0xFFFF7A38);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -291,75 +322,8 @@ class _KartyCardFeedbackPainter extends CustomPainter {
       );
     final metric = rimPath.computeMetrics().first;
 
-    if (correctProgress > 0) {
-      _drawCorrectEnergy(canvas, rimRect, rimPath, metric);
-    }
     if (wrongProgress > 0) {
       _drawWrongDrain(canvas, size, rimPath, metric);
-    }
-  }
-
-  void _drawCorrectEnergy(
-    Canvas canvas,
-    Rect rimRect,
-    Path rimPath,
-    PathMetric metric,
-  ) {
-    final rise = Curves.easeOutCubic.transform(
-      (correctProgress / 0.28).clamp(0.0, 1.0),
-    );
-    final fade = 1 -
-        Curves.easeInCubic.transform(
-          ((correctProgress - 0.7) / 0.3).clamp(0.0, 1.0),
-        );
-    final opacity = rise * fade;
-
-    canvas.drawPath(
-      rimPath,
-      Paint()
-        ..color = _yellow.withValues(alpha: 0.32 * opacity)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 20 * scale
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 14 * scale),
-    );
-    canvas.drawPath(
-      rimPath,
-      Paint()
-        ..shader = SweepGradient(
-          transform: GradientRotation(correctProgress * math.pi * 4.8),
-          colors: [
-            _lime.withValues(alpha: 0.12 * opacity),
-            Colors.white.withValues(alpha: 0.98 * opacity),
-            _yellow.withValues(alpha: opacity),
-            _deepGreen.withValues(alpha: 0.72 * opacity),
-            _lime.withValues(alpha: 0.12 * opacity),
-          ],
-          stops: const [0, 0.18, 0.36, 0.58, 1],
-        ).createShader(rimRect)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 8 * scale
-        ..strokeCap = StrokeCap.round,
-    );
-
-    for (var index = 0; index < 8; index++) {
-      final travel = (correctProgress * 1.35 + index / 8) % 1;
-      final tangent = metric.getTangentForOffset(metric.length * travel);
-      if (tangent == null) continue;
-      final radius = (4 + index % 3 * 2) * scale;
-      canvas.drawCircle(
-        tangent.position,
-        radius * 2.2,
-        Paint()
-          ..color = _yellow.withValues(alpha: 0.2 * opacity)
-          ..maskFilter = MaskFilter.blur(BlurStyle.normal, 6 * scale),
-      );
-      canvas.drawCircle(
-        tangent.position,
-        radius,
-        Paint()
-          ..color = (index.isEven ? Colors.white : _yellow)
-              .withValues(alpha: 0.92 * opacity),
-      );
     }
   }
 
@@ -380,92 +344,41 @@ class _KartyCardFeedbackPainter extends CustomPainter {
     canvas.drawPath(
       rimPath,
       Paint()
-        ..color = _wrongRed.withValues(alpha: 0.42 * strike * fade)
+        // Kenardaki kırmızı halka **kısıldı**. Yanlış cevapta dört sinyal
+        // aynı anda çalışıyordu: kart sarsılıyor, çerçeve kızarıyor, kart
+        // küçülüyor ve kenar kırmızı yanıyordu. Küçülme kaldırıldı,
+        // kızarma yumuşadı; bu halka da alarm olmaktan çıkıp eşlik eden bir
+        // ipucuna indi.
+        // Yanlış cevabın **tek görsel işareti**: kartı saran kırmızı hale.
+        //
+        // Doz kalibre edildi. 0.16 koyu zeminde tamamen kayboluyordu, 0.70
+        // ise alarm gibiydi; 0.38 okunuyor ama azarlamıyor. Genişlik 16
+        // birim — 22'de hale kartı yutuyordu.
+        ..color = _wrongRed.withValues(alpha: 0.38 * strike * fade)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 18 * scale
+        ..strokeWidth = 16 * scale
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, 12 * scale),
     );
-    canvas.drawPath(
-      rimPath,
-      Paint()
-        ..shader = SweepGradient(
-          transform: GradientRotation(-wrongProgress * math.pi * 2.2),
-          colors: [
-            _wrongRed.withValues(alpha: 0.05 * fade),
-            _wrongOrange.withValues(alpha: 0.88 * fade),
-            _wrongRed.withValues(alpha: 0.68 * fade),
-            _wrongRed.withValues(alpha: 0.05 * fade),
-          ],
-        ).createShader(Offset.zero & size)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 7 * scale,
-    );
-
-    for (var index = 0; index < 11; index++) {
-      final delay = index * 0.035;
-      final particleProgress =
-          ((wrongProgress - delay) / (1 - delay)).clamp(0.0, 1.0);
-      if (particleProgress <= 0 || particleProgress >= 1) continue;
-      final tangent = metric.getTangentForOffset(
-        ((index * 0.137) % 1) * metric.length,
-      );
-      if (tangent == null) continue;
-
-      final direction = tangent.position - size.center(Offset.zero);
-      final normalized = direction.distance == 0
-          ? const Offset(0, 1)
-          : direction / direction.distance;
-      final drift = Offset(
-        math.sin(index * 2.1) * 28 * scale,
-        (24 + index % 4 * 13) * scale,
-      );
-      final position = tangent.position +
-          normalized * (particleProgress * 64 * scale) +
-          drift * particleProgress;
-      final particleOpacity =
-          math.sin(particleProgress * math.pi).clamp(0.0, 1.0) * fade;
-      _drawEnergyDroplet(
-        canvas,
-        position,
-        (7 + index % 3 * 3) * scale * (1 - particleProgress * 0.35),
-        math.atan2(normalized.dy, normalized.dx) + particleProgress,
-        Color.lerp(_wrongOrange, _wrongRed, index / 11)!
-            .withValues(alpha: particleOpacity),
-      );
-    }
-  }
-
-  void _drawEnergyDroplet(
-    Canvas canvas,
-    Offset center,
-    double radius,
-    double angle,
-    Color color,
-  ) {
-    final path = Path()
-      ..moveTo(0, -radius * 1.4)
-      ..cubicTo(
-          radius * 0.9, -radius * 0.45, radius * 0.75, radius * 0.8, 0, radius)
-      ..cubicTo(-radius * 0.75, radius * 0.8, -radius * 0.9, -radius * 0.45, 0,
-          -radius * 1.4)
-      ..close();
-    canvas.save();
-    canvas.translate(center.dx, center.dy);
-    canvas.rotate(angle);
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = color.withValues(alpha: color.a * 0.35)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 6 * scale),
-    );
-    canvas.drawPath(path, Paint()..color = color);
-    canvas.restore();
+    // ## Buradan iki sinyal **kaldırıldı**
+    //
+    // 1. Dönen `SweepGradient` halkası (alfa 0.88) — kartın çevresinde
+    //    turuncu bir çember yakıyordu. İkinci bir alarmdı ve §2.2 gradyan
+    //    bulanıklığını zaten yasaklıyor.
+    // 2. Kenardan dışarı uçan 11 "enerji damlacığı" — kart hasar almış,
+    //    parçalanmış gibi okunuyordu.
+    //
+    // Yanlış cevapta toplam **altı** sinyal aynı anda çalışıyordu: sarsıntı,
+    // çerçevenin kızarması, kartın küçülmesi, bulanık kırmızı halka, dönen
+    // halka ve parçacıklar. Hepsi birden "cezalandırıldın" diyordu.
+    //
+    // Kalanlar: kısa bir "hayır" jesti, çerçevede hafif kızarma ve kenarda
+    // çok sönük bir kırmızı iz. Bilgilendiren kısım — doğru yazımın
+    // yukarıda belirmesi — zaten ayrı bir katman ve o dokunulmadı.
   }
 
   @override
   bool shouldRepaint(covariant _KartyCardFeedbackPainter oldDelegate) {
-    return oldDelegate.correctProgress != correctProgress ||
-        oldDelegate.wrongProgress != wrongProgress ||
+    return oldDelegate.wrongProgress != wrongProgress ||
         oldDelegate.scale != scale;
   }
 }

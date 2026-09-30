@@ -1,0 +1,11 @@
+Baloo 2 — 30 Eylül 2026
+
+Resmî Google Fonts kaynağından alınan ve onaylanan önizlemede kullanılan dosyalar.
+Kaynak: https://raw.githubusercontent.com/google/fonts/main/ofl/baloo2/Baloo2%5Bwght%5D.ttf
+Kaynak SHA-256: d47a6852548059b1db49a1319d06d499d546c3fa2237cf9eee9c43c8abb025c2
+Lisans: SIL Open Font License 1.1; Baloo2-LICENSE.txt
+
+Statik ağırlıklar: 800
+fontTools instantiateVariableFont(updateFontNames=True) ile gerçek wght örnekleri.
+Önizlemeden uygulamaya dosyalar değiştirilmeden kopyalandı.
+TR/DE kontrolü: ÇçĞğIıİiÖöŞşÜüÄäÖöÜüßẞ — tümü mevcut.

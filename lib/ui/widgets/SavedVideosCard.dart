@@ -1,3 +1,4 @@
+import 'package:lingualloop/ui/app_typography.dart';
 import 'package:flutter/material.dart';
 
 import 'Popups/VideoPopup.dart';
@@ -50,9 +51,9 @@ class SavedVideosCard extends StatelessWidget {
                     'Kaydedilenler',
                     style: TextStyle(
                       color: Colors.white,
-                      fontFamily: 'Inter',
+                      fontFamily: AppTypography.family,
                       fontSize: 36 * scale,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: AppTypography.caption,
                       height: 1,
                     ),
                   ),
@@ -60,9 +61,9 @@ class SavedVideosCard extends StatelessWidget {
                     'Tümünü Gör',
                     style: TextStyle(
                       color: _secondaryTextColor,
-                      fontFamily: 'Inter',
+                      fontFamily: AppTypography.family,
                       fontSize: 30 * scale,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: AppTypography.caption,
                       height: 1,
                     ),
                   ),
@@ -111,9 +112,9 @@ class SavedVideosCard extends StatelessWidget {
                                 maxLines: 1,
                                 style: TextStyle(
                                   color: const Color(0xFF5F5CF0),
-                                  fontFamily: 'Inter',
+                                  fontFamily: AppTypography.family,
                                   fontSize: 40 * scale,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: AppTypography.caption,
                                 ),
                               ),
                             ),

@@ -1,3 +1,4 @@
+import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:flutter/material.dart';
 
 class CustomIconButton extends StatefulWidget {
@@ -9,16 +10,16 @@ class CustomIconButton extends StatefulWidget {
   final double? buttonSize;
   final double? padding;
 
-  const CustomIconButton({
-    Key? key,
-    required this.img,
-    this.clickedImg, // İkinci ikon parametresi
-    required this.backgroundColor,
-    this.iconColor,
-    this.ontap,
-    this.buttonSize,
-    this.padding
-  }) : super(key: key);
+  const CustomIconButton(
+      {Key? key,
+      required this.img,
+      this.clickedImg, // İkinci ikon parametresi
+      required this.backgroundColor,
+      this.iconColor,
+      this.ontap,
+      this.buttonSize,
+      this.padding})
+      : super(key: key);
 
   @override
   _CustomIconButtonState createState() => _CustomIconButtonState();
@@ -43,42 +44,25 @@ class _CustomIconButtonState extends State<CustomIconButton> {
 
   @override
   Widget build(BuildContext context) {
-    // Butonun devre dışı olup olmadığını kontrol et
-    bool isButtonDisabled = widget.ontap == null;
-
-    return Material(
-      color: widget.iconColor,
-      borderRadius: BorderRadius.circular(14),
-      child: AbsorbPointer(
-        absorbing: isButtonDisabled, // Buton devre dışıysa, etkileşimi yutuyoruz
-        child: Ink(
-          decoration: BoxDecoration(
-            color: widget.backgroundColor,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: InkWell(
-            onTap: isButtonDisabled
-                ? null // Buton devre dışıysa tıklanamaz
-                : () {
-              widget.ontap!(); // Null check yapmadan doğrudan fonksiyonu çağır
-              _toggleIcon(); // Önce ikon değişimini yap
-            },
-            borderRadius: BorderRadius.circular(14),
-            splashColor: Colors.grey.withOpacity(0.1),
-            child: Padding(
-              padding: EdgeInsets.all(widget.padding ?? 10),
-              child: Opacity(
-                opacity: isButtonDisabled ? 0.5 : 1.0, // Buton devre dışıysa opaklık %50
-                child: Image.asset(
-                  'assets/icons/${currentIcon}.png',
-                  height: widget.buttonSize ?? 26, // 49
-                  color: widget.iconColor, // Rengi gri yapıyoruz
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+    final iconSize = widget.buttonSize ?? 26;
+    final size = iconSize + 2 * (widget.padding ?? 10);
+    return DepthPressableButton(
+      width: size,
+      height: size,
+      radius: 14,
+      shadowOffset: 0,
+      backgroundColor: widget.backgroundColor,
+      shadowColor: widget.backgroundColor.computeLuminance() > .5
+          ? const Color(0xFFBDC5D0)
+          : const Color(0xFF0B2143),
+      fontSize: 0,
+      enabled: widget.ontap != null,
+      onPressed: () {
+        widget.ontap?.call();
+        _toggleIcon();
+      },
+      child: Image.asset('assets/icons/$currentIcon.png',
+          height: iconSize, color: widget.iconColor),
     );
   }
 }

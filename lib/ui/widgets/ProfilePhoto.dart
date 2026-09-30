@@ -10,17 +10,17 @@ import '../../providers/UserProvider.dart';
 import '../../services/UserService.dart';
 
 class ProfilePhotoWidget extends StatefulWidget {
-  late double? width;
-  late double? height;
-  late double? borderRadius;
-  late bool? editable;
+  final double? width;
+  final double? height;
+  final double? borderRadius;
+  final bool? editable;
 
-  ProfilePhotoWidget({
+  const ProfilePhotoWidget({
     super.key,
     this.width,
     this.height,
     this.borderRadius,
-    this.editable
+    this.editable,
   });
 
   @override
@@ -41,26 +41,38 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
     _user = Provider.of<UserProvider>(context, listen: false).user;
   }
 
-  Future<void> _pickImageAndUpload(BuildContext context) async {
+  Future<void> _pickImageAndUpload() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile == null) return;
 
-    final response = await _userService.updateProfilePhotoById(File(pickedFile.path));
+    final response =
+        await _userService.updateProfilePhotoById(File(pickedFile.path));
     if (response.errorCode != null) {
       AppNotifier.showMessage("Fotoğraf yüklenemedi: ${response.errorCode}");
 
       return;
     }
 
-    await _localFileService.updateCachedProfilePhoto(response.data!.signedUrl, _user!.userId, context,);
+    if (!mounted) return;
+    await _localFileService.updateCachedProfilePhoto(
+      response.data!.signedUrl,
+      _user!.userId,
+      context,
+    );
 
-    AppNotifier.showMessage("Profil fotoğrafı başarıyla güncellendi. ${response.errorCode}", color: Colors.green);
+    AppNotifier.showMessage(
+        "Profil fotoğrafı başarıyla güncellendi. ${response.errorCode}",
+        color: Colors.green);
   }
 
   @override
   Widget build(BuildContext context) {
+    final photoWidth = widget.width ?? 70;
+    final photoHeight = widget.height ?? 70;
+    final editButtonSize = (photoWidth * 0.30).clamp(30.0, 46.0).toDouble();
+    final editIconSize = editButtonSize * 0.55;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -71,37 +83,64 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
             // Profil fotoğrafı
             Consumer<UserProvider>(
               builder: (context, userProvider, _) {
+                final photoPath = userProvider.user?.profilePhotoUrl;
+
                 return ClipRRect(
-                  borderRadius: BorderRadius.circular(widget.borderRadius ?? 20),
-                  child: Image.file(
-                    File(userProvider.user!.profilePhotoUrl!),
-                    width: widget.width ?? 70,
-                    height: widget.height ?? 70,
-                    fit: BoxFit.cover,
-                    key: ValueKey(DateTime.now().toString()), // Unique key forces reload
-                  ),
+                  borderRadius:
+                      BorderRadius.circular(widget.borderRadius ?? 20),
+                  child: photoPath == null || photoPath.isEmpty
+                      ? Image.asset(
+                          'assets/icons/profilephoto.png',
+                          width: photoWidth,
+                          height: photoHeight,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.file(
+                          File(photoPath),
+                          width: photoWidth,
+                          height: photoHeight,
+                          fit: BoxFit.cover,
+                          key: ValueKey(DateTime.now()
+                              .toString()), // Unique key forces reload
+                        ),
                 );
               },
             ),
 
             if (widget.editable == null || widget.editable != false)
               Positioned(
-                bottom: -6,
-                right: -10,
+                bottom: -editButtonSize * 0.10,
+                right: -editButtonSize * 0.12,
                 child: GestureDetector(
-                  onTap: () => _pickImageAndUpload(context),
+                  onTap: _pickImageAndUpload,
                   child: Container(
-                    width: 26,
-                    height: 26,
+                    width: editButtonSize,
+                    height: editButtonSize,
                     decoration: BoxDecoration(
-                      color: Color(0xFF5F5CF0),
-                      shape: BoxShape.rectangle,
-                      borderRadius: BorderRadius.circular(8),
+                      color: const Color(0xFF041227),
+                      borderRadius:
+                          BorderRadius.circular(editButtonSize * 0.32),
+                      border: Border.all(
+                        color: const Color(0xFF0C2244),
+                        width: 3,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.32),
+                          offset: const Offset(0, 5),
+                          blurRadius: 10,
+                        ),
+                        BoxShadow(
+                          color:
+                              const Color(0xFFFFB000).withValues(alpha: 0.18),
+                          blurRadius: 12,
+                        ),
+                      ],
                     ),
                     child: Icon(
-                      Icons.edit_rounded,
-                      size: 18,
-                      color: Colors.white,
+                      Icons.photo_camera_rounded,
+                      size: editIconSize,
+                      color: const Color(0xFFF4F5F8),
                     ),
                   ),
                 ),

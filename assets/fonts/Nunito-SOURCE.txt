@@ -1,0 +1,6 @@
+Nunito — Google Fonts
+Source: https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/nunito/Nunito%5Bwght%5D.ttf
+Revision: 8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5
+License: SIL Open Font License 1.1 (Nunito-LICENSE.txt)
+Static instances: wght 400, 500, 600, 700, 800, 900; generated with fontTools.varLib.instancer.
+Verified characters: ÇçĞğIıİiÖöŞşÜüÄäßSchlüsselStraße149

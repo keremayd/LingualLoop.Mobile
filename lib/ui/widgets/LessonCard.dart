@@ -1,3 +1,4 @@
+import 'package:lingualloop/ui/app_typography.dart';
 import 'package:flutter/material.dart';
 
 class LessonCard extends StatefulWidget {
@@ -29,7 +30,8 @@ class _LessonCardState extends State<LessonCard> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
         double screenHeight = constraints.maxHeight; // 218.697
         double screenWidth = constraints.maxWidth; // 170.384
         String imageName = widget.imageName;
@@ -42,21 +44,30 @@ class _LessonCardState extends State<LessonCard> {
           },
           onTapCancel: () => setState(() => _isPressed = false),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 40), // Butonun aşağı çökme süresi
+            duration:
+                const Duration(milliseconds: 40), // Butonun aşağı çökme süresi
             transform: Matrix4.translationValues(0, _isPressed ? 4 : 0, 0),
             decoration: BoxDecoration(
               boxShadow: _isPressed
-                  ? [ BoxShadow(color: widget.borderColor, offset: const Offset(0, 2)) ]
-                  : [ BoxShadow(color: widget.borderColor, offset: const Offset(0, 6)) ],
+                  ? [
+                      BoxShadow(
+                          color: widget.borderColor, offset: const Offset(0, 2))
+                    ]
+                  : [
+                      BoxShadow(
+                          color: widget.borderColor, offset: const Offset(0, 6))
+                    ],
               borderRadius: BorderRadius.circular(14),
-              
             ),
             child: Card(
               color: widget.color,
               shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14)),
+                  borderRadius: BorderRadius.circular(14)),
               child: Padding(
-                padding: EdgeInsets.only(right: screenWidth * 0.0586, top: screenHeight * 0.0457, left: screenWidth * 0.0704), // 10, 10, 12
+                padding: EdgeInsets.only(
+                    right: screenWidth * 0.0586,
+                    top: screenHeight * 0.0457,
+                    left: screenWidth * 0.0704), // 10, 10, 12
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   // Öğeleri hizalayın
@@ -67,10 +78,12 @@ class _LessonCardState extends State<LessonCard> {
                       children: [
                         Text(
                           widget.title,
-                          style: TextStyle(fontSize: 25,
+                          style: TextStyle(
+                            fontSize: 25,
                             color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            height: 0,),
+                            fontWeight: AppTypography.label,
+                            height: 0,
+                          ),
                         ),
                         Image.asset(
                           'assets/icons/ticket-one.png',
@@ -83,16 +96,17 @@ class _LessonCardState extends State<LessonCard> {
                       children: [
                         Text(
                           widget.childTitle ?? "",
-                          style: TextStyle(fontSize: 13,
+                          style: TextStyle(
+                            fontSize: 13,
                             color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            height: 0,),
+                            fontWeight: AppTypography.label,
+                            height: 0,
+                          ),
                         ),
                       ],
                     ),
                     SizedBox(
-                      child:
-                      Text(
+                      child: Text(
                         widget.description,
                         style: TextStyle(fontSize: 14, color: Colors.white),
                       ),
@@ -106,8 +120,8 @@ class _LessonCardState extends State<LessonCard> {
                           flex: 1,
                           child: Align(
                             alignment: Alignment.center, // Resmi sola hizala
-                            child: Image.asset(
-                                'assets/images/$imageName.png', height: screenHeight * 0.4572), // 100
+                            child: Image.asset('assets/images/$imageName.png',
+                                height: screenHeight * 0.4572), // 100
                           ),
                         ),
                       ],

@@ -1,3 +1,5 @@
+import 'package:lingualloop/ui/app_typography.dart';
+import 'package:lingualloop/ui/widgets/app_shape_style.dart';
 import 'package:flutter/material.dart';
 import 'package:lingualloop/ui/widgets/CurvedDesign.dart';
 import 'package:lingualloop/ui/widgets/CustomIconButton.dart';
@@ -57,7 +59,8 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
                       onTap: () {
                         Navigator.pop(context);
                       },
-                      child: const Icon(Icons.close_rounded, color: Colors.white, size: 29),
+                      child: const Icon(Icons.close_rounded,
+                          color: Colors.white, size: 29),
                     ),
 
                     // TimeBar
@@ -71,7 +74,8 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
                     // Score & streak (ScoreWithLivesProvider'dan gelmeye devam ediyoruz)
                     Row(
                       children: [
-                        Image.asset('assets/icons/cup.png', height: 22, width: 22),
+                        Image.asset('assets/icons/cup.png',
+                            height: 22, width: 22),
                         const SizedBox(width: 4),
                         Consumer<ScoreWithLivesProvider>(
                           builder: (context, scoreProvider, child) {
@@ -80,20 +84,21 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
                               style: const TextStyle(
                                 fontSize: 17,
                                 color: Color(0xFFF99300),
-                                fontWeight: FontWeight.w600,
+                                fontWeight: AppTypography.number,
                               ),
                             );
                           },
                         ),
                         const SizedBox(width: 20),
-                        Image.asset('assets/icons/fire.png', height: 22, width: 22),
+                        Image.asset('assets/icons/fire.png',
+                            height: 22, width: 22),
                         const SizedBox(width: 4),
                         Text(
                           "${provider.streak}",
                           style: const TextStyle(
                               fontSize: 17,
                               color: Color(0xFFFF6536),
-                              fontWeight: FontWeight.w600),
+                              fontWeight: AppTypography.number),
                         ),
                       ],
                     ),
@@ -104,7 +109,6 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
           ],
         ),
       ),
-
       body: Column(
         children: [
           Container(
@@ -112,7 +116,7 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
             margin: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               color: const Color(0xFF7875FC),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppShapeStyle.cardRadius(14)),
             ),
             child: Stack(
               children: [
@@ -125,24 +129,24 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
                           child: Container(
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(
+                                  AppShapeStyle.cardRadius(12)),
                             ),
                             child: provider.duration.value == 0 || value
                                 ? Align(
-                                  alignment: Alignment.centerRight,
-                                  child: CustomIconButton(
-                                    img: 'next',
-                                    backgroundColor: Colors.white,
-                                    iconColor: const Color(0xFF5F5CEF),
-                                    ontap: () => provider.nextVideo(context),
-                                  ),
-                                )
-                                  : null,
+                                    alignment: Alignment.centerRight,
+                                    child: CustomIconButton(
+                                      img: 'next',
+                                      backgroundColor: Colors.white,
+                                      iconColor: const Color(0xFF5F5CEF),
+                                      ontap: () => provider.nextVideo(context),
+                                    ),
+                                  )
+                                : null,
                           ),
                         );
                       },
                     ),
-
                     Padding(
                       padding: const EdgeInsets.all(8),
                       child: Row(
@@ -150,12 +154,22 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
                         children: [
                           Row(
                             children: [
-                              CustomIconButton(img: 'info', backgroundColor: Colors.white, iconColor: Color(0xFF7875FC)),
+                              CustomIconButton(
+                                  img: 'info',
+                                  backgroundColor: Colors.white,
+                                  iconColor: Color(0xFF7875FC)),
                               const SizedBox(width: 10),
-                              CustomIconButton(img: 'subtitleopen', clickedImg: 'subtitleclose', backgroundColor: Colors.white, iconColor: Color(0xFF7875FC)),
+                              CustomIconButton(
+                                  img: 'subtitleopen',
+                                  clickedImg: 'subtitleclose',
+                                  backgroundColor: Colors.white,
+                                  iconColor: Color(0xFF7875FC)),
                             ],
                           ),
-                          CustomIconButton(img: 'bookmark', backgroundColor: Colors.white, iconColor: Color(0xFF7875FC)),
+                          CustomIconButton(
+                              img: 'bookmark',
+                              backgroundColor: Colors.white,
+                              iconColor: Color(0xFF7875FC)),
                         ],
                       ),
                     ),
@@ -164,15 +178,14 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
               ],
             ),
           ),
-
           CustomDesignWidget(),
-
           Expanded(
             child: Center(
               child: Container(
                 decoration: const BoxDecoration(color: Color(0xFF7875FC)),
                 child: Padding(
-                  padding: const EdgeInsets.only(left: 16, right: 16, bottom: 32),
+                  padding:
+                      const EdgeInsets.only(left: 16, right: 16, bottom: 32),
                   child: Column(
                     children: [
                       Row(
@@ -180,7 +193,11 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
                         children: const [
                           Text(
                             "Süre tükenmeden yanıtını seç!",
-                            style: TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                                fontFamily: AppTypography.displayFamily,
+                                fontSize: 22,
+                                color: Colors.white,
+                                fontWeight: AppTypography.heading),
                           ),
                         ],
                       ),
@@ -203,8 +220,13 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
                                 children: [
                                   AnswerButton(
                                     text: provider.aButton,
-                                    onPressed: provider.isFinished.value ? null : () => provider.answerQuestion(context, provider.aButton),
-                                    buttonDisabledColor: provider.buttonsColor[provider.aButton] ?? Colors.transparent,
+                                    onPressed: provider.isFinished.value
+                                        ? null
+                                        : () => provider.answerQuestion(
+                                            context, provider.aButton),
+                                    buttonDisabledColor: provider
+                                            .buttonsColor[provider.aButton] ??
+                                        Colors.transparent,
                                     textColor: provider.textColor,
                                   ),
                                 ],
@@ -212,7 +234,10 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
                               const SizedBox(height: 5),
                               const Text(
                                 "veya",
-                                style: TextStyle(fontSize: 20, color: Color(0xFF5F5CEF), fontWeight: FontWeight.w600),
+                                style: TextStyle(
+                                    fontSize: 20,
+                                    color: Color(0xFF5F5CEF),
+                                    fontWeight: AppTypography.caption),
                               ),
                               const SizedBox(height: 5),
                               Row(
@@ -220,8 +245,13 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
                                 children: [
                                   AnswerButton(
                                     text: provider.bButton,
-                                    onPressed: provider.isFinished.value ? null : () => provider.answerQuestion(context, provider.bButton),
-                                    buttonDisabledColor: provider.buttonsColor[provider.bButton] ?? Colors.transparent,
+                                    onPressed: provider.isFinished.value
+                                        ? null
+                                        : () => provider.answerQuestion(
+                                            context, provider.bButton),
+                                    buttonDisabledColor: provider
+                                            .buttonsColor[provider.bButton] ??
+                                        Colors.transparent,
                                     textColor: provider.textColor,
                                   ),
                                 ],
@@ -230,7 +260,6 @@ class _VideoQuizScreenState extends State<VideoQuizScreen> {
                           );
                         },
                       ),
-
                     ],
                   ),
                 ),

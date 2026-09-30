@@ -150,7 +150,10 @@ class KartyProvider with ChangeNotifier {
         kartyUrl: cacheUrl,
         questionText: apiResponse.data!.questionText,
         correctText: apiResponse.data!.correctText,
+        article: apiResponse.data!.article,
         isCorrect: apiResponse.data!.isCorrect,
+        audioUrl: apiResponse.data!.audioUrl,
+        mode: apiResponse.data!.mode,
       );
     } catch (_) {
       return null;
