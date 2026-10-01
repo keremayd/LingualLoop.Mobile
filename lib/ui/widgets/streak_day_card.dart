@@ -309,7 +309,7 @@ class StreakDayCard extends StatelessWidget {
         // ondan biraz yukarıda başlıyor.
         top: (_flameTop - 6) * scale,
         child: Text(
-          '$days Gün',
+          days == 0 ? '0 Gün' : '$days. Gün',
           style: TextStyle(
             color: Colors.white,
             fontFamily: AppTypography.displayFamily,

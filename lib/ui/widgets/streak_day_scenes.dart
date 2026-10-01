@@ -409,7 +409,7 @@ class StreakScene {
       matches: _isPersonalRecord,
       asset: 'assets/scenes/kendi_rekorun.png',
       aspect: 1774 / 887,
-      message: 'En uzun serindesin!',
+      message: 'En uzun seridesin!',
       // **`cardColor`'ın üçüncü türetme yolu.** Diğer ikisi: referans kartın
       // yüzeyine eşitle (çoğu sahne) ya da kontrasttan hesapla
       // (`serin_korundu`). Burada ikisi de işlemiyor: kart mockup'ı yok ve
