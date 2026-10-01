@@ -784,23 +784,30 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
                             isIntroducing: introducing,
                             header: ValueListenableBuilder<bool>(
                               valueListenable: pronunciationService.isMuted,
-                              builder: (context, muted, _) => KartyTopBar(
-                                scale: scale,
-                                duration: duration,
-                                timeBarResetNotifier: timeBarResetNotifier,
-                                isFinished: isFinished,
-                                isPaused: isPaused,
-                                isBoostActive: _isBoostActive,
-                                isIntroducing: introducing,
-                                reviewMode: widget.reviewMode,
-                                reviewTotalStack: _reviewTotalStack,
-                                reviewCompletedStack: _reviewCompletedStack,
-                                leaguePointsAnchorKey: _boostLeagueTargetKey,
-                                muted: muted,
-                                onToggleSound: () =>
-                                    pronunciationService.setMuted(!muted),
-                                pauseEnabled: !busy,
-                                onPause: _togglePauseMenu,
+                              builder: (context, muted, _) =>
+                                  ValueListenableBuilder<bool>(
+                                valueListenable:
+                                    pronunciationService.isSpeaking,
+                                builder: (context, speaking, _) => KartyTopBar(
+                                  scale: scale,
+                                  duration: duration,
+                                  timeBarResetNotifier: timeBarResetNotifier,
+                                  isFinished: isFinished,
+                                  isPaused: isPaused,
+                                  isBoostActive: _isBoostActive,
+                                  isIntroducing: introducing,
+                                  reviewMode: widget.reviewMode,
+                                  reviewTotalStack: _reviewTotalStack,
+                                  reviewCompletedStack: _reviewCompletedStack,
+                                  leaguePointsAnchorKey: _boostLeagueTargetKey,
+                                  muted: muted,
+                                  onToggleSound: () =>
+                                      pronunciationService.setMuted(!muted),
+                                  pauseEnabled: !busy,
+                                  pauseMenuOpen: _pauseMenuOpen,
+                                  speaking: speaking,
+                                  onPause: _togglePauseMenu,
+                                ),
                               ),
                             ),
                             cardBuilder: (layout) {

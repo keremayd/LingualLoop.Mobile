@@ -380,6 +380,7 @@ class _ScreenState extends State<_Screen> {
                     reviewCompletedStack: 0,
                     leaguePointsAnchorKey: target,
                     muted: widget.soundMuted,
+                    pauseMenuOpen: widget.menuOpen,
                     onToggleSound: () {},
                     onPause: () {},
                   ),

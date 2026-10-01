@@ -6,6 +6,56 @@ import 'package:lingualloop/ui/widgets/speaker_mark.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 
 void main() {
+  testWidgets('Ses dalgaları çalarken hareket eder, bitince ve sessizde durur',
+      (tester) async {
+    Future<void> show({
+      bool speaking = false,
+      bool muted = false,
+      bool reduceMotion = false,
+    }) =>
+        tester.pumpWidget(MaterialApp(
+          home: MediaQuery(
+            data: MediaQueryData(disableAnimations: reduceMotion),
+            child: Center(
+              child: KartySoundButton(
+                  scale: 0.6,
+                  muted: muted,
+                  speaking: speaking,
+                  onToggle: () {}),
+            ),
+          ),
+        ));
+    double wave() => tester.widget<SpeakerMark>(find.byType(SpeakerMark)).wave;
+
+    await show();
+    final bounds = tester.getRect(find.byType(KartySoundButton));
+    expect(wave(), 0);
+    await show(speaking: true);
+    await tester.pump(const Duration(milliseconds: 160));
+    final first = wave();
+    expect(first, greaterThan(0));
+    await tester.pump(const Duration(milliseconds: 160));
+    expect(wave(), isNot(first));
+    expect(tester.getRect(find.byType(KartySoundButton)), bounds);
+
+    await show(speaking: true, muted: true);
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(wave(), 0);
+    await show(speaking: true);
+    await tester.pump(const Duration(milliseconds: 160));
+    expect(wave(), greaterThan(0));
+    await show();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(wave(), 0);
+
+    await show(speaking: true, reduceMotion: true);
+    final still = wave();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(wave(), still);
+    await tester.pumpWidget(const SizedBox.shrink());
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Ses kontrolü 44 px dokunma alanında açılır ve kapanır',
       (tester) async {
     var muted = false;

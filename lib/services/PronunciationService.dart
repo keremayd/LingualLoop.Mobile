@@ -34,7 +34,7 @@ class PronunciationService {
       if (_disposed) return;
       isSpeaking.value = !isMuted.value &&
           state.playing &&
-          state.processingState != ProcessingState.completed;
+          state.processingState == ProcessingState.ready;
     });
     ready = _restorePreference();
   }

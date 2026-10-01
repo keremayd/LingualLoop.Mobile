@@ -2,6 +2,7 @@ import 'package:lingualloop/ui/app_typography.dart';
 import 'package:flutter/material.dart';
 
 import '../widgets/Buttons/depth_pressable_button.dart';
+import '../widgets/Buttons/secondary_action_button.dart';
 import '../widgets/mascot_mark.dart';
 
 /// Hoş geldin ekranı — uygulamanın **ilk** ekranı.
@@ -42,12 +43,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   /// Giriş butonunun yeşili (§2.2) — kayıt birincil eylem olduğu için onda.
   static const _primary = Color(0xFF98DE25);
   static const _primaryShadow = Color(0xFF6EA51C);
-
-  /// İkincil butonun yüzü: kart konturu tonu. Yeşili iki butona birden
-  /// vermek ikisini eşit ağırlıkta gösteriyordu — yeni kullanıcı için
-  /// birincil eylem **kayıt olmak**, giriş yapmak zaten hesabı olanın işi.
-  static const _secondary = Color(0xFF0C2244);
-  static const _secondaryShadow = Color(0xFF07182F);
 
   /// Sahnenin ekran yüksekliğine oranı.
   ///
@@ -174,24 +169,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             Navigator.pushNamed(context, '/signup'),
                       ),
                       SizedBox(height: 20 * scale),
-                      DepthPressableButton(
+                      SecondaryActionButton(
+                        text: 'Zaten hesabım var',
+                        scale: scale,
                         width: 654 * scale,
-                        height: 96 * scale,
-                        radius: 26 * scale,
-                        shadowOffset: 10 * scale,
-                        backgroundColor: _secondary,
-                        shadowColor: _secondaryShadow,
-                        fontSize: 28 * scale,
-                        fontWeight: AppTypography.action,
-                        child: Text(
-                          'Zaten hesabım var',
-                          style: TextStyle(
-                            color: _text,
-                            fontFamily: AppTypography.family,
-                            fontSize: 28 * scale,
-                            fontWeight: AppTypography.action,
-                          ),
-                        ),
                         onPressed: () =>
                             Navigator.pushNamed(context, '/signin'),
                       ),

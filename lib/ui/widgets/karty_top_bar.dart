@@ -29,6 +29,8 @@ class KartyTopBar extends StatelessWidget {
     required this.onToggleSound,
     required this.onPause,
     this.pauseEnabled = true,
+    this.pauseMenuOpen = false,
+    this.speaking = false,
     this.leaguePointsAnchorKey,
   });
 
@@ -45,6 +47,9 @@ class KartyTopBar extends StatelessWidget {
   final int reviewCompletedStack;
   final bool muted;
   final bool pauseEnabled;
+  // Sürenin boost için kısa beklemesi, kullanıcı duraklatması değildir.
+  final bool pauseMenuOpen;
+  final bool speaking;
   final VoidCallback onToggleSound;
   final VoidCallback onPause;
 
@@ -55,7 +60,7 @@ class KartyTopBar extends StatelessWidget {
       final league = scores.scoreWithLives?.league;
       return Row(children: [
         Semantics(
-          label: 'Oyunu duraklat',
+          label: pauseMenuOpen ? 'Oyuna devam et' : 'Oyunu duraklat',
           child: DepthPressableButton(
             width: size,
             height: size - 3.125 * scale,
@@ -67,7 +72,9 @@ class KartyTopBar extends StatelessWidget {
             enabled: pauseEnabled,
             onPressed: onPause,
             child: KartyControlMark(
-              glyph: KartyControlGlyph.pause,
+              glyph: pauseMenuOpen
+                  ? KartyControlGlyph.play
+                  : KartyControlGlyph.pause,
               size: 50.25 * scale,
             ),
           ),
@@ -115,7 +122,11 @@ class KartyTopBar extends StatelessWidget {
           ),
         ],
         SizedBox(width: 21 * scale),
-        KartySoundButton(scale: scale, muted: muted, onToggle: onToggleSound),
+        KartySoundButton(
+            scale: scale,
+            muted: muted,
+            speaking: speaking,
+            onToggle: onToggleSound),
       ]);
     });
   }

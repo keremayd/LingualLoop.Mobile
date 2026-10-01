@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:lingualloop/ui/widgets/Buttons/secondary_action_button.dart';
 import 'package:lingualloop/ui/widgets/karty_control_glyphs.dart';
 import 'package:lingualloop/ui/widgets/level_bars_icon.dart';
 import 'package:lingualloop/ui/widgets/quest_icons.dart';
@@ -100,16 +101,11 @@ class KartyPauseOverlay extends StatelessWidget {
                 onPressed: onResume,
               ),
               SizedBox(height: 22 * scale),
-              TextButton(
+              SecondaryActionButton(
+                text: 'Oyundan çık',
+                scale: scale,
+                width: 534 * scale,
                 onPressed: onExit,
-                style: TextButton.styleFrom(
-                    minimumSize: Size(240 * scale, 44),
-                    foregroundColor: const Color(0xFF8FA0B5)),
-                child: Text('Oyundan çık',
-                    style: TextStyle(
-                        fontFamily: AppTypography.family,
-                        fontSize: 26 * scale,
-                        fontWeight: AppTypography.action)),
               ),
             ]),
           ),

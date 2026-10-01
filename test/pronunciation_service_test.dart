@@ -26,6 +26,20 @@ void main() {
     await audio.dispose();
   });
 
+  test('Ses göstergesi yalnız hazır ve oynayan seste açılır', () async {
+    final player = _Player();
+    final audio = service(player);
+    await audio.ready;
+    for (final state in ProcessingState.values) {
+      player.states.add(PlayerState(true, state));
+      expect(audio.isSpeaking.value, state == ProcessingState.ready,
+          reason: '$state');
+    }
+    player.states.add(PlayerState(false, ProcessingState.ready));
+    expect(audio.isSpeaking.value, isFalse);
+    await audio.dispose();
+  });
+
   test('Kapatmak çalan sesi hemen durdurur ve sonraki sesleri engeller',
       () async {
     final player = _Player();
