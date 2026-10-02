@@ -1,3 +1,4 @@
+import 'learning_card_frame.dart';
 import 'package:lingualloop/ui/app_typography.dart';
 import 'package:lingualloop/ui/widgets/Buttons/app_button_style.dart';
 import 'package:flutter/material.dart';
@@ -120,23 +121,14 @@ class ArticlePracticeHomeCard extends StatelessWidget {
               top: 218 * scale,
               child: Transform.rotate(
                 angle: -0.09,
-                child: Container(
+                child: LearningCardFrame(
                   width: 185 * scale,
                   height: 145 * scale,
-                  padding: EdgeInsets.all(9 * scale),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24 * scale),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.28),
-                        blurRadius: 13 * scale,
-                        offset: Offset(7 * scale, 10 * scale),
-                      ),
-                    ],
-                  ),
+                  radius: 24 * scale,
+                  borderWidth: 9 * scale,
+                  scale: scale * .5,
                   child: ArticleWordSurface(
-                    borderRadius: BorderRadius.circular(17 * scale),
+                    borderRadius: BorderRadius.circular(15 * scale),
                     child: Center(
                       child: Container(
                         padding: EdgeInsets.symmetric(

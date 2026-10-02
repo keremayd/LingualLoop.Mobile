@@ -1,5 +1,5 @@
 import 'package:lingualloop/ui/app_typography.dart';
-import 'dart:math' as math;
+import 'learning_card_gradient.dart';
 
 import 'package:flutter/material.dart';
 
@@ -83,9 +83,6 @@ class _ArticleWordSurfacePainter extends CustomPainter {
   final String? highlightedArticle;
   final double pulse;
 
-  static const _green = Color(0xFF17345E);
-  static const _greenLight = Color(0xFF244A7D);
-  static const _greenShadow = Color(0xFF0B2143);
   static const _navy = Color(0xFF041227);
   static const _der = Color(0xFF1CB1F5);
   static const _das = Color(0xFFFFB000);
@@ -96,32 +93,9 @@ class _ArticleWordSurfacePainter extends CustomPainter {
     final rect = Offset.zero & size;
     canvas.drawRect(
       rect,
-      Paint()
-        ..shader = const LinearGradient(
-          colors: [_greenLight, _green, _greenShadow],
-          stops: [0, 0.58, 1],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ).createShader(rect),
+      Paint()..shader = learningCardGradient(size).createShader(rect),
     );
-
     _drawArticlePattern(canvas, size);
-    _drawPressedEdge(canvas, size);
-
-    canvas.drawRect(
-      rect,
-      Paint()
-        ..shader = LinearGradient(
-          colors: [
-            Colors.white.withValues(alpha: 0.16),
-            Colors.transparent,
-            _greenShadow.withValues(alpha: 0.18),
-          ],
-          stops: const [0, 0.44, 1],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ).createShader(rect),
-    );
   }
 
   void _drawArticlePattern(Canvas canvas, Size size) {
@@ -171,14 +145,15 @@ class _ArticleWordSurfacePainter extends CustomPainter {
         text: TextSpan(
           text: article,
           style: TextStyle(
-            color: color.withValues(alpha: 0.32 + pulse * 0.18),
+            color: color.withValues(alpha: 0.85 + pulse * 0.15),
             fontSize: fontSize,
             fontWeight: AppTypography.word,
             fontFamily: AppTypography.family,
             shadows: [
               Shadow(
-                color: color.withValues(alpha: 0.5 + pulse * 0.22),
-                blurRadius: fontSize * (0.28 + pulse * 0.12),
+                color: _navy.withValues(alpha: 0.55),
+                blurRadius: fontSize * 0.06,
+                offset: Offset(0, fontSize * 0.04),
               ),
             ],
           ),
@@ -193,7 +168,7 @@ class _ArticleWordSurfacePainter extends CustomPainter {
       text: TextSpan(
         text: article,
         style: TextStyle(
-          color: _navy.withValues(alpha: 0.12),
+          color: _navy.withValues(alpha: 0.045),
           fontSize: fontSize,
           fontWeight: AppTypography.word,
           fontFamily: AppTypography.family,
@@ -210,7 +185,7 @@ class _ArticleWordSurfacePainter extends CustomPainter {
       text: TextSpan(
         text: article,
         style: TextStyle(
-          color: Colors.white.withValues(alpha: 0.095),
+          color: Colors.white.withValues(alpha: 0.07),
           fontSize: fontSize,
           fontWeight: AppTypography.word,
           fontFamily: AppTypography.family,
@@ -219,26 +194,6 @@ class _ArticleWordSurfacePainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     )..layout();
     facePainter.paint(canvas, offset);
-  }
-
-  void _drawPressedEdge(Canvas canvas, Size size) {
-    final lineWidth = math.max(1.0, size.width * 0.006);
-    canvas.drawLine(
-      Offset(size.width * 0.04, size.height * 0.025),
-      Offset(size.width * 0.96, size.height * 0.025),
-      Paint()
-        ..strokeWidth = lineWidth
-        ..strokeCap = StrokeCap.round
-        ..color = Colors.white.withValues(alpha: 0.2),
-    );
-    canvas.drawLine(
-      Offset(size.width * 0.96, size.height * 0.035),
-      Offset(size.width * 0.96, size.height * 0.965),
-      Paint()
-        ..strokeWidth = lineWidth
-        ..strokeCap = StrokeCap.round
-        ..color = _navy.withValues(alpha: 0.14),
-    );
   }
 
   @override

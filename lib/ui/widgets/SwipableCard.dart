@@ -1,3 +1,4 @@
+import 'learning_card_gradient.dart';
 import 'package:lingualloop/ui/app_typography.dart';
 import 'package:lingualloop/ui/widgets/karty_card_rim.dart';
 import 'dart:io';
@@ -194,23 +195,9 @@ class _SwipableCardState extends State<SwipableCard>
     final borderRadius = BorderRadius.circular(52.5 * scale);
     final innerBorderRadius = BorderRadius.circular(29.25 * scale);
     const deckAnimationDuration = Duration(milliseconds: 280);
-    // CSS 135deg is a 45-degree axis even on a tall card. A simple
-    // topLeft/bottomRight gradient would stretch that angle with the card.
     final innerWidth = cardWidth - 2 * borderWidth;
     final innerHeight = cardHeight - 2 * borderWidth;
-    final gradientX = (innerWidth + innerHeight) / (2 * innerWidth);
-    final gradientY = (innerWidth + innerHeight) / (2 * innerHeight);
-    final cardGradient = LinearGradient(
-      colors: const [
-        Color(0xFF68D73D),
-        Color(0xFF56BEEA),
-        Color(0xFFA647F0),
-        Color(0xFFFDC041)
-      ],
-      stops: const [0.02, 0.38, 0.68, 1],
-      begin: Alignment(-gradientX, -gradientY),
-      end: Alignment(gradientX, gradientY),
-    );
+    final cardGradient = learningCardGradient(Size(innerWidth, innerHeight));
     double layerWidth(int level) {
       if (level == 0) {
         return cardWidth;
