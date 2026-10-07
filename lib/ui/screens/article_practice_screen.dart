@@ -11,6 +11,7 @@ import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:lingualloop/ui/widgets/article_practice_card.dart';
 import 'package:lingualloop/ui/widgets/article_practice_locked_state.dart';
 import 'package:lingualloop/ui/widgets/article_target.dart';
+import 'package:lingualloop/ui/widgets/karty_control_glyphs.dart';
 import 'package:provider/provider.dart';
 
 class ArticlePracticeScreen extends StatefulWidget {
@@ -249,18 +250,19 @@ class _ArticlePracticeScreenState extends State<ArticlePracticeScreen>
 
   Widget _buildGame(ArticlePracticeProvider provider, double scale) {
     final task = provider.task!;
+    const deckTop = 240.0;
     return Stack(
       clipBehavior: Clip.none,
       children: [
         Positioned(
           left: 40 * scale,
-          right: 40 * scale,
           top: 42 * scale,
-          child: _TopBar(scale: scale, onClose: () => Navigator.pop(context)),
+          child:
+              _ExitButton(scale: scale, onClose: () => Navigator.pop(context)),
         ),
         Positioned(
           left: 95 * scale,
-          top: 280 * scale,
+          top: deckTop * scale,
           child: ArticlePracticeDeckBackdrop(
             scale: scale,
             nextTask: provider.nextTask,
@@ -268,7 +270,7 @@ class _ArticlePracticeScreenState extends State<ArticlePracticeScreen>
         ),
         Positioned(
           left: 95 * scale,
-          top: 280 * scale,
+          top: deckTop * scale,
           child: AnimatedBuilder(
             animation: _motionController,
             builder: (context, child) {
@@ -323,7 +325,7 @@ class _ArticlePracticeScreenState extends State<ArticlePracticeScreen>
         ),
         Positioned(
           left: 267 * scale,
-          top: 223 * scale,
+          top: (deckTop - 57) * scale,
           child: ArticleTarget(
             article: 'das',
             color: _das,
@@ -335,7 +337,7 @@ class _ArticlePracticeScreenState extends State<ArticlePracticeScreen>
         ),
         Positioned(
           left: 20 * scale,
-          top: 630 * scale,
+          top: (deckTop + 350) * scale,
           child: ArticleTarget(
             article: 'die',
             color: _die,
@@ -347,7 +349,7 @@ class _ArticlePracticeScreenState extends State<ArticlePracticeScreen>
         ),
         Positioned(
           right: 20 * scale,
-          top: 630 * scale,
+          top: (deckTop + 350) * scale,
           child: ArticleTarget(
             article: 'der',
             color: _der,
@@ -360,7 +362,7 @@ class _ArticlePracticeScreenState extends State<ArticlePracticeScreen>
         Positioned(
           left: 85 * scale,
           right: 85 * scale,
-          top: 1330 * scale,
+          top: (deckTop + 1050) * scale,
           child: _FeedbackPanel(
             scale: scale,
             provider: provider,
@@ -372,41 +374,31 @@ class _ArticlePracticeScreenState extends State<ArticlePracticeScreen>
   }
 }
 
-class _TopBar extends StatelessWidget {
-  const _TopBar({required this.scale, required this.onClose});
+class _ExitButton extends StatelessWidget {
+  const _ExitButton({required this.scale, required this.onClose});
 
   final double scale;
   final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        DepthPressableButton(
-          width: 58 * scale,
-          height: 58 * scale,
-          radius: 10 * scale,
-          shadowOffset: 0,
-          backgroundColor: _ArticlePracticeScreenState._panel,
-          shadowColor: const Color(0xFF041227),
-          fontSize: 0,
-          onPressed: onClose,
-          child:
-              Icon(Icons.close_rounded, color: Colors.white, size: 48 * scale),
+    final size = math.max(44.0, 84.75 * scale);
+    return Semantics(
+      label: 'Oyundan çık',
+      child: DepthPressableButton(
+        width: size,
+        height: size - 3.125 * scale,
+        radius: 24 * scale,
+        shadowOffset: 8 * scale,
+        backgroundColor: const Color(0xFF163258),
+        shadowColor: const Color(0xFF0B2143),
+        fontSize: 0,
+        onPressed: onClose,
+        child: KartyControlMark(
+          glyph: KartyControlGlyph.cross,
+          size: 50.25 * scale,
         ),
-        SizedBox(width: 22 * scale),
-        Text(
-          'Artikel Pusulası',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 40 * scale,
-            fontWeight: AppTypography.heading,
-            fontFamily: AppTypography.displayFamily,
-          ),
-        ),
-        // Toplam XP oyun sırasında gösterilmiyor; kullanıcı onu profilden
-        // görüyor. Oyun içi geri bildirim kartın kendi akışında.
-      ],
+      ),
     );
   }
 }
