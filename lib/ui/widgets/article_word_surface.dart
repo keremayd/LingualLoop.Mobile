@@ -1,5 +1,4 @@
 import 'package:lingualloop/ui/app_typography.dart';
-import 'learning_card_gradient.dart';
 
 import 'package:flutter/material.dart';
 
@@ -83,6 +82,9 @@ class _ArticleWordSurfacePainter extends CustomPainter {
   final String? highlightedArticle;
   final double pulse;
 
+  static const _surface = Color(0xFF17345E);
+  static const _surfaceLight = Color(0xFF244A7D);
+  static const _surfaceShadow = Color(0xFF0B2143);
   static const _navy = Color(0xFF041227);
   static const _der = Color(0xFF1CB1F5);
   static const _das = Color(0xFFFFB000);
@@ -93,9 +95,29 @@ class _ArticleWordSurfacePainter extends CustomPainter {
     final rect = Offset.zero & size;
     canvas.drawRect(
       rect,
-      Paint()..shader = learningCardGradient(size).createShader(rect),
+      Paint()
+        ..shader = const LinearGradient(
+          colors: [_surfaceLight, _surface, _surfaceShadow],
+          stops: [0, 0.58, 1],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ).createShader(rect),
     );
     _drawArticlePattern(canvas, size);
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = LinearGradient(
+          colors: [
+            Colors.white.withValues(alpha: 0.16),
+            Colors.transparent,
+            _surfaceShadow.withValues(alpha: 0.18),
+          ],
+          stops: const [0, 0.44, 1],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ).createShader(rect),
+    );
   }
 
   void _drawArticlePattern(Canvas canvas, Size size) {
@@ -168,7 +190,7 @@ class _ArticleWordSurfacePainter extends CustomPainter {
       text: TextSpan(
         text: article,
         style: TextStyle(
-          color: _navy.withValues(alpha: 0.045),
+          color: _navy.withValues(alpha: 0.12),
           fontSize: fontSize,
           fontWeight: AppTypography.word,
           fontFamily: AppTypography.family,
@@ -185,7 +207,7 @@ class _ArticleWordSurfacePainter extends CustomPainter {
       text: TextSpan(
         text: article,
         style: TextStyle(
-          color: Colors.white.withValues(alpha: 0.07),
+          color: Colors.white.withValues(alpha: 0.095),
           fontSize: fontSize,
           fontWeight: AppTypography.word,
           fontFamily: AppTypography.family,
