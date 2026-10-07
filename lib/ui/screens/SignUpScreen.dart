@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:lingualloop/models/Requests/SignUpRequest.dart';
 import 'package:lingualloop/ui/widgets/Buttons/app_icon_control_button.dart';
 import 'package:lingualloop/ui/widgets/Buttons/auth_back_button.dart';
+import 'package:lingualloop/ui/widgets/Buttons/auth_social_button.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:provider/provider.dart';
 import '../../services/AuthenticationService.dart';
@@ -30,6 +31,7 @@ class _SignUpScreenState extends State<SignUpScreen>
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _googleLoading = false;
   bool _accountCreated = false;
   SignUpRequest? _submittedRequest;
   String? _formError;
@@ -52,9 +54,10 @@ class _SignUpScreenState extends State<SignUpScreen>
   static const _buttonColor = Color(0xFF98DE25);
   static const _buttonShadowColor = Color(0xFF6EA51C);
   static const _dividerColor = Color(0xFF0B2143);
-  static const _socialBackground = Color(0xFFE9E9E9);
   static const _warningColor = Color(0xFFFF4D5E);
   static const _warningBackgroundColor = Color(0xFF102948);
+
+  bool get _isBusy => _isLoading || _googleLoading;
 
   @override
   void dispose() {
@@ -158,7 +161,7 @@ class _SignUpScreenState extends State<SignUpScreen>
   }
 
   Future<void> _signUp() async {
-    if (_isLoading) return;
+    if (_isBusy) return;
     if (!_accountCreated && !_validateAll()) return;
 
     final authService = Provider.of<AuthService>(context, listen: false);
@@ -214,6 +217,48 @@ class _SignUpScreenState extends State<SignUpScreen>
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _continueWithGoogle() async {
+    if (_isBusy || _accountCreated) return;
+    final authService = Provider.of<AuthService>(context, listen: false);
+    setState(() {
+      _googleLoading = true;
+      _errors.updateAll((key, value) => null);
+      _formError = null;
+    });
+
+    try {
+      final response = await authService.signInWithGoogle(context);
+      if (!mounted) return;
+      if (response.errorCode == null && response.data != null) {
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        setState(() => _formError = response.errorCode == 'İşlem iptal edildi!'
+            ? 'Google ile devam etme iptal edildi.'
+            : 'Google ile devam edilemedi. Tekrar dene.');
+      }
+    } catch (error) {
+      if (!mounted) return;
+      final connectionError = error is DioError &&
+          (error.type == DioErrorType.connectTimeout ||
+              error.type == DioErrorType.sendTimeout ||
+              error.type == DioErrorType.receiveTimeout ||
+              error.type == DioErrorType.other);
+      setState(() => _formError = connectionError
+          ? 'Bağlantı kurulamadı. İnternetini ve sunucuyu kontrol et.'
+          : 'Google ile devam edilemedi. Tekrar dene.');
+    } finally {
+      if (mounted) setState(() => _googleLoading = false);
+    }
+  }
+
+  void _showAppleUnavailable() {
+    if (_isBusy) return;
+    setState(() {
+      _errors.updateAll((key, value) => null);
+      _formError = 'Apple ile kayıt henüz kullanılamıyor.';
+    });
   }
 
   Widget _dividerLine(double scale) => Container(
@@ -275,7 +320,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                         fontSize: 30 * scale,
                         hasError: _errors['firstName'] != null,
                         keyboardType: TextInputType.name,
-                        readOnly: _isLoading || _accountCreated,
+                        readOnly: _isBusy || _accountCreated,
                         onChanged: (_) => _clearFieldError('firstName'),
                       ),
                     ),
@@ -298,7 +343,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                         fontSize: 30 * scale,
                         hasError: _errors['lastName'] != null,
                         keyboardType: TextInputType.name,
-                        readOnly: _isLoading || _accountCreated,
+                        readOnly: _isBusy || _accountCreated,
                         onChanged: (_) => _clearFieldError('lastName'),
                       ),
                     ),
@@ -315,7 +360,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                         fontSize: 30 * scale,
                         hasError: _errors['email'] != null,
                         keyboardType: TextInputType.emailAddress,
-                        readOnly: _isLoading || _accountCreated,
+                        readOnly: _isBusy || _accountCreated,
                         onChanged: (_) => _clearFieldError('email'),
                       ),
                     ),
@@ -332,7 +377,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                         fontSize: 30 * scale,
                         hasError: _errors['password'] != null,
                         obscureText: true,
-                        readOnly: _isLoading || _accountCreated,
+                        readOnly: _isBusy || _accountCreated,
                         onChanged: (_) => _clearFieldError('password'),
                       ),
                     ),
@@ -360,7 +405,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                         radius: 26 * scale,
                         shadowOffset: 10 * scale,
                         fontSize: 28 * scale,
-                        enabled: !_isLoading,
+                        enabled: !_isBusy,
                         isLoading: _isLoading,
                         text: _accountCreated ? 'Giriş yap' : 'Kayıt ol',
                         onPressed: _signUp,
@@ -398,23 +443,28 @@ class _SignUpScreenState extends State<SignUpScreen>
                     Positioned(
                       left: 211 * scale,
                       top: 1030 * scale + errorOffset,
-                      child: _SocialButton(
-                        assetPath: 'assets/icons/google-logo.png',
+                      child: AuthSocialButton(
+                        provider: AuthSocialProvider.google,
+                        label: 'Google ile devam et',
                         size: 120 * scale,
                         radius: 34 * scale,
                         iconSize: 62 * scale,
-                        onTap: () {},
+                        enabled: !_isBusy && !_accountCreated,
+                        isLoading: _googleLoading,
+                        onPressed: _continueWithGoogle,
                       ),
                     ),
                     Positioned(
                       left: 384 * scale,
                       top: 1030 * scale + errorOffset,
-                      child: _SocialButton(
-                        assetPath: 'assets/icons/apple-logo.png',
+                      child: AuthSocialButton(
+                        provider: AuthSocialProvider.apple,
+                        label: 'Apple ile kayıt ol',
                         size: 120 * scale,
                         radius: 34 * scale,
                         iconSize: 62 * scale,
-                        onTap: () {},
+                        enabled: !_isBusy && !_accountCreated,
+                        onPressed: _showAppleUnavailable,
                       ),
                     ),
                     Positioned(
@@ -718,34 +768,4 @@ class _PrimarySignUpButton extends StatelessWidget {
             ),
     );
   }
-}
-
-class _SocialButton extends StatelessWidget {
-  const _SocialButton({
-    required this.assetPath,
-    required this.size,
-    required this.radius,
-    required this.iconSize,
-    required this.onTap,
-  });
-
-  final String assetPath;
-  final double size;
-  final double radius;
-  final double iconSize;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => DepthPressableButton(
-        width: size,
-        height: size,
-        radius: radius,
-        shadowOffset: 0,
-        backgroundColor: _SignUpScreenState._socialBackground,
-        shadowColor: const Color(0xFF0B2143),
-        fontSize: 0,
-        onPressed: onTap,
-        child: Image.asset(assetPath,
-            width: iconSize, height: iconSize, fit: BoxFit.contain),
-      );
 }

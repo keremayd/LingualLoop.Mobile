@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:lingualloop/main.dart';
 import 'package:lingualloop/ui/widgets/Buttons/app_icon_control_button.dart';
 import 'package:lingualloop/ui/widgets/Buttons/auth_back_button.dart';
+import 'package:lingualloop/ui/widgets/Buttons/auth_social_button.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:provider/provider.dart';
 
@@ -50,7 +51,6 @@ class _LoginScreenState extends State<LoginScreen> {
   static const _buttonColor = Color(0xFF98DE25);
   static const _buttonShadowColor = Color(0xFF6EA51C);
   static const _dividerColor = Color(0xFF0B2143);
-  static const _socialBackground = Color(0xFFE9E9E9);
   static const _warningColor = Color(0xFFFF4D5E);
 
   void _clearError() {
@@ -346,26 +346,28 @@ class _LoginScreenState extends State<LoginScreen> {
                   Positioned(
                     left: 226 * scale,
                     top: 990 * scale,
-                    child: _SocialButton(
-                      assetPath: 'assets/icons/google-logo.png',
+                    child: AuthSocialButton(
+                      provider: AuthSocialProvider.google,
+                      label: 'Google ile giriş yap',
                       size: 120 * scale,
                       radius: 34 * scale,
                       iconSize: 62 * scale,
                       enabled: !_isLoading,
                       isLoading: _loadingSource == _LoginSource.google,
-                      onTap: () => _login(LoginMethod.google),
+                      onPressed: () => _login(LoginMethod.google),
                     ),
                   ),
                   Positioned(
                     left: 400 * scale,
                     top: 990 * scale,
-                    child: _SocialButton(
-                      assetPath: 'assets/icons/apple-logo.png',
+                    child: AuthSocialButton(
+                      provider: AuthSocialProvider.apple,
+                      label: 'Apple ile giriş yap',
                       size: 120 * scale,
                       radius: 34 * scale,
                       iconSize: 62 * scale,
                       enabled: !_isLoading,
-                      onTap: () => _login(LoginMethod.apple),
+                      onPressed: () => _login(LoginMethod.apple),
                     ),
                   ),
                   if (kDebugMode)
@@ -641,48 +643,4 @@ class _PrimaryLoginButton extends StatelessWidget {
             ),
     );
   }
-}
-
-class _SocialButton extends StatelessWidget {
-  const _SocialButton({
-    required this.assetPath,
-    required this.size,
-    required this.radius,
-    required this.iconSize,
-    required this.onTap,
-    required this.enabled,
-    this.isLoading = false,
-  });
-
-  final String assetPath;
-  final double size;
-  final double radius;
-  final double iconSize;
-  final VoidCallback onTap;
-  final bool enabled;
-  final bool isLoading;
-
-  @override
-  Widget build(BuildContext context) => DepthPressableButton(
-        width: size,
-        height: size,
-        radius: radius,
-        shadowOffset: 0,
-        backgroundColor: _LoginScreenState._socialBackground,
-        shadowColor: const Color(0xFF0B2143),
-        fontSize: 0,
-        enabled: enabled,
-        onPressed: onTap,
-        child: isLoading
-            ? SizedBox(
-                width: iconSize * 0.55,
-                height: iconSize * 0.55,
-                child: const CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: _LoginScreenState._inputFillColor,
-                ),
-              )
-            : Image.asset(assetPath,
-                width: iconSize, height: iconSize, fit: BoxFit.contain),
-      );
 }

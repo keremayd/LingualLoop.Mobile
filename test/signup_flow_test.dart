@@ -8,6 +8,7 @@ import 'package:lingualloop/models/Requests/SignUpRequest.dart';
 import 'package:lingualloop/models/responses/AuthenticateResponse.dart';
 import 'package:lingualloop/services/AuthenticationService.dart';
 import 'package:lingualloop/ui/screens/SignUpScreen.dart';
+import 'package:lingualloop/ui/widgets/Buttons/auth_social_button.dart';
 import 'package:provider/provider.dart';
 
 class _FakeAuthService extends AuthService {
@@ -15,8 +16,10 @@ class _FakeAuthService extends AuthService {
 
   final registrations = <SignUpRequest>[];
   final logins = <(String, String)>[];
+  int googleLogins = 0;
   Completer<ApiResponse<Map<String, dynamic>>> registration = Completer();
   Completer<ApiResponse<AuthenticateResponse>> login = Completer();
+  Completer<ApiResponse<AuthenticateResponse>> googleLogin = Completer();
 
   @override
   Future<ApiResponse<Map<String, dynamic>>> signUp(
@@ -30,6 +33,13 @@ class _FakeAuthService extends AuthService {
       String email, String password, BuildContext context) {
     logins.add((email, password));
     return login.future;
+  }
+
+  @override
+  Future<ApiResponse<AuthenticateResponse>> signInWithGoogle(
+      BuildContext context) {
+    googleLogins++;
+    return googleLogin.future;
   }
 }
 
@@ -213,5 +223,54 @@ void main() {
     expect(auth.registrations, hasLength(2));
     auth.registration.complete(ApiResponse(errorCode: 'Rejected'));
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('Google boş formdan devam eder ve hesabı açar', (tester) async {
+    final auth = _FakeAuthService();
+    await showSignUp(tester, auth);
+
+    await tester.tap(find.byType(AuthSocialButton).first);
+    await tester.pump();
+    expect(auth.googleLogins, 1);
+    expect(auth.registrations, isEmpty);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+    await tester.tap(find.byType(AuthSocialButton).first);
+    await tester.pump();
+    expect(auth.googleLogins, 1);
+
+    auth.googleLogin.complete(loggedIn());
+    await tester.pumpAndSettle();
+    expect(find.text('Ana ekran'), findsOneWidget);
+  });
+
+  testWidgets('Google iptali ve Apple desteği ekranda açıklanır',
+      (tester) async {
+    final auth = _FakeAuthService();
+    await showSignUp(tester, auth);
+
+    await tester.tap(find.byType(AuthSocialButton).first);
+    await tester.pump();
+    auth.googleLogin.complete(ApiResponse(errorCode: 'İşlem iptal edildi!'));
+    await tester.pumpAndSettle();
+    expect(find.text('Google ile devam etme iptal edildi.'), findsOneWidget);
+
+    auth.googleLogin = Completer();
+    await tester.tap(find.byType(AuthSocialButton).first);
+    await tester.pump();
+    auth.googleLogin.completeError(DioError(
+      requestOptions: RequestOptions(path: 'authentication/google-login'),
+      type: DioErrorType.other,
+    ));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Bağlantı kurulamadı. İnternetini ve sunucuyu kontrol et.'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byType(AuthSocialButton).last);
+    await tester.pumpAndSettle();
+    expect(find.text('Apple ile kayıt henüz kullanılamıyor.'), findsOneWidget);
+    expect(auth.registrations, isEmpty);
   });
 }
