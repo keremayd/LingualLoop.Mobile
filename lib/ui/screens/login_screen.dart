@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:lingualloop/main.dart';
+import 'package:lingualloop/ui/widgets/Buttons/auth_back_button.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:provider/provider.dart';
 
@@ -274,10 +275,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   Positioned(
-                    left: 48 * scale,
+                    left: 32 * scale,
                     top: 620 * scale,
                     child: _PrimaryLoginButton(
-                      width: 654 * scale,
+                      width: 686 * scale,
                       height: 96 * scale,
                       radius: 26 * scale,
                       shadowOffset: 10 * scale,
@@ -554,10 +555,9 @@ class _LoginHeader extends StatelessWidget {
         children: [
           Positioned(
             left: 20 * scale,
-            child: _BackArrowButton(
+            child: AuthBackButton(
               scale: scale,
-              color: titleColor,
-              onTap: () {
+              onPressed: () {
                 final navigator = navigatorKey.currentState;
                 if (navigator == null) {
                   return;
@@ -584,76 +584,6 @@ class _LoginHeader extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class _BackArrowButton extends StatelessWidget {
-  const _BackArrowButton({
-    required this.scale,
-    required this.color,
-    required this.onTap,
-  });
-
-  final double scale;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(46 * scale),
-        onTap: onTap,
-        child: SizedBox(
-          width: 92 * scale,
-          height: 92 * scale,
-          child: Center(
-            child: CustomPaint(
-              size: Size(58 * scale, 58 * scale),
-              painter: _BackArrowPainter(
-                color: color,
-                strokeWidth: 6.6 * scale,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BackArrowPainter extends CustomPainter {
-  const _BackArrowPainter({
-    required this.color,
-    required this.strokeWidth,
-  });
-
-  final Color color;
-  final double strokeWidth;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..style = PaintingStyle.stroke;
-
-    final path = Path()
-      ..moveTo(size.width * 0.56, size.height * 0.14)
-      ..lineTo(size.width * 0.16, size.height * 0.50)
-      ..lineTo(size.width * 0.56, size.height * 0.86)
-      ..moveTo(size.width * 0.18, size.height * 0.50)
-      ..lineTo(size.width * 0.90, size.height * 0.50);
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _BackArrowPainter oldDelegate) {
-    return oldDelegate.color != color || oldDelegate.strokeWidth != strokeWidth;
   }
 }
 
