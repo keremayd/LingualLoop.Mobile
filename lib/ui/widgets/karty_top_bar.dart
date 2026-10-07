@@ -1,11 +1,9 @@
-import 'dart:math' as math;
-
 import 'package:provider/provider.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/ui/widgets/karty_league_score.dart';
 
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:lingualloop/ui/widgets/Buttons/app_icon_control_button.dart';
 import 'package:lingualloop/ui/widgets/karty_control_glyphs.dart';
 import 'package:lingualloop/ui/widgets/karty_review_stack_bar.dart';
 import 'package:lingualloop/ui/widgets/karty_sound_button.dart';
@@ -55,28 +53,19 @@ class KartyTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = math.max(44.0, 84.75 * scale);
     return Consumer<ScoreWithLivesProvider>(builder: (context, scores, _) {
       final league = scores.scoreWithLives?.league;
       return Row(children: [
-        Semantics(
+        AppIconControlButton(
+          scale: scale,
           label: pauseMenuOpen ? 'Oyuna devam et' : 'Oyunu duraklat',
-          child: DepthPressableButton(
-            width: size,
-            height: size - 3.125 * scale,
-            radius: 24 * scale,
-            shadowOffset: 8 * scale,
-            backgroundColor: const Color(0xFF163258),
-            shadowColor: const Color(0xFF0B2143),
-            fontSize: 24 * scale,
-            enabled: pauseEnabled,
-            onPressed: onPause,
-            child: KartyControlMark(
-              glyph: pauseMenuOpen
-                  ? KartyControlGlyph.play
-                  : KartyControlGlyph.pause,
-              size: 50.25 * scale,
-            ),
+          enabled: pauseEnabled,
+          onPressed: onPause,
+          child: KartyControlMark(
+            glyph: pauseMenuOpen
+                ? KartyControlGlyph.play
+                : KartyControlGlyph.pause,
+            size: 50.25 * scale,
           ),
         ),
         SizedBox(width: 21 * scale),

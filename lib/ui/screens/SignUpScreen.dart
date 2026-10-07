@@ -2,6 +2,7 @@ import 'package:lingualloop/ui/app_typography.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:lingualloop/models/Requests/SignUpRequest.dart';
+import 'package:lingualloop/ui/widgets/Buttons/app_icon_control_button.dart';
 import 'package:lingualloop/ui/widgets/Buttons/auth_back_button.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:provider/provider.dart';
@@ -535,7 +536,7 @@ class _SignUpHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 82 * scale,
+      height: AppIconControlButton.outerHeightForScale(scale),
       child: Stack(
         alignment: Alignment.center,
         children: [

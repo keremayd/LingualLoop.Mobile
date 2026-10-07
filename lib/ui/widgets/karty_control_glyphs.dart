@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Karty oyun ekranının kontrol glifleri: onay, ret, duraklat, oynat.
+/// Uygulamanın kontrol glifleri: onay, ret, duraklat, oynat ve geri.
 ///
 /// Bunlar §2.5'teki "chunky sticker" ikonları **değil**. O reçete üç renkli,
 /// kalınlık bandı olan **illüstrasyon** simgeleri için (alev, kitap, güneş);
@@ -14,7 +14,7 @@ import 'package:flutter/material.dart';
 /// hâller için ikinci bir dosya gerekmez.
 ///
 /// Hepsi 100 birimlik kutuda tanımlıdır (§2.5'in bu kısmı ortak).
-enum KartyControlGlyph { check, cross, pause, play }
+enum KartyControlGlyph { check, cross, pause, play, back }
 
 class KartyControlMark extends StatelessWidget {
   const KartyControlMark({
@@ -59,6 +59,13 @@ class _ControlGlyphPainter extends CustomPainter {
       case KartyControlGlyph.pause:
         _bar(canvas, u, 24 * u);
         _bar(canvas, u, 58 * u);
+      case KartyControlGlyph.back:
+        _stroke(canvas, u, [
+          Offset(48 * u, 18 * u),
+          Offset(16 * u, 50 * u),
+          Offset(48 * u, 82 * u),
+        ]);
+        _stroke(canvas, u, [Offset(18 * u, 50 * u), Offset(84 * u, 50 * u)]);
       case KartyControlGlyph.play:
         // Üçgen de yuvarlatılmış: aynı yolu hem doldur hem konturla.
         final path = Path()
