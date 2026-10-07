@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:lingualloop/Utils/AppNotifier.dart';
 import 'services/AuthenticationService.dart';
@@ -14,6 +13,13 @@ class TokenInterceptor extends Interceptor {
 
   @override
   void onError(DioError err, ErrorInterceptorHandler handler) async {
+    // Yanlış giriş bilgileri için dönen 401, süresi dolmuş oturum değildir.
+    // Ekran bu yanıtı alıp kullanıcıya giriş hatasını göstermelidir.
+    if (err.requestOptions.path == 'authentication/login' ||
+        err.requestOptions.path == 'authentication/google-login') {
+      return handler.next(err);
+    }
+
     if (err.type == DioErrorType.connectTimeout ||
         err.type == DioErrorType.sendTimeout ||
         err.type == DioErrorType.receiveTimeout ||

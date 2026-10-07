@@ -43,10 +43,20 @@ class AuthService {
           (data) => AuthenticateResponse.fromJson(data as Map<String, dynamic>),
     );
 
-    final cachedPhotoPath = await fileService.cacheProfilePhoto(
-      apiResponse.data!.profilePhotoUrl,
-      apiResponse.data!.userId,
-    );
+    if (apiResponse.errorCode != null || apiResponse.data == null) {
+      return apiResponse;
+    }
+
+    String? cachedPhotoPath;
+    try {
+      cachedPhotoPath = await fileService.cacheProfilePhoto(
+        apiResponse.data!.profilePhotoUrl,
+        apiResponse.data!.userId,
+      );
+    } catch (_) {
+      // Profil görseli indirilemese de doğrulanmış giriş tamamlanır.
+      // Fotoğraf bileşeni bu durumda varsayılan görselini gösterir.
+    }
 
     // Update UserProvider
     userProvider.setUser(
@@ -115,10 +125,19 @@ class AuthService {
             (data) => AuthenticateResponse.fromJson(data as Map<String, dynamic>),
       );
 
-      final cachedPhotoPath = await fileService.cacheProfilePhoto(
-        apiResponse.data!.profilePhotoUrl,
-        apiResponse.data!.userId,
-      );
+      if (apiResponse.errorCode != null || apiResponse.data == null) {
+        return apiResponse;
+      }
+
+      String? cachedPhotoPath;
+      try {
+        cachedPhotoPath = await fileService.cacheProfilePhoto(
+          apiResponse.data!.profilePhotoUrl,
+          apiResponse.data!.userId,
+        );
+      } catch (_) {
+        // Google oturumu da yalnız profil fotoğrafı için başarısız sayılmaz.
+      }
 
       userProvider.setUser(
         User(

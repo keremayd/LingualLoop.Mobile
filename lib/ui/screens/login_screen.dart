@@ -1,13 +1,16 @@
 import 'package:lingualloop/ui/app_typography.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:lingualloop/Utils/AppNotifier.dart';
 import 'package:lingualloop/main.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:provider/provider.dart';
 
 import '../../Enums/LoginMethod.dart';
 import '../../services/AuthenticationService.dart';
+
+enum _LoginSource { form, test, google }
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -17,6 +20,19 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  _LoginSource? _loadingSource;
+  String? _errorMessage;
+  bool _emailInvalid = false;
+  bool _passwordInvalid = false;
+
+  bool get _isLoading => _loadingSource != null;
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   // Renkler §2.2'ye çekildi. Eskiden ekranın kendi paleti vardı ve
   // uygulamanın hiçbir yerinde karşılığı yoktu: zemin `#00142E`, giriş
@@ -33,35 +49,108 @@ class _LoginScreenState extends State<LoginScreen> {
   static const _buttonShadowColor = Color(0xFF6EA51C);
   static const _dividerColor = Color(0xFF0B2143);
   static const _socialBackground = Color(0xFFE9E9E9);
+  static const _warningColor = Color(0xFFFF4D5E);
 
-  Future<void> _login(BuildContext context, LoginMethod method) async {
+  void _clearError() {
+    if (_errorMessage == null && !_emailInvalid && !_passwordInvalid) return;
+    setState(() {
+      _errorMessage = null;
+      _emailInvalid = false;
+      _passwordInvalid = false;
+    });
+  }
+
+  bool _validateCredentials() {
+    final email = _usernameController.text.trim();
+    final password = _passwordController.text;
+    final emailInvalid = !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email);
+    final passwordInvalid = password.isEmpty;
+    if (!emailInvalid && !passwordInvalid) return true;
+
+    setState(() {
+      _emailInvalid = emailInvalid;
+      _passwordInvalid = passwordInvalid;
+      _errorMessage = email.isEmpty
+          ? 'E-posta adresini gir.'
+          : emailInvalid
+              ? 'Geçerli bir e-posta adresi gir.'
+              : 'Şifreni gir.';
+    });
+    return false;
+  }
+
+  String _failureMessage(Object error, LoginMethod method) {
+    if (error is DioError) {
+      if (error.response?.statusCode == 400 ||
+          error.response?.statusCode == 401) {
+        return method == LoginMethod.usernamePassword
+            ? 'E-posta veya şifre hatalı.'
+            : 'Google ile giriş yapılamadı. Tekrar dene.';
+      }
+      if (error.type == DioErrorType.connectTimeout ||
+          error.type == DioErrorType.sendTimeout ||
+          error.type == DioErrorType.receiveTimeout ||
+          error.type == DioErrorType.other) {
+        return 'Bağlantı kurulamadı. İnternetini ve sunucuyu kontrol et.';
+      }
+    }
+    return 'Şu anda giriş yapılamıyor. Lütfen tekrar dene.';
+  }
+
+  Future<void> _login(LoginMethod method, {bool useTestAccount = false}) async {
+    if (_isLoading) return;
+    if (useTestAccount && !kDebugMode) return;
+    if (method == LoginMethod.apple) {
+      setState(() => _errorMessage = 'Apple ile giriş henüz kullanılamıyor.');
+      return;
+    }
+    if (method == LoginMethod.usernamePassword &&
+        !useTestAccount &&
+        !_validateCredentials()) {
+      return;
+    }
+
     final authService = Provider.of<AuthService>(context, listen: false);
+    setState(() {
+      _errorMessage = null;
+      _emailInvalid = false;
+      _passwordInvalid = false;
+      _loadingSource = method == LoginMethod.google
+          ? _LoginSource.google
+          : useTestAccount
+              ? _LoginSource.test
+              : _LoginSource.form;
+    });
 
-    switch (method) {
-      case LoginMethod.usernamePassword:
-        final username = "sefa@gmail.com";
-        final password = "sefa123";
-
-        final response = await authService.signIn(username, password, context);
-
-        if (response.errorCode == null) {
-          Navigator.pushReplacementNamed(context, '/home');
-        } else {
-          AppNotifier.showMessage("Giriş başarısız: ${response.errorCode}");
-        }
-        break;
-
-      case LoginMethod.google:
-        final response = await authService.signInWithGoogle(context);
-        if (response.errorCode == null) {
-          Navigator.pushReplacementNamed(context, '/home');
-        } else {
-          AppNotifier.showMessage("Giriş başarısız: ${response.errorCode}");
-        }
-        break;
-
-      case LoginMethod.apple:
-      // TODO: Handle this case.
+    try {
+      final response = method == LoginMethod.google
+          ? await authService.signInWithGoogle(context)
+          : await authService.signIn(
+              // Test hesabı yalnız debug derlemesindeki ayrı butondan gelir.
+              useTestAccount
+                  ? 'sefa@gmail.com'
+                  : _usernameController.text.trim(),
+              useTestAccount ? 'sefa123' : _passwordController.text,
+              context,
+            );
+      if (!mounted) return;
+      if (response.errorCode == null && response.data != null) {
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        setState(() {
+          _errorMessage = method == LoginMethod.google
+              ? response.errorCode == 'İşlem iptal edildi!'
+                  ? 'Google ile giriş iptal edildi.'
+                  : 'Google ile giriş yapılamadı. Tekrar dene.'
+              : 'E-posta veya şifre hatalı.';
+        });
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() => _errorMessage = _failureMessage(error, method));
+      }
+    } finally {
+      if (mounted) setState(() => _loadingSource = null);
     }
   }
 
@@ -106,6 +195,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: _LoginInput(
                       controller: _usernameController,
                       hint: 'E-posta',
+                      enabled: !_isLoading,
+                      invalid: _emailInvalid,
+                      onChanged: (_) => _clearError(),
+                      onSubmitted: (_) => FocusScope.of(context).nextFocus(),
+                      autofillHints: const [AutofillHints.email],
                       keyboardType: TextInputType.emailAddress,
                       width: 686 * scale,
                       height: 112 * scale,
@@ -129,6 +223,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: _LoginInput(
                       controller: _passwordController,
                       hint: 'Şifre',
+                      enabled: !_isLoading,
+                      invalid: _passwordInvalid,
+                      onChanged: (_) => _clearError(),
+                      onSubmitted: (_) => _login(LoginMethod.usernamePassword),
+                      autofillHints: const [AutofillHints.password],
                       width: 686 * scale,
                       height: 112 * scale,
                       radius: 26 * scale,
@@ -146,6 +245,34 @@ class _LoginScreenState extends State<LoginScreen> {
                       textInputAction: TextInputAction.done,
                     ),
                   ),
+                  if (_errorMessage != null || _isLoading)
+                    Positioned(
+                      left: 48 * scale,
+                      right: 48 * scale,
+                      top: 557 * scale,
+                      height: 58 * scale,
+                      child: Semantics(
+                        liveRegion: true,
+                        child: Center(
+                          child: Text(
+                            _errorMessage ??
+                                (_loadingSource == _LoginSource.google
+                                    ? 'Google ile giriş yapılıyor...'
+                                    : 'Giriş yapılıyor...'),
+                            maxLines: 2,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: _errorMessage == null
+                                  ? _mutedColor
+                                  : _warningColor,
+                              fontSize: 24 * scale,
+                              fontWeight: AppTypography.label,
+                              fontFamily: AppTypography.family,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   Positioned(
                     left: 48 * scale,
                     top: 620 * scale,
@@ -155,8 +282,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       radius: 26 * scale,
                       shadowOffset: 10 * scale,
                       fontSize: 28 * scale,
-                      onPressed: () =>
-                          _login(context, LoginMethod.usernamePassword),
+                      enabled: !_isLoading,
+                      isLoading: _loadingSource == _LoginSource.form,
+                      onPressed: () => _login(LoginMethod.usernamePassword),
                     ),
                   ),
                   Positioned(
@@ -164,7 +292,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     left: 0,
                     right: 0,
                     child: TextButton(
-                      onPressed: () {},
+                      onPressed: _isLoading ? null : () {},
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
                         minimumSize: Size.zero,
@@ -221,7 +349,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       size: 120 * scale,
                       radius: 34 * scale,
                       iconSize: 62 * scale,
-                      onTap: () => _login(context, LoginMethod.google),
+                      enabled: !_isLoading,
+                      isLoading: _loadingSource == _LoginSource.google,
+                      onTap: () => _login(LoginMethod.google),
                     ),
                   ),
                   Positioned(
@@ -232,9 +362,45 @@ class _LoginScreenState extends State<LoginScreen> {
                       size: 120 * scale,
                       radius: 34 * scale,
                       iconSize: 62 * scale,
-                      onTap: () => _login(context, LoginMethod.apple),
+                      enabled: !_isLoading,
+                      onTap: () => _login(LoginMethod.apple),
                     ),
                   ),
+                  if (kDebugMode)
+                    Positioned(
+                      left: 143 * scale,
+                      top: 1190 * scale,
+                      child: DepthPressableButton(
+                        width: 464 * scale,
+                        height: 82 * scale,
+                        radius: 24 * scale,
+                        shadowOffset: 9 * scale,
+                        backgroundColor: const Color(0xFF163258),
+                        shadowColor: const Color(0xFF0B2143),
+                        fontSize: 0,
+                        enabled: !_isLoading,
+                        onPressed: () => _login(LoginMethod.usernamePassword,
+                            useTestAccount: true),
+                        child: _loadingSource == _LoginSource.test
+                            ? SizedBox(
+                                width: 32 * scale,
+                                height: 32 * scale,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                'TEST GİRİŞİ',
+                                style: TextStyle(
+                                  color: _titleColor,
+                                  fontSize: 27 * scale,
+                                  fontWeight: AppTypography.action,
+                                  fontFamily: AppTypography.family,
+                                ),
+                              ),
+                      ),
+                    ),
                   // Karşılıklı yönlendirme. Kayıt ekranında "Hesabın var mı?
                   // Giriş yap" vardı ama dönüşü yoktu; hesabı olmayan
                   // kullanıcı geri tuşuna basmak zorunda kalıyordu.
@@ -289,6 +455,11 @@ class _LoginInput extends StatelessWidget {
     required this.radius,
     required this.borderWidth,
     required this.fontSize,
+    required this.enabled,
+    required this.invalid,
+    required this.onChanged,
+    required this.onSubmitted,
+    required this.autofillHints,
     this.obscureText = false,
     this.textInputAction,
     this.keyboardType,
@@ -306,6 +477,11 @@ class _LoginInput extends StatelessWidget {
   final double radius;
   final double borderWidth;
   final double fontSize;
+  final bool enabled;
+  final bool invalid;
+  final ValueChanged<String> onChanged;
+  final ValueChanged<String> onSubmitted;
+  final Iterable<String> autofillHints;
   final bool obscureText;
   final TextInputAction? textInputAction;
 
@@ -318,7 +494,9 @@ class _LoginInput extends StatelessWidget {
         color: _LoginScreenState._inputFillColor,
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(
-          color: _LoginScreenState._inputBorderColor,
+          color: invalid
+              ? _LoginScreenState._warningColor
+              : _LoginScreenState._inputBorderColor,
           width: borderWidth,
         ),
       ),
@@ -326,6 +504,11 @@ class _LoginInput extends StatelessWidget {
       child: Center(
         child: TextField(
           controller: controller,
+          enabled: enabled,
+          onChanged: onChanged,
+          onSubmitted: onSubmitted,
+          autofillHints: autofillHints,
+          autocorrect: false,
           obscureText: obscureText,
           textInputAction: textInputAction,
           style: TextStyle(
@@ -482,6 +665,8 @@ class _PrimaryLoginButton extends StatelessWidget {
     required this.shadowOffset,
     required this.fontSize,
     required this.onPressed,
+    required this.enabled,
+    required this.isLoading,
   });
 
   final double width;
@@ -490,11 +675,12 @@ class _PrimaryLoginButton extends StatelessWidget {
   final double shadowOffset;
   final double fontSize;
   final VoidCallback onPressed;
+  final bool enabled;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     return DepthPressableButton(
-      text: 'Giriş yap',
       width: width,
       height: height,
       radius: radius,
@@ -502,7 +688,26 @@ class _PrimaryLoginButton extends StatelessWidget {
       backgroundColor: _LoginScreenState._buttonColor,
       shadowColor: _LoginScreenState._buttonShadowColor,
       fontSize: fontSize,
+      enabled: enabled,
       onPressed: onPressed,
+      child: isLoading
+          ? SizedBox(
+              width: fontSize * 1.1,
+              height: fontSize * 1.1,
+              child: const CircularProgressIndicator(
+                strokeWidth: 2.5,
+                color: Colors.white,
+              ),
+            )
+          : Text(
+              'Giriş yap',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: fontSize,
+                fontWeight: AppTypography.action,
+                fontFamily: AppTypography.family,
+              ),
+            ),
     );
   }
 }
@@ -514,6 +719,8 @@ class _SocialButton extends StatelessWidget {
     required this.radius,
     required this.iconSize,
     required this.onTap,
+    required this.enabled,
+    this.isLoading = false,
   });
 
   final String assetPath;
@@ -521,6 +728,8 @@ class _SocialButton extends StatelessWidget {
   final double radius;
   final double iconSize;
   final VoidCallback onTap;
+  final bool enabled;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) => DepthPressableButton(
@@ -531,8 +740,18 @@ class _SocialButton extends StatelessWidget {
         backgroundColor: _LoginScreenState._socialBackground,
         shadowColor: const Color(0xFF0B2143),
         fontSize: 0,
+        enabled: enabled,
         onPressed: onTap,
-        child: Image.asset(assetPath,
-            width: iconSize, height: iconSize, fit: BoxFit.contain),
+        child: isLoading
+            ? SizedBox(
+                width: iconSize * 0.55,
+                height: iconSize * 0.55,
+                child: const CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: _LoginScreenState._inputFillColor,
+                ),
+              )
+            : Image.asset(assetPath,
+                width: iconSize, height: iconSize, fit: BoxFit.contain),
       );
 }
