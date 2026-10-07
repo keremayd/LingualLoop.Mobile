@@ -352,10 +352,10 @@ class _SignUpScreenState extends State<SignUpScreen>
                         ),
                       ),
                     Positioned(
-                      left: 48 * scale,
+                      left: 32 * scale,
                       top: 706 * scale + errorOffset,
                       child: _PrimarySignUpButton(
-                        width: 654 * scale,
+                        width: 686 * scale,
                         height: 96 * scale,
                         radius: 26 * scale,
                         shadowOffset: 10 * scale,
