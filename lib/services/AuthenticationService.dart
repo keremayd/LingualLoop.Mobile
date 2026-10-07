@@ -10,7 +10,6 @@ import 'package:lingualloop/models/Requests/SignUpRequest.dart';
 import 'package:lingualloop/models/responses/AuthenticateResponse.dart';
 import 'package:lingualloop/models/responses/RefreshTokenResponse.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:lingualloop/models/responses/SignUpResponse.dart';
 import 'package:lingualloop/providers/UserProvider.dart';
 import 'package:lingualloop/services/FileService.dart';
 import 'package:path_provider/path_provider.dart';
@@ -164,7 +163,7 @@ class AuthService {
     }
   }
   
-  Future<bool> signUp(SignUpRequest request, BuildContext context) async {
+  Future<ApiResponse<Map<String, dynamic>>> signUp(SignUpRequest request, BuildContext context) async {
     final random = Random().nextInt(5) + 1; // 1..5 arası
 
     final byteData = await rootBundle.load("assets/ProfilePhotos/photo_$random.png");
@@ -180,7 +179,7 @@ class AuthService {
       "password": request.password,
       "email": request.email,
       "file": await MultipartFile.fromFile(file.path, filename: "profilePhoto.png"),
-      "roles": "Admin",
+      "roles": "User",
     });
 
     final response = await _dio.post("authentication/register", data: formData,
@@ -189,18 +188,10 @@ class AuthService {
       ),
     );
 
-    var apiResponse = ApiResponse<SignUpResponse>.fromJson(
+    return ApiResponse<Map<String, dynamic>>.fromJson(
       response.data,
-          (data) => SignUpResponse.fromJson(data as Map<String, dynamic>),
+          (data) => data as Map<String, dynamic>,
     );
-
-    if (apiResponse.errorCode != null) {
-      return false;
-    }
-
-    AppNotifier.showMessage("Kayıt başarıyla oluşturuldu.", color: Colors.green);
-
-    return true;
   }
 
   Future<bool> isAccessTokenExpired() async {

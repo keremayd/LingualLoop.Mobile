@@ -1,4 +1,5 @@
 import 'package:lingualloop/ui/app_typography.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:lingualloop/models/Requests/SignUpRequest.dart';
@@ -6,8 +7,14 @@ import 'package:lingualloop/ui/widgets/Buttons/app_icon_control_button.dart';
 import 'package:lingualloop/ui/widgets/Buttons/auth_back_button.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:provider/provider.dart';
-import 'package:lingualloop/Utils/AppNotifier.dart';
 import '../../services/AuthenticationService.dart';
+
+class _RegistrationFailure {
+  const _RegistrationFailure(this.message, {this.field});
+
+  final String message;
+  final String? field;
+}
 
 class SignUpScreen extends StatefulWidget {
   @override
@@ -22,6 +29,10 @@ class _SignUpScreenState extends State<SignUpScreen>
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isLoading = false;
+  bool _accountCreated = false;
+  SignUpRequest? _submittedRequest;
+  String? _formError;
 
   final Map<String, String?> _errors = {
     'firstName': null,
@@ -55,33 +66,39 @@ class _SignUpScreenState extends State<SignUpScreen>
   }
 
   bool _validateAll() {
-    final Map<String, String?> newErrors = {};
-
-    if (_firstNameController.text.trim().isEmpty) {
-      newErrors['firstName'] = 'İsmini yazmalısın.';
-    }
-
-    if (_lastNameController.text.trim().isEmpty) {
-      newErrors['lastName'] = 'Soyismini yazmalısın.';
-    }
-
+    final firstName = _firstNameController.text.trim();
+    final lastName = _lastNameController.text.trim();
     final email = _emailController.text.trim();
-    if (email.isEmpty || !email.contains('@')) {
-      newErrors['email'] = 'Geçerli bir email adresi yazmalısın.';
-    }
-
     final password = _passwordController.text;
-    if (password.isEmpty) {
-      newErrors['password'] = 'Şifre alanını doldurmalısın.';
-    } else if (password.length < 6) {
-      newErrors['password'] = 'Şifren en az 6 karakter olmalı.';
-    }
+    final newErrors = <String, String?>{
+      'firstName': firstName.isEmpty ? 'İsmini yazmalısın.' : null,
+      'lastName': lastName.isEmpty ? 'Soyismini yazmalısın.' : null,
+      'email': RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)
+          ? null
+          : 'Geçerli bir e-posta adresi gir.',
+      'password': password.isEmpty
+          ? 'Şifreni gir.'
+          : password.length < 6 || !RegExp(r'\d').hasMatch(password)
+              ? 'Şifren en az 6 karakter ve bir rakam içermeli.'
+              : null,
+    };
 
     setState(() {
-      _errors.addAll(newErrors);
+      _errors
+        ..clear()
+        ..addAll(newErrors);
+      _formError = null;
     });
 
     return newErrors.values.every((e) => e == null);
+  }
+
+  void _clearFieldError(String field) {
+    if (_errors[field] == null && _formError == null) return;
+    setState(() {
+      _errors[field] = null;
+      _formError = null;
+    });
   }
 
   String? get _visibleErrorMessage {
@@ -92,36 +109,110 @@ class _SignUpScreenState extends State<SignUpScreen>
       }
     }
 
-    return null;
+    return _formError;
   }
 
-  Future<void> _signUp(BuildContext context) async {
-    if (_validateAll()) {
-      final authService = Provider.of<AuthService>(context, listen: false);
+  _RegistrationFailure _registrationFailure(Object error) {
+    if (error is DioError) {
+      final body = error.response?.data;
+      final errorList = body is Map ? body['errorList'] : null;
+      final codes = errorList is Map ? errorList['errorCode'] : null;
+      final identityCodes =
+          codes is List ? codes.whereType<String>() : <String>[];
 
-      SignUpRequest request = SignUpRequest(
-          firstName: _firstNameController.text,
-          lastName: _lastNameController.text,
+      if (identityCodes.contains('DuplicateEmail')) {
+        return const _RegistrationFailure(
+          'Bu e-posta adresiyle zaten bir hesap var.',
+          field: 'email',
+        );
+      }
+      if (identityCodes.contains('DuplicateUserName')) {
+        return const _RegistrationFailure(
+          'Bu isimle hesap oluşturulamadı. Farklı bir ad veya soyad dene.',
+          field: 'firstName',
+        );
+      }
+      if (identityCodes.any((code) => code.startsWith('Password'))) {
+        return const _RegistrationFailure(
+          'Şifren en az 6 karakter ve bir rakam içermeli.',
+          field: 'password',
+        );
+      }
+      if (error.type == DioErrorType.connectTimeout ||
+          error.type == DioErrorType.sendTimeout ||
+          error.type == DioErrorType.receiveTimeout ||
+          error.type == DioErrorType.other) {
+        return const _RegistrationFailure(
+          'Bağlantı kurulamadı. İnternetini ve sunucuyu kontrol et.',
+        );
+      }
+      if (error.response?.statusCode == 400) {
+        return const _RegistrationFailure(
+            'Bilgileri kontrol edip tekrar dene.');
+      }
+    }
+
+    return const _RegistrationFailure(
+      'Şu anda kayıt oluşturulamıyor. Lütfen tekrar dene.',
+    );
+  }
+
+  Future<void> _signUp() async {
+    if (_isLoading) return;
+    if (!_accountCreated && !_validateAll()) return;
+
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final request = _submittedRequest ??
+        SignUpRequest(
+          firstName: _firstNameController.text.trim(),
+          lastName: _lastNameController.text.trim(),
+          email: _emailController.text.trim(),
           password: _passwordController.text,
-          email: _emailController.text);
-      var signUpResponse = await authService.signUp(request, context);
+        );
 
-      if (signUpResponse) {
-        var loginResponse =
-            await authService.signIn(request.email, request.password, context);
-        if (loginResponse.errorCode == null) {
-          Navigator.pushReplacementNamed(context, '/home');
+    setState(() {
+      _isLoading = true;
+      _formError = null;
+    });
 
+    try {
+      if (!_accountCreated) {
+        final response = await authService.signUp(request, context);
+        if (!mounted) return;
+        if (response.errorCode != null || response.data == null) {
+          setState(() => _formError =
+              'Şu anda kayıt oluşturulamıyor. Lütfen tekrar dene.');
           return;
         }
-
-        AppNotifier.showMessage(
-            "Kayıt oluşturuldu, giriş başarısız. Tekrar giriş yapmayı deneyin.");
-
-        return;
+        setState(() {
+          _accountCreated = true;
+          _submittedRequest = request;
+        });
       }
 
-      AppNotifier.showMessage("Kayıt olurken hata oluştu!");
+      final loginResponse =
+          await authService.signIn(request.email, request.password, context);
+      if (!mounted) return;
+      if (loginResponse.errorCode == null && loginResponse.data != null) {
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        setState(() =>
+            _formError = 'Hesabın oluşturuldu. Giriş yapılamadı; tekrar dene.');
+      }
+    } catch (error) {
+      if (!mounted) return;
+      if (_accountCreated) {
+        setState(() =>
+            _formError = 'Hesabın oluşturuldu. Giriş yapılamadı; tekrar dene.');
+      } else {
+        final failure = _registrationFailure(error);
+        setState(() {
+          _formError = failure.field == null ? failure.message : null;
+          if (failure.field != null) _errors[failure.field!] = failure.message;
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -184,8 +275,8 @@ class _SignUpScreenState extends State<SignUpScreen>
                         fontSize: 30 * scale,
                         hasError: _errors['firstName'] != null,
                         keyboardType: TextInputType.name,
-                        onChanged: (_) =>
-                            setState(() => _errors['firstName'] = null),
+                        readOnly: _isLoading || _accountCreated,
+                        onChanged: (_) => _clearFieldError('firstName'),
                       ),
                     ),
                     Positioned(
@@ -207,8 +298,8 @@ class _SignUpScreenState extends State<SignUpScreen>
                         fontSize: 30 * scale,
                         hasError: _errors['lastName'] != null,
                         keyboardType: TextInputType.name,
-                        onChanged: (_) =>
-                            setState(() => _errors['lastName'] = null),
+                        readOnly: _isLoading || _accountCreated,
+                        onChanged: (_) => _clearFieldError('lastName'),
                       ),
                     ),
                     Positioned(
@@ -224,8 +315,8 @@ class _SignUpScreenState extends State<SignUpScreen>
                         fontSize: 30 * scale,
                         hasError: _errors['email'] != null,
                         keyboardType: TextInputType.emailAddress,
-                        onChanged: (_) =>
-                            setState(() => _errors['email'] = null),
+                        readOnly: _isLoading || _accountCreated,
+                        onChanged: (_) => _clearFieldError('email'),
                       ),
                     ),
                     Positioned(
@@ -241,20 +332,23 @@ class _SignUpScreenState extends State<SignUpScreen>
                         fontSize: 30 * scale,
                         hasError: _errors['password'] != null,
                         obscureText: true,
-                        onChanged: (_) =>
-                            setState(() => _errors['password'] = null),
+                        readOnly: _isLoading || _accountCreated,
+                        onChanged: (_) => _clearFieldError('password'),
                       ),
                     ),
                     if (errorMessage != null)
                       Positioned(
                         left: 40 * scale,
                         top: 686 * scale,
-                        child: _FormWarning(
-                          message: errorMessage,
-                          width: 670 * scale,
-                          height: 58 * scale,
-                          radius: 20 * scale,
-                          fontSize: 22 * scale,
+                        child: Semantics(
+                          liveRegion: true,
+                          child: _FormWarning(
+                            message: errorMessage,
+                            width: 670 * scale,
+                            height: 58 * scale,
+                            radius: 20 * scale,
+                            fontSize: 22 * scale,
+                          ),
                         ),
                       ),
                     Positioned(
@@ -266,7 +360,10 @@ class _SignUpScreenState extends State<SignUpScreen>
                         radius: 26 * scale,
                         shadowOffset: 10 * scale,
                         fontSize: 28 * scale,
-                        onPressed: () => _signUp(context),
+                        enabled: !_isLoading,
+                        isLoading: _isLoading,
+                        text: _accountCreated ? 'Giriş yap' : 'Kayıt ol',
+                        onPressed: _signUp,
                       ),
                     ),
                     // Çıplak çizgi neyi ayırdığını söylemiyordu; "veya"
@@ -380,6 +477,7 @@ class _SignUpInput extends StatelessWidget {
     this.hasError = false,
     this.keyboardType,
     this.obscureText = false,
+    this.readOnly = false,
   });
 
   final TextEditingController controller;
@@ -393,6 +491,7 @@ class _SignUpInput extends StatelessWidget {
   final bool hasError;
   final TextInputType? keyboardType;
   final bool obscureText;
+  final bool readOnly;
   final ValueChanged<String> onChanged;
 
   @override
@@ -423,6 +522,7 @@ class _SignUpInput extends StatelessWidget {
               controller: controller,
               keyboardType: keyboardType,
               obscureText: obscureText,
+              readOnly: readOnly,
               onChanged: onChanged,
               style: TextStyle(
                 color: Colors.white,
@@ -571,6 +671,9 @@ class _PrimarySignUpButton extends StatelessWidget {
     required this.shadowOffset,
     required this.fontSize,
     required this.onPressed,
+    required this.enabled,
+    required this.isLoading,
+    required this.text,
   });
 
   final double width;
@@ -579,11 +682,13 @@ class _PrimarySignUpButton extends StatelessWidget {
   final double shadowOffset;
   final double fontSize;
   final VoidCallback onPressed;
+  final bool enabled;
+  final bool isLoading;
+  final String text;
 
   @override
   Widget build(BuildContext context) {
     return DepthPressableButton(
-      text: 'Kayıt ol',
       width: width,
       height: height,
       radius: radius,
@@ -591,7 +696,26 @@ class _PrimarySignUpButton extends StatelessWidget {
       backgroundColor: _SignUpScreenState._buttonColor,
       shadowColor: _SignUpScreenState._buttonShadowColor,
       fontSize: fontSize,
+      enabled: enabled,
       onPressed: onPressed,
+      child: isLoading
+          ? SizedBox(
+              width: fontSize * 1.1,
+              height: fontSize * 1.1,
+              child: const CircularProgressIndicator(
+                strokeWidth: 2.5,
+                color: Colors.white,
+              ),
+            )
+          : Text(
+              text,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: fontSize,
+                fontWeight: AppTypography.action,
+                fontFamily: AppTypography.family,
+              ),
+            ),
     );
   }
 }

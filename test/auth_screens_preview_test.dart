@@ -15,7 +15,8 @@ import 'package:provider/provider.dart';
 void main() {
   setUpAll(loadPreviewFonts);
 
-  Future<void> shoot(WidgetTester tester, Widget screen, String name) async {
+  Future<void> shoot(WidgetTester tester, Widget screen, String name,
+      {bool submitEmptyForm = false}) async {
     const size = Size(430, 932);
     await tester.binding.setSurfaceSize(size);
     tester.view.physicalSize = size;
@@ -34,6 +35,10 @@ void main() {
       }
     });
     await tester.pump();
+    if (submitEmptyForm) {
+      await tester.tap(find.text('Kayıt ol'));
+      await tester.pump();
+    }
 
     await expectLater(
         find.byType(MaterialApp), matchesGoldenFile('goldens/$name.png'));
@@ -43,6 +48,11 @@ void main() {
       'giris ekrani', (t) async => shoot(t, LoginScreen(), 'auth_login'));
   testWidgets(
       'kayit ekrani', (t) async => shoot(t, SignUpScreen(), 'auth_signup'));
+  testWidgets(
+    'kayit hata gorunumu',
+    (t) async =>
+        shoot(t, SignUpScreen(), 'auth_signup_error', submitEmptyForm: true),
+  );
 
   testWidgets('geri düğmesi başlık alanında kırpılmaz', (tester) async {
     for (final width in [320.0, 430.0]) {
