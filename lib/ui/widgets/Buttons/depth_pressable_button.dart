@@ -11,6 +11,7 @@ class DepthPressableButton extends StatefulWidget {
     required this.height,
     required this.radius,
     required this.shadowOffset,
+    this.roundedDepthOverride,
     required this.backgroundColor,
     required this.shadowColor,
     required this.fontSize,
@@ -28,6 +29,9 @@ class DepthPressableButton extends StatefulWidget {
   final double height;
   final double radius;
   final double shadowOffset;
+
+  /// Ortak yuvarlak stil açıkken kullanılacak alt katman kalınlığı.
+  final double? roundedDepthOverride;
   final Color backgroundColor;
   final Color shadowColor;
   final double fontSize;
@@ -56,6 +60,7 @@ class _DepthPressableButtonState extends State<DepthPressableButton> {
       totalHeight: widget.height + widget.shadowOffset,
       legacyRadius: widget.radius,
       legacyDepth: widget.shadowOffset,
+      roundedDepthOverride: widget.roundedDepthOverride,
     );
 
     return Semantics(

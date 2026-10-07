@@ -64,7 +64,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(
           38 * scale,
-          24 * scale,
+          40 * scale,
           40 * scale,
           52 * scale,
         ),
@@ -82,7 +82,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const ProfileCard(color: Color(0xFF0C2244)),
-            SizedBox(height: 38 * scale),
+            SizedBox(height: 34 * scale),
             Consumer2<ScoreWithLivesProvider, ProfileLearningStatsProvider>(
               builder: (context, scoreProvider, statsProvider, child) {
                 final data = scoreProvider.scoreWithLives;

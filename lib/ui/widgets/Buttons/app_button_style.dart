@@ -17,6 +17,7 @@ abstract final class AppButtonStyle {
     required double totalHeight,
     required double legacyRadius,
     required double legacyDepth,
+    double? roundedDepthOverride,
     bool? icon,
   }) {
     if (!roundedDepth) {
@@ -27,7 +28,8 @@ abstract final class AppButtonStyle {
       );
     }
     final isIcon = icon ?? width <= totalHeight * 1.35;
-    final depth = totalHeight * (isIcon ? _iconDepth : _actionDepth);
+    final depth = roundedDepthOverride ??
+        totalHeight * (isIcon ? _iconDepth : _actionDepth);
     return AppButtonGeometry(
       depth: depth,
       radius:

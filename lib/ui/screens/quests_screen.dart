@@ -366,7 +366,7 @@ class _QuestsScreenState extends State<QuestsScreen>
                     ),
                     padding: EdgeInsets.fromLTRB(
                       34 * scale,
-                      26 * scale,
+                      36 * scale,
                       34 * scale,
                       54 * scale,
                     ),
@@ -380,7 +380,7 @@ class _QuestsScreenState extends State<QuestsScreen>
                         resetAtUtc: data?.resetAtUtc,
                         quests: quests,
                       ),
-                      SizedBox(height: 40 * scale),
+                      SizedBox(height: 34 * scale),
                       _buildQuestBoard(quests, scale, provider),
                     ],
                   );

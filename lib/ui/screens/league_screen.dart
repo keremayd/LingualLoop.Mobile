@@ -271,7 +271,7 @@ class _LeagueScreenState extends State<LeagueScreen>
                     ),
                     padding: EdgeInsets.fromLTRB(
                       14 * scale,
-                      8 * scale,
+                      40 * scale,
                       14 * scale,
                       60 * scale,
                     ),
@@ -289,7 +289,7 @@ class _LeagueScreenState extends State<LeagueScreen>
                           }
                         },
                       ),
-                      SizedBox(height: 46 * scale),
+                      SizedBox(height: 34 * scale),
                       ..._buildLeaderboard(league, scale),
                     ],
                   );
