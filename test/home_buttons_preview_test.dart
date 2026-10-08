@@ -42,6 +42,7 @@ class _Learning extends ProfileLearningStatsProvider {
   _Learning() {
     applyPreviewStats(ProfileLearningStatsResponse.fromJson({
       'learnedWordCount': 20,
+      'dueWordCount': 12,
       'learnedArticleCount': 12,
       'reviewPendingCount': 6,
       'currentStreak': 7,
@@ -82,6 +83,7 @@ void main() {
     });
     await tester.pump(const Duration(milliseconds: 450));
     expect(tester.takeException(), isNull);
+    expect(find.text('12 kelimeyi\ntekrar et!'), findsOneWidget);
     await expectLater(find.byType(MaterialApp),
         matchesGoldenFile('goldens/home_global_buttons.png'));
     await tester.pumpWidget(const SizedBox.shrink());

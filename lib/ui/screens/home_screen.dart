@@ -439,10 +439,18 @@ class _HomeScreenScreenState extends State<HomeScreen> {
                     },
                   ),
                   SizedBox(height: 34 * scale),
-                  _KartyFeatureCard(
-                    scale: scale,
-                    onTap: () async {
-                      await _updateLivesAndRouter('kartyquiz');
+                  Consumer<ProfileLearningStatsProvider>(
+                    builder: (context, provider, child) {
+                      final stats = _isHoldingLearningCardState
+                          ? _heldLearningStats
+                          : provider.stats;
+                      return _KartyFeatureCard(
+                        scale: scale,
+                        dueWordCount: stats?.dueWordCount ?? 0,
+                        onTap: () async {
+                          await _updateLivesAndRouter('kartyquiz');
+                        },
+                      );
                     },
                   ),
                   SizedBox(height: 34 * scale),
@@ -649,10 +657,12 @@ class _ReviewMistakesCard extends StatelessWidget {
 class _KartyFeatureCard extends StatelessWidget {
   const _KartyFeatureCard({
     required this.scale,
+    required this.dueWordCount,
     required this.onTap,
   });
 
   final double scale;
+  final int dueWordCount;
   final VoidCallback onTap;
 
   @override
@@ -774,7 +784,9 @@ class _KartyFeatureCard extends StatelessWidget {
                   ),
                   SizedBox(height: 16 * scale),
                   Text(
-                    "Kartları kaydır,\nyeni kelimeler\nöğren!",
+                    dueWordCount > 0
+                        ? '$dueWordCount kelimeyi\ntekrar et!'
+                        : 'Kartları kaydır,\nöğrenmeye\ndevam et!',
                     textAlign: TextAlign.right,
                     style: TextStyle(
                       color: _HomeScreenScreenState._textColor,
