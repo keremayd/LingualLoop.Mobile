@@ -97,7 +97,24 @@ class _ArticlePracticeScreenState extends State<ArticlePracticeScreen>
       return;
     }
 
+    await _submitAnswer(selectedArticle, scale);
+  }
+
+  Future<void> _onTargetTap(String article, double scale) async {
     final provider = context.read<ArticlePracticeProvider>();
+    if (!provider.canInteract || _motionController.isAnimating) return;
+    HapticFeedback.selectionClick();
+    setState(() {
+      _dragOffset = Offset.zero;
+      _hoveredArticle = article;
+      _isDragging = false;
+    });
+    await _submitAnswer(article, scale);
+  }
+
+  Future<void> _submitAnswer(String selectedArticle, double scale) async {
+    final provider = context.read<ArticlePracticeProvider>();
+    if (!provider.canInteract || _motionController.isAnimating) return;
     final userService = context.read<UserService>();
     final profileLearningStatsProvider =
         context.read<ProfileLearningStatsProvider>();
@@ -251,6 +268,7 @@ class _ArticlePracticeScreenState extends State<ArticlePracticeScreen>
   Widget _buildGame(ArticlePracticeProvider provider, double scale) {
     final task = provider.task!;
     const deckTop = 240.0;
+    final canSelect = provider.canInteract && !_motionController.isAnimating;
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -326,38 +344,17 @@ class _ArticlePracticeScreenState extends State<ArticlePracticeScreen>
         Positioned(
           left: 267 * scale,
           top: (deckTop - 57) * scale,
-          child: ArticleTarget(
-            article: 'das',
-            color: _das,
-            baseColor: _dasBase,
-            scale: scale,
-            isNear: _hoveredArticle == 'das',
-            isReceiving: _receivingArticle == 'das',
-          ),
+          child: _answerTarget('das', _das, _dasBase, scale, canSelect),
         ),
         Positioned(
           left: 20 * scale,
           top: (deckTop + 350) * scale,
-          child: ArticleTarget(
-            article: 'die',
-            color: _die,
-            baseColor: _dieBase,
-            scale: scale,
-            isNear: _hoveredArticle == 'die',
-            isReceiving: _receivingArticle == 'die',
-          ),
+          child: _answerTarget('die', _die, _dieBase, scale, canSelect),
         ),
         Positioned(
           right: 20 * scale,
           top: (deckTop + 350) * scale,
-          child: ArticleTarget(
-            article: 'der',
-            color: _der,
-            baseColor: _derBase,
-            scale: scale,
-            isNear: _hoveredArticle == 'der',
-            isReceiving: _receivingArticle == 'der',
-          ),
+          child: _answerTarget('der', _der, _derBase, scale, canSelect),
         ),
         Positioned(
           left: 85 * scale,
@@ -370,6 +367,33 @@ class _ArticlePracticeScreenState extends State<ArticlePracticeScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _answerTarget(String article, Color color, Color baseColor,
+      double scale, bool enabled) {
+    final label = switch (article) {
+      'der' => 'Der seç',
+      'die' => 'Die seç',
+      _ => 'Das seç',
+    };
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: label,
+      excludeSemantics: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: enabled ? () => _onTargetTap(article, scale) : null,
+        child: ArticleTarget(
+          article: article,
+          color: color,
+          baseColor: baseColor,
+          scale: scale,
+          isNear: _hoveredArticle == article,
+          isReceiving: _receivingArticle == article,
+        ),
+      ),
     );
   }
 }
@@ -441,7 +465,7 @@ class _FeedbackPanelState extends State<_FeedbackPanel> {
     final nextVisible = isCorrect || isWrong;
     final nextWrong = isWrong ? true : (isCorrect ? false : _wrong);
     final nextMessage = isCorrect
-        ? '${widget.provider.answerResult?.correctArticle ?? ''} ${widget.nounText}  +1'
+        ? 'Doğru! ${widget.provider.answerResult?.correctArticle ?? ''} ${widget.nounText}'
         : isWrong
             ? 'Tekrar dene'
             : _message;
@@ -492,13 +516,19 @@ class _FeedbackPanelState extends State<_FeedbackPanel> {
           ),
         ),
         alignment: Alignment.center,
-        child: Text(
-          _message,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 29 * widget.scale,
-            fontWeight: AppTypography.label,
-            fontFamily: AppTypography.family,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 14 * widget.scale),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              _message,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 29 * widget.scale,
+                fontWeight: AppTypography.label,
+                fontFamily: AppTypography.family,
+              ),
+            ),
           ),
         ),
       ),
