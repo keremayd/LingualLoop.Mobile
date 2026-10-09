@@ -98,7 +98,6 @@ class ArticlePracticeAnswer {
     required this.isAccepted,
     required this.isCorrect,
     required this.correctArticle,
-    required this.earnedPoints,
     required this.articleAttemptCount,
     required this.articleCorrectCount,
   });
@@ -106,7 +105,6 @@ class ArticlePracticeAnswer {
   final bool isAccepted;
   final bool isCorrect;
   final String correctArticle;
-  final int earnedPoints;
   final int articleAttemptCount;
   final int articleCorrectCount;
 
@@ -115,7 +113,6 @@ class ArticlePracticeAnswer {
       isAccepted: json['isAccepted'] as bool? ?? false,
       isCorrect: json['isCorrect'] as bool? ?? false,
       correctArticle: json['correctArticle'] as String? ?? '',
-      earnedPoints: json['earnedPoints'] as int? ?? 0,
       articleAttemptCount: json['articleAttemptCount'] as int? ?? 0,
       articleCorrectCount: json['articleCorrectCount'] as int? ?? 0,
     );

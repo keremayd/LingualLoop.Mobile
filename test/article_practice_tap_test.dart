@@ -47,7 +47,6 @@ class _Practice extends ArticlePracticeProvider {
       isAccepted: true,
       isCorrect: isCorrect,
       correctArticle: 'der',
-      earnedPoints: isCorrect ? 1 : 0,
       articleAttemptCount: selectedArticles.length,
       articleCorrectCount: isCorrect ? 1 : 0,
     );
