@@ -44,6 +44,10 @@ class ScoreWithLivesResponse {
   @JsonKey(defaultValue: 0)
   int streak;
 
+  /// Geçmişte ulaşılan en uzun seri; ana ekrandaki sahneleri seçer.
+  @JsonKey(defaultValue: 0)
+  int longestStreak;
+
   @JsonKey(defaultValue: 0)
   int freezeCount;
 
@@ -68,6 +72,7 @@ class ScoreWithLivesResponse {
     this.nextTicketAt,
     this.league,
     this.streak = 0,
+    this.longestStreak = 0,
     this.freezeCount = 0,
     this.playedToday = false,
     this.streakWeek = const <DailyActivityDay>[],

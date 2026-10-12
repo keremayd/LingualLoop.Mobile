@@ -48,6 +48,7 @@ class StreakDayCard extends StatelessWidget {
     required this.sceneZoom,
     required this.sceneAnchorY,
     required this.sceneFadeEnd,
+    this.animateScene = false,
     required this.week,
     required this.playedToday,
     this.onTap,
@@ -84,6 +85,9 @@ class StreakDayCard extends StatelessWidget {
   /// Sönümün tamamlandığı nokta — sahneye göre değişir,
   /// bkz. `StreakScene.fadeEnd`.
   final double sceneFadeEnd;
+
+  /// Ödül sahnesi görünürken görselin tek seferlik yumuşak girişi.
+  final bool animateScene;
 
   /// Son 7 gün. Sahne kartında da gösteriliyor: kart "kaç gün" diyor, şerit
   /// "hangi günler" diyor.
@@ -197,7 +201,7 @@ class StreakDayCard extends StatelessWidget {
                 ),
               ),
 
-              _scene(),
+              _scene(context),
 
               // Cam parlaması sahnenin de üstünde: kenar, içeriğin değil
               // kartın bir özelliği.
@@ -230,10 +234,10 @@ class StreakDayCard extends StatelessWidget {
   /// katmanın rengini elle eşitlemek gerektiği için sınırda ince bir çizgi
   /// kalıyordu. `dstIn` maskesi görselin kendisini şeffaflaştırıyor, yani
   /// arkasında ne varsa ona karışıyor — eşitlenecek renk kalmıyor.
-  Widget _scene() {
+  Widget _scene(BuildContext context) {
     final boxWidth = (1 - _sceneBoxLeft) * _cardWidth;
 
-    return Align(
+    final scene = Align(
       alignment: Alignment.centerRight,
       child: SizedBox(
         width: boxWidth * scale,
@@ -265,6 +269,27 @@ class StreakDayCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+
+    if (!animateScene || MediaQuery.disableAnimationsOf(context)) return scene;
+    return TweenAnimationBuilder<double>(
+      key: ValueKey(sceneAsset),
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 850),
+      curve: Curves.easeOutCubic,
+      builder: (context, progress, child) => Opacity(
+        key: const ValueKey('streak-scene-reveal'),
+        opacity: progress,
+        child: Transform.translate(
+          offset: Offset(14 * scale * (1 - progress), 0),
+          child: Transform.scale(
+            scale: 1 + 0.025 * (1 - progress),
+            alignment: Alignment.centerRight,
+            child: child,
+          ),
+        ),
+      ),
+      child: scene,
     );
   }
 

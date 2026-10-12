@@ -24,6 +24,7 @@ ScoreWithLivesResponse _$ScoreWithLivesResponseFromJson(
           : LeagueProgressResponse.fromJson(
               json['league'] as Map<String, dynamic>),
       streak: (json['streak'] as num?)?.toInt() ?? 0,
+      longestStreak: (json['longestStreak'] as num?)?.toInt() ?? 0,
       freezeCount: (json['freezeCount'] as num?)?.toInt() ?? 0,
       playedToday: json['playedToday'] as bool? ?? false,
       streakWeek: (json['streakWeek'] as List<dynamic>?)
@@ -45,6 +46,7 @@ Map<String, dynamic> _$ScoreWithLivesResponseToJson(
       'nextTicketAt': instance.nextTicketAt?.toIso8601String(),
       'league': instance.league,
       'streak': instance.streak,
+      'longestStreak': instance.longestStreak,
       'freezeCount': instance.freezeCount,
       'playedToday': instance.playedToday,
       'streakWeek': instance.streakWeek,

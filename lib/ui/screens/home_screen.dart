@@ -51,7 +51,7 @@ class _HomeScreenScreenState extends State<HomeScreen> {
 
   /// Güne özel sahne kartını denemek için sahneyi elle seçer. Gerekli çünkü
   /// gerçek veriyle görmek o gün sayısına ulaşmayı beklemek demek.
-  String? _debugSceneKey = 'kendi_rekorun';
+  String? _debugSceneKey;
 
   Future<void> _replayStreakTransition({required bool milestone}) async {
     setState(() {
@@ -388,25 +388,12 @@ class _HomeScreenScreenState extends State<HomeScreen> {
                       // öncelik kazanıyor (bkz. `StreakScene`).
                       final scene = _debugSceneKey != null
                           ? StreakScene.byKey(_debugSceneKey!)
-                          : StreakScene.resolve(
-                              StreakSceneContext(
-                                streak: streak,
-                                playedToday: doneToday,
-                                // `score-with-lives` `longestStreak`
-                                // taşımıyor; alan eklenene kadar "hiç seri
-                                // olmamış" varsayılıyor, yani seri sıfırken
-                                // hep `beyni_esnet` çıkıyor (bugünkü
-                                // davranışın aynısı).
-                                hasEverStreaked: false,
-                                // Koruma bayrağı zaten şeritte geliyor
-                                // (`user_daily_activity.frozen`); ek alan
-                                // gerekmiyor.
-                                freezeUsedRecently: week.freezeUsedRecently,
-                                // `longestStreak` yanıtta yok; alan eklenene
-                                // kadar rekor kartı yalnız debug'dan görünür.
-                                isPersonalRecord: false,
-                              ),
-                            );
+                          : StreakScene.resolve(StreakSceneContext.fromScore(
+                              data!,
+                              freezeUsedRecently: week.freezeUsedRecently,
+                              streakOverride: streak,
+                              playedTodayOverride: doneToday,
+                            ));
 
                       if (scene != null) {
                         return StreakDayCard(
@@ -421,6 +408,7 @@ class _HomeScreenScreenState extends State<HomeScreen> {
                           sceneZoom: scene.zoom,
                           sceneAnchorY: scene.anchorY,
                           sceneFadeEnd: scene.fadeEnd,
+                          animateScene: scene.animateOnEnter,
                           week: week.toStrip(),
                           playedToday: doneToday,
                           onTap: () => NavbarWidget.requestedTab.value =

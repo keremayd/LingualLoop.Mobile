@@ -21,6 +21,7 @@ final _score = ScoreWithLivesResponse(
   lives: 15,
   maxLives: 15,
   streak: 7,
+  longestStreak: 7,
   playedToday: true,
   streakWeek: List.generate(
       7,
@@ -70,6 +71,11 @@ void main() {
               create: (_) => _Learning()),
         ],
         child: MaterialApp(
+            builder: (context, child) => MediaQuery(
+                  data:
+                      MediaQuery.of(context).copyWith(disableAnimations: true),
+                  child: child!,
+                ),
             theme: ThemeData(
                 fontFamily: AppTypography.family,
                 textTheme: AppTypography.textTheme),
@@ -83,6 +89,7 @@ void main() {
     });
     await tester.pump(const Duration(milliseconds: 450));
     expect(tester.takeException(), isNull);
+    expect(find.text('En uzun seridesin!'), findsOneWidget);
     expect(find.text('12 kelimeyi\ntekrar et!'), findsOneWidget);
     await expectLater(find.byType(MaterialApp),
         matchesGoldenFile('goldens/home_global_buttons.png'));

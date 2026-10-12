@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lingualloop/models/responses/ScoreWithLivesResponse.dart';
 
 /// Ana ekrandaki seri kartının hangi **sahneyi** göstereceğine karar veren
 /// kural listesi. Tek doğruluk kaynağı.
@@ -22,6 +23,7 @@ import 'package:flutter/material.dart';
 /// |---|---|---|
 /// | 300 | Tek seferlik kilometre taşı (100, 200, 365. gün) | Hayatta bir kez yaşanır; hiçbir şeyin üstünü örtmesine izin verilmez |
 /// | 200 | Tekrarlı kilometre taşı (7, 30, 50. gün) | Nadir ama tekrar eder |
+/// | 125–150 | Kişisel en iyi ve seri koruma | Özel durumdur; sabit gün kutlamalarını kapatmaz |
 /// | 100 | Davranış / bağlam kartı (hafta sonu, geç saat…) | Sık tekrarlanabilir; nadir olanın altında kalır |
 /// | 0 | Sahne yok → `HomeStreakStrip` | |
 ///
@@ -39,7 +41,7 @@ import 'package:flutter/material.dart';
 /// | `madalyani_kazan` | 200 | `streak == 15` **ve** bugün oynanmış — **geçici** |
 /// | `ruzgari_yakala` | 200 | `streak == 12` **ve** bugün oynanmış — **geçici** |
 /// | `istikrar_guclendirir` | 200 | `streak == 3` **ve** bugün oynanmış — **geçici** |
-/// | `kendi_rekorun` | 250 | Seri kendi rekorunu geçmiş — `longestStreak` gerekiyor |
+/// | `kendi_rekorun` | 125 | Bugün oynanmış, seri kişisel en uzun seriye eşit |
 /// | `serin_korundu` | 150 | Son iki günde koruma harcanmış — `bugun_geri_don`'u yener |
 /// | `bugun_geri_don` | 100 | `streak > 0` **ve** bugün oynanmamış — durum kartı |
 /// | `beyni_esnet` | 100 | `streak == 0` **ve** hiç seri olmamış — henüz başlamadı |
@@ -67,6 +69,7 @@ class StreakScene {
     this.zoom = 1.0,
     this.anchorY = 0,
     this.fadeEnd = 0.70,
+    this.animateOnEnter = false,
   });
 
   /// Kayıt anahtarı — hata ayıklama ve test için.
@@ -131,11 +134,15 @@ class StreakScene {
   /// (kutu genişliyor, kırpma azalıyor) ve fidan tam opak kalıyor.
   final double fadeEnd;
 
+  /// Ödül ve koruma sahneleri görünürken tek seferlik yumuşak giriş hareketi.
+  final bool animateOnEnter;
+
   static const _rules = <StreakScene>[
     StreakScene(
       key: 'gun_100',
       priority: 300,
       matches: _isDay100,
+      animateOnEnter: true,
       asset: 'assets/scenes/gun_100.png',
       aspect: 1540 / 1021,
       message: 'Galaksi seviyesindesin!',
@@ -152,6 +159,7 @@ class StreakScene {
       key: 'ritmi_koru',
       priority: 200,
       matches: _isDay14,
+      animateOnEnter: true,
       asset: 'assets/scenes/ritmi_koru.png',
       aspect: 1774 / 887,
       message: 'Ritmi koru!',
@@ -181,6 +189,7 @@ class StreakScene {
       // referans kart 21 gün gösteriyor, o alındı. Karar verilince
       // `_isDay21` değişecek, kartın geri kalanına dokunulmayacak.
       matches: _isDay21,
+      animateOnEnter: true,
       asset: 'assets/scenes/harika_gidiyorsun.png',
       aspect: 1672 / 941,
       message: 'Harika gidiyorsun!',
@@ -206,6 +215,7 @@ class StreakScene {
       priority: 200,
       // **Geçici filtre**, referans karttaki sayıdan alındı.
       matches: _isDay6,
+      animateOnEnter: true,
       asset: 'assets/scenes/hedefe_dogru.png',
       aspect: 1672 / 941,
       message: 'Haydi yüksel!',
@@ -257,6 +267,7 @@ class StreakScene {
       priority: 200,
       // **Geçici filtre**, referans karttaki sayıdan alındı.
       matches: _isDay15,
+      animateOnEnter: true,
       asset: 'assets/scenes/madalyani_kazan.png',
       aspect: 1659 / 948,
       message: 'Madalyanı kazan!',
@@ -308,6 +319,7 @@ class StreakScene {
       priority: 200,
       // **Geçici filtre**, referans karttaki sayıdan alındı.
       matches: _isDay3,
+      animateOnEnter: true,
       asset: 'assets/scenes/istikrar_guclendirir.png',
       aspect: 1672 / 941,
       // Referans kart iki satır yazıyor ("Harika! İstikrarın seni
@@ -353,6 +365,7 @@ class StreakScene {
       priority: 200,
       // **Geçici filtre**, referans karttaki sayıdan alındı.
       matches: _isDay12,
+      animateOnEnter: true,
       asset: 'assets/scenes/ruzgari_yakala.png',
       aspect: 1672 / 941,
       message: 'Rüzgarı yakala!',
@@ -378,6 +391,7 @@ class StreakScene {
       // yüzden kazanmalı — "nadir olan kazanır" ilkesi.
       priority: 150,
       matches: _isFreezeUsed,
+      animateOnEnter: true,
       asset: 'assets/scenes/serin_korundu.png',
       aspect: 1774 / 887,
       message: 'Serin korundu!',
@@ -402,11 +416,11 @@ class StreakScene {
     ),
     StreakScene(
       key: 'kendi_rekorun',
-      // Kilometre taşlarının (200) üstünde: sabit bir sayıya değil
-      // kullanıcının **kendi** geçmişine bağlı, o yüzden daha nadir ve daha
-      // kişisel. 300 tek seferliklere ayrılmış.
-      priority: 250,
-      matches: _isPersonalRecord,
+      // En uzun seri her gün yeniden eşitlenebileceği için sabit gün
+      // kutlamalarını kapatmaz; koruma ve kilometre taşları önce gelir.
+      priority: 125,
+      matches: _isAtPersonalBest,
+      animateOnEnter: true,
       asset: 'assets/scenes/kendi_rekorun.png',
       aspect: 1774 / 887,
       message: 'En uzun seridesin!',
@@ -446,15 +460,15 @@ class StreakScene {
 
   static bool _isDay3(StreakSceneContext c) => c.playedToday && c.streak == 3;
 
-  static bool _isDay12(StreakSceneContext c) =>
-      c.playedToday && c.streak == 12;
+  static bool _isDay12(StreakSceneContext c) => c.playedToday && c.streak == 12;
 
-  /// Seri, kullanıcının **kendi en uzun serisini** geçmiş.
-  static bool _isPersonalRecord(StreakSceneContext c) => c.isPersonalRecord;
+  /// Bugün oynanmış ve kullanıcı kişisel en uzun serisinde.
+  static bool _isAtPersonalBest(StreakSceneContext c) => c.isAtPersonalBest;
 
   /// Son iki günde koruma harcanmış. Kart kutlama değil **rahatlama**:
   /// "az kalsın gidiyordu ama kurtuldu".
-  static bool _isFreezeUsed(StreakSceneContext c) => c.freezeUsedRecently;
+  static bool _isFreezeUsed(StreakSceneContext c) =>
+      c.streak > 0 && c.freezeUsedRecently;
 
   /// Seri ayakta ama bugün henüz oynanmamış. Kartın işi kutlamak değil
   /// **geri çağırmak**.
@@ -497,8 +511,28 @@ class StreakSceneContext {
     required this.playedToday,
     required this.hasEverStreaked,
     required this.freezeUsedRecently,
-    required this.isPersonalRecord,
+    required this.isAtPersonalBest,
   });
+
+  factory StreakSceneContext.fromScore(
+    ScoreWithLivesResponse score, {
+    required bool freezeUsedRecently,
+    int? streakOverride,
+    bool? playedTodayOverride,
+  }) {
+    final streak = streakOverride ?? score.streak;
+    final playedToday = playedTodayOverride ?? score.playedToday;
+    return StreakSceneContext(
+      streak: streak,
+      playedToday: playedToday,
+      hasEverStreaked: score.longestStreak > 0,
+      freezeUsedRecently: freezeUsedRecently,
+      // En uzun seri kayıt sırasında güncellenir: burada '>' asla doğru
+      // olmaz. Eşitlik, bugün kişisel en uzun seride olunduğunu söyler.
+      isAtPersonalBest:
+          playedToday && streak > 1 && streak == score.longestStreak,
+    );
+  }
 
   final int streak;
 
@@ -508,9 +542,6 @@ class StreakSceneContext {
   /// Kullanıcının **daha önce** bir serisi olmuş mu (`user_streak
   /// .longest_streak > 0`). "Hiç başlamadı" ile "kaybetti" ayrımı bunda.
   ///
-  /// **Şu an her zaman `false`**: ana ekranı besleyen `score-with-lives`
-  /// yanıtı `longestStreak` taşımıyor. Alan eklenene kadar `seni_ozledik`
-  /// yalnız debug döngüsünden görülebiliyor.
   final bool hasEverStreaked;
 
   /// Son iki günden biri korumayla kapatılmış mı
@@ -521,11 +552,8 @@ class StreakSceneContext {
   /// dün (ve öncesi) frozen oluyor. Tek güne baksaydı kart hiç çıkmazdı.
   final bool freezeUsedRecently;
 
-  /// `streak > user_streak.longest_streak`.
-  ///
-  /// **Şu an her zaman `false`** — `hasEverStreaked` ile aynı sebep:
-  /// `score-with-lives` yanıtı `longestStreak` taşımıyor. Tek bir alan
-  /// eklemek bu kartı ve `seni_ozledik`'i birlikte açıyor.
-  final bool isPersonalRecord;
-
+  /// Bugün oynandı, seri 1 günü geçti ve geçmişteki en uzun seriyle eşit.
+  /// Kayıt günü backend `longest_streak` değerini zaten güncellediğinden
+  /// `streak > longestStreak` hiçbir zaman doğru olamaz.
+  final bool isAtPersonalBest;
 }
