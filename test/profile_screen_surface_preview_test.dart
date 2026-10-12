@@ -37,6 +37,7 @@ class _UserService extends Fake implements UserService {
 class _Learning extends ProfileLearningStatsProvider {
   _Learning() {
     applyPreviewStats(ProfileLearningStatsResponse.fromJson({
+      'encounteredWordCount': 24,
       'learnedWordCount': 20,
       'learnedArticleCount': 12,
       'reviewPendingCount': 6,

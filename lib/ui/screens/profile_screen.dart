@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/services/UserService.dart';
+import 'package:lingualloop/ui/app_typography.dart';
 import 'package:lingualloop/ui/widgets/ProfileCard.dart';
 import 'package:lingualloop/ui/widgets/profile_learning_stats_card.dart';
 import 'package:provider/provider.dart';
@@ -17,6 +18,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late ProfileLearningStatsProvider profileLearningStatsProvider;
 
   bool isLoading = true;
+
+  void _openWordCollection() {
+    Navigator.of(context).pushNamed('/wordcollection');
+  }
 
   @override
   void initState() {
@@ -111,15 +116,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     SizedBox(height: 15 * scale),
                     const ProfileLearningStatsCard(),
                     SizedBox(height: 34 * scale),
-                    ProfileSectionTitle(text: 'TOPLAM', scale: scale),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ProfileSectionTitle(
+                            text: 'TOPLAM',
+                            scale: scale,
+                          ),
+                        ),
+                        Semantics(
+                          button: true,
+                          label: 'Kelimelerim ekranını aç',
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: _openWordCollection,
+                            child: Text(
+                              'KELİMELERİM  ›',
+                              style: TextStyle(
+                                color: const Color(0xFF1CB1F5),
+                                fontFamily: AppTypography.family,
+                                fontSize: 20 * scale,
+                                fontWeight: AppTypography.label,
+                                letterSpacing: 0.3 * scale,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                     SizedBox(height: 15 * scale),
                     ProfileTotalsRow(
                       // Ham skor değil XP; skor zorluk termostatı olduğu için
                       // kullanıcıya gösterilmez.
                       experience: data?.experience ?? 0,
-                      learnedWords: stats?.learnedWordCount ?? 0,
+                      encounteredWords: stats?.encounteredWordCount ?? 0,
                       learnedArticles: stats?.learnedArticleCount ?? 0,
                       leaderboardRank: league?.leaderboardRank,
+                      onWordsTap: _openWordCollection,
                     ),
                   ],
                 );

@@ -11,12 +11,22 @@ class KartySoundButton extends StatefulWidget {
       required this.scale,
       required this.muted,
       this.speaking = false,
-      required this.onToggle});
+      this.animationTrigger = 0,
+      required this.onToggle,
+      this.semanticsLabel,
+      this.semanticsHint,
+      this.tooltip});
 
   final double scale;
   final bool muted;
   final bool speaking;
+
+  /// Aynı ses yeniden başladığında dalga animasyonunu baştan oynatır.
+  final int animationTrigger;
   final VoidCallback onToggle;
+  final String? semanticsLabel;
+  final String? semanticsHint;
+  final String? tooltip;
 
   @override
   State<KartySoundButton> createState() => _KartySoundButtonState();
@@ -38,6 +48,14 @@ class _KartySoundButtonState extends State<KartySoundButton>
   @override
   void didUpdateWidget(covariant KartySoundButton oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.animationTrigger != oldWidget.animationTrigger &&
+        widget.speaking &&
+        !widget.muted &&
+        !_reduceMotion) {
+      _wave
+        ..stop()
+        ..value = 0;
+    }
     _syncWave();
   }
 
@@ -62,11 +80,12 @@ class _KartySoundButtonState extends State<KartySoundButton>
     final muted = widget.muted;
     final size = math.max(44.0, 84.75 * scale);
     return Semantics(
-      label: muted ? 'Telaffuz sesi kapalı' : 'Telaffuz sesi açık',
-      hint: muted ? 'Sesi aç' : 'Sesi kapat',
-      toggled: !muted,
+      label: widget.semanticsLabel ??
+          (muted ? 'Telaffuz sesi kapalı' : 'Telaffuz sesi açık'),
+      hint: widget.semanticsHint ?? (muted ? 'Sesi aç' : 'Sesi kapat'),
+      toggled: widget.semanticsLabel == null ? !muted : null,
       child: Tooltip(
-        message: muted ? 'Sesi aç' : 'Sesi kapat',
+        message: widget.tooltip ?? (muted ? 'Sesi aç' : 'Sesi kapat'),
         child: DepthPressableButton(
           width: size,
           height: size - 3.125 * scale,

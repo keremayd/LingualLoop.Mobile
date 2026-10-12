@@ -241,15 +241,17 @@ class ProfileTotalsRow extends StatelessWidget {
   const ProfileTotalsRow({
     super.key,
     required this.experience,
-    required this.learnedWords,
+    required this.encounteredWords,
     required this.learnedArticles,
     required this.leaderboardRank,
+    this.onWordsTap,
   });
 
   final int experience;
-  final int learnedWords;
+  final int encounteredWords;
   final int learnedArticles;
   final int? leaderboardRank;
+  final VoidCallback? onWordsTap;
 
   static const _backgroundColor = Color(0xFF041227);
   static const _borderColor = Color(0xFF0B2143);
@@ -282,7 +284,8 @@ class ProfileTotalsRow extends StatelessWidget {
                 _cell(scale, PointsStarIcon(size: 48 * scale), '$experience',
                     'PUAN'),
                 _cell(scale, _WhiteBoostBoltIcon(size: 48 * scale),
-                    '$learnedWords', 'KELİME'),
+                    '$encounteredWords', 'KELİME',
+                    onTap: onWordsTap),
                 _cell(scale, ArticleLearnedIcon(size: 48 * scale),
                     '$learnedArticles', 'ARTİKEL'),
                 _cell(
@@ -310,38 +313,84 @@ class ProfileTotalsRow extends StatelessWidget {
     );
   }
 
-  Widget _cell(double scale, Widget icon, String value, String label) {
+  Widget _cell(double scale, Widget icon, String value, String label,
+      {VoidCallback? onTap}) {
     return Expanded(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(height: 48 * scale, child: Center(child: icon)),
-          SizedBox(height: 10 * scale),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Colors.white,
-              fontFamily: AppTypography.family,
-              fontSize: 30 * scale,
-              fontWeight: AppTypography.number,
-              height: 1,
+      child: _PressableProfileStat(
+        onTap: onTap,
+        semanticLabel:
+            onTap == null ? null : '$value kelime, Kelimelerim ekranını aç',
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(height: 48 * scale, child: Center(child: icon)),
+            SizedBox(height: 10 * scale),
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Colors.white,
+                fontFamily: AppTypography.family,
+                fontSize: 30 * scale,
+                fontWeight: AppTypography.number,
+                height: 1,
+              ),
             ),
-          ),
-          SizedBox(height: 4 * scale),
-          Text(
-            label,
-            style: TextStyle(
-              color: _muted,
-              fontFamily: AppTypography.family,
-              fontSize: 18 * scale,
-              fontWeight: AppTypography.caption,
-              letterSpacing: 0.5 * scale,
-              height: 1,
+            SizedBox(height: 4 * scale),
+            Text(
+              label,
+              style: TextStyle(
+                color: _muted,
+                fontFamily: AppTypography.family,
+                fontSize: 18 * scale,
+                fontWeight: AppTypography.caption,
+                letterSpacing: 0.5 * scale,
+                height: 1,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PressableProfileStat extends StatefulWidget {
+  const _PressableProfileStat({
+    required this.child,
+    required this.onTap,
+    required this.semanticLabel,
+  });
+
+  final Widget child;
+  final VoidCallback? onTap;
+  final String? semanticLabel;
+
+  @override
+  State<_PressableProfileStat> createState() => _PressableProfileStatState();
+}
+
+class _PressableProfileStatState extends State<_PressableProfileStat> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.onTap == null) return widget.child;
+    return Semantics(
+      button: true,
+      label: widget.semanticLabel,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapCancel: () => setState(() => _pressed = false),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          duration: const Duration(milliseconds: 90),
+          scale: _pressed ? 0.95 : 1,
+          child: widget.child,
+        ),
       ),
     );
   }

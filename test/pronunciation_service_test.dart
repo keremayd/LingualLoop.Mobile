@@ -40,6 +40,33 @@ void main() {
     await audio.dispose();
   });
 
+  test('Aynı kelime tekrar çalındığında oynatma bitene kadar bekler', () async {
+    final player = _Player()..simulatePlayback = true;
+    final audio = service(player);
+
+    final first = audio.play('word.mp3');
+    await player.firstPlayStarted.future;
+    player.finishPlayback();
+    await first;
+    expect(audio.isSpeaking.value, isFalse);
+
+    final second = audio.play('word.mp3');
+    await player.secondPlayStarted.future;
+    expect(player.loads, ['word.mp3']);
+    expect(player.pauses, 1);
+    expect(player.seeks, 1);
+    expect(audio.isSpeaking.value, isTrue);
+
+    var finished = false;
+    second.then((_) => finished = true);
+    await Future<void>.delayed(Duration.zero);
+    expect(finished, isFalse);
+    player.finishPlayback();
+    await second;
+    expect(audio.isSpeaking.value, isFalse);
+    await audio.dispose();
+  });
+
   test('Kapatmak çalan sesi hemen durdurur ve sonraki sesleri engeller',
       () async {
     final player = _Player();
@@ -133,9 +160,19 @@ class _Player extends Fake implements AudioPlayer {
   final states = StreamController<PlayerState>.broadcast(sync: true);
   final loads = <String>[];
   final loadStarted = Completer<void>();
+  final firstPlayStarted = Completer<void>();
+  final secondPlayStarted = Completer<void>();
   Completer<Duration?>? loadGate;
+  Completer<void>? _playback;
+  bool simulatePlayback = false;
+  bool _playing = false;
   int plays = 0;
   int stops = 0;
+  int pauses = 0;
+  int seeks = 0;
+
+  @override
+  bool get playing => _playing;
 
   @override
   Stream<PlayerState> get playerStateStream => states.stream;
@@ -154,18 +191,51 @@ class _Player extends Fake implements AudioPlayer {
 
   @override
   Future<void> play() async {
+    if (simulatePlayback && _playing) return;
+    _playing = true;
     plays++;
     states.add(PlayerState(true, ProcessingState.ready));
+    if (plays == 1 && !firstPlayStarted.isCompleted) {
+      firstPlayStarted.complete();
+    }
+    if (plays == 2 && !secondPlayStarted.isCompleted) {
+      secondPlayStarted.complete();
+    }
+    if (simulatePlayback) {
+      _playback = Completer<void>();
+      await _playback!.future;
+    }
+  }
+
+  void finishPlayback() {
+    states.add(PlayerState(true, ProcessingState.completed));
+    _playback?.complete();
+  }
+
+  @override
+  Future<void> pause() async {
+    pauses++;
+    _playing = false;
+    states.add(PlayerState(false, ProcessingState.ready));
+    if (_playback?.isCompleted == false) _playback!.complete();
   }
 
   @override
   Future<void> stop() async {
     stops++;
+    _playing = false;
     states.add(PlayerState(false, ProcessingState.idle));
+    if (_playback?.isCompleted == false) _playback!.complete();
   }
 
   @override
-  Future<void> seek(Duration? position, {int? index}) async {}
+  Future<void> seek(Duration? position, {int? index}) async {
+    seeks++;
+    if (simulatePlayback) {
+      states.add(PlayerState(_playing, ProcessingState.ready));
+    }
+  }
+
   @override
   Future<void> dispose() => states.close();
 }

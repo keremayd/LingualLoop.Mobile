@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:lingualloop/models/responses/ProfileLearningStatsResponse.dart';
+import 'package:lingualloop/models/responses/word_collection_response.dart';
 import 'package:lingualloop/models/responses/DailyActivityResponse.dart';
 import 'package:lingualloop/models/responses/ScoreWithLivesResponse.dart';
 import 'package:lingualloop/models/responses/UpdateLivesResponse.dart';
@@ -124,6 +125,24 @@ class UserService {
     );
 
     return apiResponse;
+  }
+
+  Future<ApiResponse<WordCollectionResponse>> wordCollection({
+    String category = 'all',
+    int page = 1,
+  }) async {
+    final userId = await _storage.read(key: 'userId');
+    if (userId == null || userId.isEmpty) {
+      throw StateError('Kullanıcı oturumu bulunamadı.');
+    }
+    final response = await _dio.get(
+      'users/$userId/word-collection',
+      queryParameters: {'category': category, 'page': page},
+    );
+    return ApiResponse<WordCollectionResponse>.fromJson(
+      response.data,
+      (data) => WordCollectionResponse.fromJson(data as Map<String, dynamic>),
+    );
   }
 
   /// [point] cevabın **yönü**: doğruda `1`, yanlışta `-1`. Boost çarpanı

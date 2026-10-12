@@ -2,6 +2,7 @@ import 'package:lingualloop/models/responses/DailyActivityResponse.dart';
 
 class ProfileLearningStatsResponse {
   const ProfileLearningStatsResponse({
+    this.encounteredWordCount = 0,
     required this.learnedWordCount,
     this.dueWordCount = 0,
     required this.learnedArticleCount,
@@ -16,6 +17,8 @@ class ProfileLearningStatsResponse {
     required this.week,
   });
 
+  /// Görülen kelimeler; en az bir doğru cevap koşulu aranmaz.
+  final int encounteredWordCount;
   final int learnedWordCount;
 
   /// Mevcut Karty zorluk bandında tekrar zamanı gelen kelimeler.
@@ -36,6 +39,7 @@ class ProfileLearningStatsResponse {
   final List<DailyActivityDay> week;
 
   ProfileLearningStatsResponse copyWith({
+    int? encounteredWordCount,
     int? learnedWordCount,
     int? dueWordCount,
     int? learnedArticleCount,
@@ -50,6 +54,7 @@ class ProfileLearningStatsResponse {
     List<DailyActivityDay>? week,
   }) {
     return ProfileLearningStatsResponse(
+      encounteredWordCount: encounteredWordCount ?? this.encounteredWordCount,
       learnedWordCount: learnedWordCount ?? this.learnedWordCount,
       dueWordCount: dueWordCount ?? this.dueWordCount,
       learnedArticleCount: learnedArticleCount ?? this.learnedArticleCount,
@@ -69,6 +74,7 @@ class ProfileLearningStatsResponse {
 
   factory ProfileLearningStatsResponse.fromJson(Map<String, dynamic> json) {
     return ProfileLearningStatsResponse(
+      encounteredWordCount: json['encounteredWordCount'] as int? ?? 0,
       learnedWordCount: json['learnedWordCount'] as int? ?? 0,
       dueWordCount: json['dueWordCount'] as int? ?? 0,
       learnedArticleCount: json['learnedArticleCount'] as int? ?? 0,

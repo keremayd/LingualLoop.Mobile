@@ -141,6 +141,10 @@ class PronunciationService {
         if (!_canPlay(version)) return;
         _loadedUrl = url;
       } else {
+        // just_audio keeps `playing` true after completion. Without pause,
+        // seeking restarts the sound but the following play() returns at once.
+        if (_player.playing) await _player.pause();
+        if (!_canPlay(version)) return;
         await _player.seek(Duration.zero);
       }
       if (!_canPlay(version)) return;

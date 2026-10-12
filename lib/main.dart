@@ -26,6 +26,7 @@ import 'package:lingualloop/ui/screens/SignUpScreen.dart';
 import 'package:lingualloop/ui/screens/article_practice_screen.dart';
 import 'package:lingualloop/ui/screens/karty_quiz_screen.dart';
 import 'package:lingualloop/ui/screens/profile_screen.dart';
+import 'package:lingualloop/ui/screens/word_collection_screen.dart';
 import 'package:lingualloop/ui/screens/video_quiz_screen.dart';
 import 'package:lingualloop/ui/screens/welcome_screen.dart';
 import 'package:lingualloop/ui/widgets/NavbarWidget.dart';
@@ -173,6 +174,7 @@ class MyApp extends StatelessWidget {
         '/kartyreview': (context) => KartyQuizScreen(reviewMode: true),
         '/articlepractice': (context) => const ArticlePracticeScreen(),
         '/profile': (context) => ProfileScreen(),
+        '/wordcollection': (context) => const WordCollectionScreen(),
         '/welcome': (context) => WelcomeScreen(),
         '/signup': (context) => SignUpScreen(),
       },
