@@ -13,6 +13,7 @@ import 'package:lingualloop/providers/QuestsProvider.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:lingualloop/ui/widgets/countdown_pill.dart';
 import 'package:lingualloop/ui/widgets/quest_icons.dart';
 import 'package:lingualloop/ui/widgets/quest_reward_celebration.dart';
 import 'package:lingualloop/ui/widgets/ticket_with_count.dart';
@@ -40,8 +41,6 @@ class _QuestsScreenState extends State<QuestsScreen>
   static const _onProgressColor = Color(0xFF4A3400);
   static const _textColor = Colors.white;
   static const _mutedTextColor = Color(0xFF8FA0B5);
-  static const _countdownValueColor = Color(0xFFE9EEF5);
-  static const _countdownUrgentColor = Color(0xFFFF6B3D);
   static const _accentColor = Color(0xFF1CB1F5);
 
   Timer? _countdownTimer;
@@ -640,42 +639,14 @@ class _QuestsHeaderCard extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: 18 * scale),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.hourglass_bottom_rounded,
-                            color: _isUrgent()
-                                ? _QuestsScreenState._countdownUrgentColor
-                                : _QuestsScreenState._mutedTextColor,
-                            size: 27 * scale,
-                          ),
-                          SizedBox(width: 6 * scale),
-                          Text(
-                            _countdownText(),
-                            style: TextStyle(
-                              color: _isUrgent()
-                                  ? _QuestsScreenState._countdownUrgentColor
-                                  : _QuestsScreenState._countdownValueColor,
-                              fontSize: 22 * scale,
-                              fontWeight: AppTypography.number,
-                              fontFamily: AppTypography.family,
-                            ),
-                          ),
-                          SizedBox(width: 8 * scale),
-                          Flexible(
-                            child: Text(
-                              'sonra yenilenir',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: _QuestsScreenState._mutedTextColor,
-                                fontSize: 22 * scale,
-                                fontWeight: AppTypography.caption,
-                                fontFamily: AppTypography.family,
-                              ),
-                            ),
-                          ),
-                        ],
+                      // Yalnız saat + değer; "sonra yenilenir" kalktı.
+                      // Lig başlığıyla aynı bileşen (bkz. CountdownPill).
+                      CountdownPill(
+                        scale: scale,
+                        value: _countdownText(),
+                        urgent: _isUrgent(),
+                        semanticLabel:
+                            'Görevler ${_countdownText()} sonra yenilenir',
                       ),
                     ],
                   ),
