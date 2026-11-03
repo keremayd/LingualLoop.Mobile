@@ -53,6 +53,7 @@ flutter:
     # 2.0x/3.0x varyantlarını Flutter otomatik toplar (§2.12).
     # Güne özel seri sahneleri (§2.12 yoğunluk varyantlarıyla)
     - assets/scenes/welcome_hero.png
+    - assets/scenes/lig_ilk_ulasan.png
     - assets/scenes/gun_100.png
     - assets/scenes/ritmi_koru.png
     - assets/scenes/harika_gidiyorsun.png

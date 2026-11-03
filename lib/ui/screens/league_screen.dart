@@ -1,6 +1,5 @@
 import 'package:lingualloop/ui/app_typography.dart';
 import 'package:lingualloop/ui/widgets/app_shape_style.dart';
-import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show kDebugMode;
@@ -10,6 +9,9 @@ import 'package:lingualloop/models/responses/LeagueProgressResponse.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/ui/widgets/ProfilePhoto.dart';
+import 'package:lingualloop/ui/widgets/Buttons/app_icon_control_button.dart';
+import 'package:lingualloop/ui/widgets/countdown_pill.dart';
+import 'package:lingualloop/ui/widgets/Popups/league_info_popup.dart';
 import 'package:lingualloop/ui/widgets/league_badge_mark.dart';
 import 'package:lingualloop/ui/flows/league_promotion_flow.dart';
 import 'package:lingualloop/ui/screens/league_promotion_screen.dart';
@@ -63,7 +65,6 @@ class _LeagueScreenState extends State<LeagueScreen>
     'pulsar',
   ];
 
-  Timer? _countdownTimer;
   bool _isRefreshing = false;
   bool _isShowingPromotion = false;
   ModalRoute<void>? _subscribedRoute;
@@ -79,9 +80,6 @@ class _LeagueScreenState extends State<LeagueScreen>
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _refreshLeague();
-    });
-    _countdownTimer = Timer.periodic(const Duration(minutes: 1), (_) {
-      if (mounted) setState(() {});
     });
   }
 
@@ -102,7 +100,6 @@ class _LeagueScreenState extends State<LeagueScreen>
   void dispose() {
     routeObserver.unsubscribe(this);
     WidgetsBinding.instance.removeObserver(this);
-    _countdownTimer?.cancel();
     _stripController?.dispose();
     super.dispose();
   }
@@ -264,6 +261,10 @@ class _LeagueScreenState extends State<LeagueScreen>
                       .clamp(0, _leagueKeys.length - 1)
                       .toInt();
                   _ensureStripController(activeIndex);
+                  final nextLeagueKey =
+                      league != null && league.rank < _leagueKeys.length
+                          ? _leagueKeys[league.rank]
+                          : null;
 
                   return ListView(
                     physics: const AlwaysScrollableScrollPhysics(
@@ -283,6 +284,20 @@ class _LeagueScreenState extends State<LeagueScreen>
                         controller: _stripController!,
                         displayedName:
                             _leagueNames[_leagueKeys[_centeredIndex]] ?? '',
+                        nextLeagueKey: nextLeagueKey,
+                        nextLeagueName: nextLeagueKey == null
+                            ? null
+                            : _leagueNames[nextLeagueKey],
+                        onInfoPressed: league == null
+                            ? null
+                            : () => showLeagueInfoPopup(
+                                  context,
+                                  league: league,
+                                  nextLeagueName: league.rank <
+                                          _leagueKeys.length
+                                      ? _leagueNames[_leagueKeys[league.rank]]
+                                      : null,
+                                ),
                         onCenteredChanged: (index) {
                           if (index != _centeredIndex && mounted) {
                             setState(() => _centeredIndex = index);
@@ -315,6 +330,15 @@ class _LeagueScreenState extends State<LeagueScreen>
             24 * scale,
           ),
           child: _LeaderboardRow(scale: scale, entry: entry),
+        ),
+      // Sıralama yalnız **aynı lig bandındaki** kullanıcıları gösteriyor;
+      // kullanıcı az olduğu sürece çoğu zaman tek kişi kalınıyor ve ekranın
+      // yarısı boş duruyordu. Tek olmak bir eksiklik değil: oraya ilk ulaşan
+      // sensin. İkinci kişi geldiği an sahne listeye yerini bırakır.
+      if (league != null && entries.length <= 1)
+        _LeagueSoloScene(
+          scale: scale,
+          leagueName: _leagueNames[league.leagueKey] ?? league.leagueName,
         ),
     ];
   }
@@ -420,6 +444,9 @@ class _LeagueHeaderPanel extends StatelessWidget {
     required this.leagueKeys,
     required this.controller,
     required this.displayedName,
+    required this.nextLeagueKey,
+    required this.nextLeagueName,
+    required this.onInfoPressed,
     required this.onCenteredChanged,
   });
 
@@ -430,29 +457,14 @@ class _LeagueHeaderPanel extends StatelessWidget {
 
   /// Şeritte ortalanan ligin adı; kullanıcı gezindikçe başlık onu izler.
   final String displayedName;
+
+  /// Kullanıcının **kendi** bir üst ligi; en üst ligde `null`. Başlık şeritte
+  /// gezilen ligi izlerken ilerleme her zaman kullanıcının kendi hedefidir —
+  /// bu yüzden metin hedef ligi adıyla söylüyor.
+  final String? nextLeagueKey;
+  final String? nextLeagueName;
+  final VoidCallback? onInfoPressed;
   final ValueChanged<int> onCenteredChanged;
-
-  String _countdownText() {
-    final endsAt = league?.seasonEndsAtUtc;
-    if (endsAt == null) {
-      return 'Sezon bilgisi yükleniyor';
-    }
-
-    final remaining = endsAt.difference(DateTime.now().toUtc());
-    if (remaining.isNegative) {
-      return 'Sezon yenileniyor';
-    }
-
-    if (remaining.inDays > 0) {
-      final hours = remaining.inHours - remaining.inDays * 24;
-      return '${remaining.inDays} gün $hours saat sonra sezon yenilenecek';
-    }
-    if (remaining.inHours > 0) {
-      final minutes = remaining.inMinutes - remaining.inHours * 60;
-      return '${remaining.inHours} saat $minutes dk sonra sezon yenilenecek';
-    }
-    return '${remaining.inMinutes} dk sonra sezon yenilenecek';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -484,14 +496,39 @@ class _LeagueHeaderPanel extends StatelessWidget {
               ),
             ),
             Padding(
+              // Üst pay 110'du ve boş duruyordu; o alan artık durum satırı.
               padding: EdgeInsets.fromLTRB(
                 24 * scale,
-                110 * scale,
+                22 * scale,
                 24 * scale,
                 22 * scale,
               ),
               child: Column(
                 children: [
+                  // Durum satırı: solda sezonun kalan süresi, sağda bilgi.
+                  // Duolingo'nun 2026 sekme yenilemesindeki kalıp — süre ayrı
+                  // bir satır değil, başlığın köşesinde küçük bir sayaç.
+                  Row(
+                    children: [
+                      Expanded(
+                        child: league == null
+                            ? const SizedBox.shrink()
+                            : _SeasonCountdown(scale: scale, league: league!),
+                      ),
+                      AppIconControlButton(
+                        scale: scale,
+                        label: 'Lig ve sezon bilgisi',
+                        enabled: onInfoPressed != null,
+                        onPressed: onInfoPressed ?? () {},
+                        child: Icon(
+                          Icons.info_outline_rounded,
+                          color: _LeagueScreenState._textColor,
+                          size: 39 * scale,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 14 * scale),
                   _LeagueBadgeCarousel(
                     scale: scale,
                     leagueKeys: leagueKeys,
@@ -500,9 +537,14 @@ class _LeagueHeaderPanel extends StatelessWidget {
                     onCenteredChanged: onCenteredChanged,
                   ),
                   SizedBox(height: 34 * scale),
+                  // Bilgi düğmesi durum satırına çıktı: başlık artık gerçekten
+                  // ortalı (eskiden düğmeyi dengelemek için solda görünmez bir
+                  // boşluk vardı).
                   Text(
                     '$displayedName Ligi',
+                    maxLines: 1,
                     textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: _LeagueScreenState._textColor,
                       fontSize: 48 * scale,
@@ -511,22 +553,227 @@ class _LeagueHeaderPanel extends StatelessWidget {
                       height: 1,
                     ),
                   ),
-                  SizedBox(height: 48 * scale),
-                  Text(
-                    _countdownText(),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: _LeagueScreenState._mutedTextColor,
-                      fontSize: 24 * scale,
-                      fontWeight: AppTypography.caption,
-                      fontFamily: AppTypography.family,
+                  if (league != null) ...[
+                    SizedBox(height: 26 * scale),
+                    _LeagueProgress(
+                      scale: scale,
+                      league: league!,
+                      nextLeagueKey: nextLeagueKey,
+                      nextLeagueName: nextLeagueName,
+                    ),
+                    SizedBox(height: 26 * scale),
+                  ] else
+                    SizedBox(height: 48 * scale),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Sıradaki lige ilerleme.
+///
+/// **Neden başlık kartının içinde:** listenin altına konsaydı kalabalık bir
+/// ligde kaydırmadan görünmezdi. Başlıkta, sıralama ne kadar uzun olursa olsun
+/// ekranın üstünde kalıyor.
+///
+/// Rozet şeridi ve başlık ortalı olduğu için blok da ortalı (tek hiza ekseni).
+/// Sezon süresi burada değil, kartın durum satırında: puan ile süre aynı
+/// blokta yarıştığında hangisinin asıl mesaj olduğu okunmuyordu. Çubuğun ucundaki
+/// kilitli rozet hedefi gösterir — Görevler'deki "ödül barın ucunda"
+/// kalıbının aynısı.
+class _LeagueProgress extends StatelessWidget {
+  const _LeagueProgress({
+    required this.scale,
+    required this.league,
+    required this.nextLeagueKey,
+    required this.nextLeagueName,
+  });
+
+  final double scale;
+  final LeagueProgressResponse league;
+  final String? nextLeagueKey;
+  final String? nextLeagueName;
+
+  /// Lig bilgi penceresindeki puan çubuğuyla aynı accent mavi: ekran ve
+  /// pencere aynı ölçüyü aynı renkle göstersin (kullanıcı kararı, 3 Kas 2026).
+  /// Bir tur profildeki lig hedefinin altını kullanıldı; altın bu uygulamada
+  /// bilet semantiği (§5).
+  static const _fill = _LeagueScreenState._accentColor;
+  static const _track = _LeagueScreenState._rowMeColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final pointsLeft = league.pointsToNextLeague;
+    final isTopLeague = pointsLeft == null || nextLeagueKey == null;
+    const muted = _LeagueScreenState._mutedTextColor;
+    final badgeSize = 64 * scale;
+    final barHeight = 20 * scale;
+
+    final message = TextStyle(
+      color: muted,
+      fontFamily: AppTypography.family,
+      fontSize: 26 * scale,
+      fontWeight: AppTypography.body,
+      height: 1.2,
+    );
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 32 * scale),
+      child: Column(
+        children: [
+          Text.rich(
+            TextSpan(
+              style: message,
+              children: isTopLeague
+                  ? const [TextSpan(text: 'En üst ligdesin')]
+                  : [
+                      TextSpan(text: '$nextLeagueName Ligi\'ne '),
+                      TextSpan(
+                        text: '$pointsLeft puan',
+                        style: message.copyWith(
+                          color: _fill,
+                          fontWeight: AppTypography.number,
+                        ),
+                      ),
+                      const TextSpan(text: ' kaldı'),
+                    ],
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+          ),
+          if (!isTopLeague) ...[
+            SizedBox(height: 14 * scale),
+            SizedBox(
+              height: badgeSize,
+              child: Stack(
+                alignment: Alignment.centerLeft,
+                children: [
+                  // Çubuk rozetin ortasına kadar uzanır, ucu rozetin altına
+                  // girer: dolgu "rozete doğru" akar.
+                  Padding(
+                    padding: EdgeInsets.only(right: badgeSize / 2),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(barHeight / 2),
+                      child: SizedBox(
+                        height: barHeight,
+                        child: LinearProgressIndicator(
+                          value: league.progressRatio.clamp(0.0, 1.0),
+                          backgroundColor: _track,
+                          valueColor: const AlwaysStoppedAnimation(_fill),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: LeagueBadgeMark(
+                      leagueKey: nextLeagueKey!,
+                      size: badgeSize,
+                      locked: true,
                     ),
                   ),
                 ],
               ),
             ),
           ],
-        ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Sezonun kalan süresi — Görevler başlığıyla aynı [CountdownPill].
+class _SeasonCountdown extends StatelessWidget {
+  const _SeasonCountdown({required this.scale, required this.league});
+
+  final double scale;
+  final LeagueProgressResponse league;
+
+  @override
+  Widget build(BuildContext context) {
+    final remaining = league.seasonEndsAtUtc.difference(DateTime.now().toUtc());
+
+    final String value;
+    if (remaining <= Duration.zero) {
+      value = 'Yenileniyor';
+    } else if (remaining.inDays > 0) {
+      value = '${remaining.inDays} gün';
+    } else if (remaining.inHours > 0) {
+      value = '${remaining.inHours} sa';
+    } else {
+      value = '${remaining.inMinutes} dk';
+    }
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: CountdownPill(
+        scale: scale,
+        value: value,
+        urgent: remaining > Duration.zero && remaining.inHours < 2,
+        semanticLabel: 'Sezonun bitmesine $value',
+      ),
+    );
+  }
+}
+
+/// Sıralamada tek kişi kalındığında gösterilen sahne.
+///
+/// Mesaj "kimse yok" değil, **"ilk sen ulaştın"**: yalnızlık başarının
+/// parçası. Maskot lige bayrak dikiyor; bayraktaki şimşek sahneyi bir lig
+/// olarak okutuyor.
+///
+/// Görselin zemini sayfa zemini (`041227`) ile birebir aynı tona çekildi;
+/// çizim modeli daha mavi bir lacivert (`00163D`) üretmişti ve sayfada
+/// çerçevesi belli oluyordu.
+class _LeagueSoloScene extends StatelessWidget {
+  const _LeagueSoloScene({required this.scale, required this.leagueName});
+
+  final double scale;
+  final String leagueName;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(40 * scale, 6 * scale, 40 * scale, 0),
+      child: Column(
+        children: [
+          Image.asset(
+            'assets/scenes/lig_ilk_ulasan.png',
+            // 430pt cihazda başlık, tek satır ve iki satırlık metin alt
+            // menünün üstünde, kaydırmadan sığsın (560'ta alt satır menünün
+            // altına kayıyordu).
+            width: 470 * scale,
+            semanticLabel: 'Lig gezegenine bayrak diken maskot',
+          ),
+          SizedBox(height: 6 * scale),
+          Text(
+            '$leagueName Ligi\'ne ilk sen ulaştın',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: _LeagueScreenState._textColor,
+              fontFamily: AppTypography.displayFamily,
+              fontSize: 38 * scale,
+              fontWeight: AppTypography.heading,
+              height: 1.1,
+            ),
+          ),
+          SizedBox(height: 10 * scale),
+          Text(
+            'Yeni rakipler yolda.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: _LeagueScreenState._mutedTextColor,
+              fontFamily: AppTypography.family,
+              fontSize: 26 * scale,
+              fontWeight: AppTypography.body,
+              height: 1.2,
+            ),
+          ),
+        ],
       ),
     );
   }
