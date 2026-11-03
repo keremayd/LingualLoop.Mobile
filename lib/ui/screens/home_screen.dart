@@ -16,7 +16,6 @@ import 'package:lingualloop/models/responses/DailyActivityResponse.dart';
 import 'package:lingualloop/models/responses/ProfileLearningStatsResponse.dart';
 import 'package:lingualloop/ui/widgets/Popups/streak_at_risk_popup.dart';
 import 'package:lingualloop/ui/widgets/article_practice_home_card.dart';
-import 'package:lingualloop/ui/widgets/home_streak_strip.dart';
 import 'package:lingualloop/ui/widgets/pressable_layered_card.dart';
 import 'package:lingualloop/ui/widgets/streak_day_card.dart';
 import 'package:lingualloop/ui/widgets/streak_day_scenes.dart';
@@ -312,8 +311,9 @@ class _HomeScreenScreenState extends State<HomeScreen> {
                     'ruzgari_yakala',
                     'istikrar_guclendirir',
                     'kendi_rekorun',
+                    'gunluk_seri',
                     'serin_korundu',
-                    'bugun_geri_don',
+                    'gunluk_seri_bekliyor',
                     'beyni_esnet',
                     'seni_ozledik',
                   ];
@@ -362,11 +362,8 @@ class _HomeScreenScreenState extends State<HomeScreen> {
                   _ProfileSummaryCard(scale: scale),
                   SizedBox(height: 34 * scale),
 
-                  // Seri şeridi üst şeritle Karty arasında. Bilet şeridi buradan
-                  // kaldırıldı: üst çubuktaki sayıyı tekrarlıyordu ve tavandayken
-                  // hiçbir eylem önermiyordu. Bu şerit ise ekranda bugüne ait tek
-                  // öğe — üst çubuktaki "2" serinin bugün kurtarılıp
-                  // kurtarılmadığını söylemiyor.
+                  // Görselli seri kartı üst şeritle Karty arasında. Bugünün
+                  // oynanıp oynanmadığını alev ve hafta şeridi gösteriyor.
                   Consumer<ScoreWithLivesProvider>(
                     builder: (context, provider, child) {
                       final data = provider.scoreWithLives;
@@ -395,32 +392,21 @@ class _HomeScreenScreenState extends State<HomeScreen> {
                               playedTodayOverride: doneToday,
                             ));
 
-                      if (scene != null) {
-                        return StreakDayCard(
-                          scale: scale,
-                          days: streak,
-                          message: scene.message,
-                          sceneAsset: scene.asset,
-                          sceneAspect: scene.aspect,
-                          cardColor: scene.cardColor,
-                          sceneEdgeColor: scene.sceneEdgeColor,
-                          faceOpacity: scene.faceOpacity,
-                          sceneZoom: scene.zoom,
-                          sceneAnchorY: scene.anchorY,
-                          sceneFadeEnd: scene.fadeEnd,
-                          animateScene: scene.animateOnEnter,
-                          week: week.toStrip(),
-                          playedToday: doneToday,
-                          onTap: () => NavbarWidget.requestedTab.value =
-                              NavbarWidget.profileTabIndex,
-                        );
-                      }
-
-                      return HomeStreakStrip(
+                      return StreakDayCard(
                         scale: scale,
-                        streak: streak,
-                        days: week.toStrip(),
-                        doneToday: doneToday,
+                        days: streak,
+                        message: scene.message,
+                        sceneAsset: scene.asset,
+                        sceneAspect: scene.aspect,
+                        cardColor: scene.cardColor,
+                        sceneEdgeColor: scene.sceneEdgeColor,
+                        faceOpacity: scene.faceOpacity,
+                        sceneZoom: scene.zoom,
+                        sceneAnchorY: scene.anchorY,
+                        sceneFadeEnd: scene.fadeEnd,
+                        animateScene: scene.animateOnEnter,
+                        week: week.toStrip(),
+                        playedToday: doneToday,
                         onTap: () => NavbarWidget.requestedTab.value =
                             NavbarWidget.profileTabIndex,
                       );
@@ -505,7 +491,7 @@ class _HomeScreenScreenState extends State<HomeScreen> {
 /// sayfa zemininde duruyor.
 ///
 /// **Seri buradan çıkarıldı, yerine lig kondu.** Seri artık kendi şeridine
-/// sahip (`HomeStreakStrip`) ve orada yalnız sayıyı değil bugünün durumunu da
+/// sahip (`StreakDayCard`) ve orada yalnız sayıyı değil bugünün durumunu da
 /// söylüyor; üst çubuktaki alev aynı sayıyı tekrarlıyordu. Lig bir ara "sayısı
 /// olmayan tek öğe" diye çıkarılmıştı, o itiraz artık geçersiz: rozetin
 /// yanında sıralama duruyor.

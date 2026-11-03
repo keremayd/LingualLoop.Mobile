@@ -25,7 +25,7 @@ import 'package:lingualloop/models/responses/ScoreWithLivesResponse.dart';
 /// | 200 | Tekrarlı kilometre taşı (7, 30, 50. gün) | Nadir ama tekrar eder |
 /// | 125–150 | Kişisel en iyi ve seri koruma | Özel durumdur; sabit gün kutlamalarını kapatmaz |
 /// | 100 | Davranış / bağlam kartı (hafta sonu, geç saat…) | Sık tekrarlanabilir; nadir olanın altında kalır |
-/// | 0 | Sahne yok → `HomeStreakStrip` | |
+/// | 0 | Günlük seri sahnesi | Her durumda görselli kart kalır |
 ///
 /// **Kural: nadir olan kazanır.** Sıklık arttıkça öncelik düşer: 100. gününü
 /// bir daha göremez, ama tekrarlı bir kartı yeniden görebilir.
@@ -42,10 +42,11 @@ import 'package:lingualloop/models/responses/ScoreWithLivesResponse.dart';
 /// | `ruzgari_yakala` | 200 | `streak == 12` **ve** bugün oynanmış — **geçici** |
 /// | `istikrar_guclendirir` | 200 | `streak == 3` **ve** bugün oynanmış — **geçici** |
 /// | `kendi_rekorun` | 125 | Bugün oynanmış, seri kişisel en uzun seriye eşit |
-/// | `serin_korundu` | 150 | Son iki günde koruma harcanmış — `bugun_geri_don`'u yener |
-/// | `bugun_geri_don` | 100 | `streak > 0` **ve** bugün oynanmamış — durum kartı |
+/// | `serin_korundu` | 150 | Son iki günde koruma harcanmış — günlük sahneyi yener |
 /// | `beyni_esnet` | 100 | `streak == 0` **ve** hiç seri olmamış — henüz başlamadı |
 /// | `seni_ozledik` | 100 | `streak == 0` **ve** daha önce seri olmuş — kaybetti |
+/// | `gunluk_seri` | 0 | Bugün oynanmış sıradan seri günü |
+/// | `gunluk_seri_bekliyor` | 0 | Seri var, bugün henüz oynanmamış |
 ///
 /// "Geçici" olanların koşulu henüz kararlaştırılmadı; sayılar referans
 /// kartlardan alındı, tasarım kararı değil. Karar verilince yalnız `matches`
@@ -290,31 +291,6 @@ class StreakScene {
       fadeEnd: 0.50,
     ),
     StreakScene(
-      key: 'bugun_geri_don',
-      // Kilometre taşı değil **durum** kartı: seri ayakta ama bugün henüz
-      // kurtarılmadı. `beyni_esnet` ile aynı bantta ve onunla çakışmıyor
-      // (o seri sıfırken, bu sıfırdan büyükken çıkıyor).
-      priority: 100,
-      matches: _isTodayPending,
-      asset: 'assets/scenes/bugun_geri_don.png',
-      aspect: 1672 / 941,
-      message: 'Bugün geri dön!',
-      // Referans kartın sol yüzü `#6E3FE8`; %92 opaklıkta tam o çıkıyor.
-      cardColor: Color(0xFF7743F9),
-      sceneEdgeColor: Color(0xFF7353F1),
-      faceOpacity: 0.92,
-      // **En dar çerçeveleme payı olan sahne.** En üstteki özne yağmur
-      // bulutu (y %6), en alttaki maskotun ayakları (~%88): üstte yalnız
-      // %6, altta %12 pay var, yani ölçek 1.22'yi geçemiyor. Alt sınır da
-      // var: kutuyu doldurmak için en az 1.18 gerekiyor. Aralık dar,
-      // 1.20 seçildi.
-      zoom: 1.20,
-      // Kırpma payların oranında (6 / 12) — üstten yalnız 16 birim
-      // kırpılıyor, bulutun tepesi 17 birim yukarıda.
-      anchorY: -0.32,
-      fadeEnd: 0.50,
-    ),
-    StreakScene(
       key: 'istikrar_guclendirir',
       priority: 200,
       // **Geçici filtre**, referans karttaki sayıdan alındı.
@@ -377,7 +353,7 @@ class StreakScene {
       // **En dar aralıklı sahne.** En üstteki özne uçurtma (y %6.8), en
       // alttaki ayaklar (~%89): pay yalnız %17.8, üst sınır 1.216. Kutuyu
       // doldurmak için alt sınır 1.183. Aralık 1.183–1.216, seçilen 1.20 —
-      // `bugun_geri_don`'dan bile dar.
+      // Diğer sahnelere göre dar.
       zoom: 1.20,
       // Kırpma payların oranında (6.8 / 11).
       anchorY: -0.23,
@@ -385,9 +361,8 @@ class StreakScene {
     ),
     StreakScene(
       key: 'serin_korundu',
-      // **100 bandının üstünde.** O an `bugun_geri_don`'un koşulu da
-      // sağlanıyor (seri var, bugün oynanmadı) ve ikisi çakışıyor. Koruma
-      // harcamak günlük "bugün dönmedin" durumundan çok daha nadir, bu
+      // **Günlük sahnenin üstünde.** Seri var ve bugün oynanmadıysa iki
+      // koşul da sağlanır. Koruma harcamak günlük durumdan çok daha nadir, bu
       // yüzden kazanmalı — "nadir olan kazanır" ilkesi.
       priority: 150,
       matches: _isFreezeUsed,
@@ -445,6 +420,35 @@ class StreakScene {
       // %60'a düşüyor, rampanın (%32 → %56) dışında kalıyor.
       fadeEnd: 0.56,
     ),
+    StreakScene(
+      key: 'gunluk_seri',
+      priority: 0,
+      matches: _isOrdinaryDay,
+      asset: 'assets/scenes/kendi_rekorun.png',
+      aspect: 1774 / 887,
+      message: 'Serin devam ediyor!',
+      cardColor: Color(0xFF1A3467),
+      sceneEdgeColor: Color(0xFF010B1F),
+      faceOpacity: 0.88,
+      zoom: 1.15,
+      anchorY: 0.2,
+      fadeEnd: 0.56,
+    ),
+    StreakScene(
+      key: 'gunluk_seri_bekliyor',
+      priority: 0,
+      matches: _isTodayPending,
+      asset: 'assets/scenes/gunluk_seri_bekliyor.png',
+      aspect: 1774 / 887,
+      message: 'Bugün geri dön!',
+      cardColor: Color(0xFF1A3467),
+      // Görselin boş sol alanından ölçülen lacivert ton.
+      sceneEdgeColor: Color(0xFF001031),
+      faceOpacity: 0.88,
+      zoom: 1.15,
+      anchorY: 0.2,
+      fadeEnd: 0.56,
+    ),
   ];
 
   static bool _isDay100(StreakSceneContext c) =>
@@ -461,6 +465,9 @@ class StreakScene {
   static bool _isDay3(StreakSceneContext c) => c.playedToday && c.streak == 3;
 
   static bool _isDay12(StreakSceneContext c) => c.playedToday && c.streak == 12;
+
+  static bool _isOrdinaryDay(StreakSceneContext c) =>
+      c.streak > 0 && c.playedToday;
 
   /// Bugün oynanmış ve kullanıcı kişisel en uzun serisinde.
   static bool _isAtPersonalBest(StreakSceneContext c) => c.isAtPersonalBest;
@@ -488,14 +495,16 @@ class StreakScene {
   static bool _isStreakLost(StreakSceneContext c) =>
       c.streak == 0 && c.hasEverStreaked;
 
-  /// Bağlama uyan **en yüksek öncelikli** sahne; yoksa `null`.
-  static StreakScene? resolve(StreakSceneContext context) {
+  /// Bağlama uyan **en yüksek öncelikli** sahne. Ana ekranda görselsiz durum yok.
+  static StreakScene resolve(StreakSceneContext context) {
     StreakScene? best;
     for (final rule in _rules) {
       if (!rule.matches(context)) continue;
       if (best == null || rule.priority > best.priority) best = rule;
     }
-    return best;
+    if (best != null) return best;
+    if (context.streak == 0) return byKey('beyni_esnet');
+    return byKey(context.playedToday ? 'gunluk_seri' : 'gunluk_seri_bekliyor');
   }
 
   /// Anahtarla doğrudan erişim — yalnız hata ayıklama ve önizleme için.

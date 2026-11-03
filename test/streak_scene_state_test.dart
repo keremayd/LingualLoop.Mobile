@@ -22,11 +22,11 @@ ScoreWithLivesResponse _score({
       playedToday: playedToday,
     );
 
-String? _sceneKey(ScoreWithLivesResponse score, {bool frozen = false}) =>
+String _sceneKey(ScoreWithLivesResponse score, {bool frozen = false}) =>
     StreakScene.resolve(StreakSceneContext.fromScore(
       score,
       freezeUsedRecently: frozen,
-    ))?.key;
+    )).key;
 
 void main() {
   test('score-with-lives en uzun seriyi çözer; eski yanıtta sıfır kullanır',
@@ -59,9 +59,16 @@ void main() {
         _sceneKey(_score(streak: 4, longest: 4, playedToday: true),
             frozen: true),
         'serin_korundu');
-    expect(_sceneKey(_score(streak: 4, longest: 8, playedToday: true)), isNull);
+    expect(_sceneKey(_score(streak: 4, longest: 8, playedToday: true)),
+        'gunluk_seri');
+    expect(_sceneKey(_score(streak: 1, longest: 1, playedToday: true)),
+        'gunluk_seri');
     expect(_sceneKey(_score(streak: 4, longest: 4, playedToday: false)),
-        'bugun_geri_don');
+        'gunluk_seri_bekliyor');
+    expect(
+        _sceneKey(_score(streak: 4, longest: 8, playedToday: false),
+            frozen: true),
+        'serin_korundu');
   });
 
   testWidgets('ödül sahnesi bir kez yumuşakça girer; azaltılmış harekete uyar',

@@ -298,8 +298,6 @@ class StreakDayCard extends StatelessWidget {
   ///
   /// İkisi tek bir şeyi söylüyor — bugün seride sayılmıyor. §5'teki kural
   /// zaten bu: "alev soluk = uyarı", göz metni okumadan önce fark ediyor.
-  /// `HomeStreakStrip` de aynı sinyali kullanıyor; iki bileşen aynı dili
-  /// konuşmalı.
   ///
   /// Referans "0 Gün" kartında ölçüldü: `#D9B6FA`, mor yüzün açılmışı.
   ///
@@ -447,47 +445,6 @@ class _WeekRow extends StatelessWidget {
   /// beyaz diskin içinden kart "görünüyor" gibi okunuyor.
   final Color checkColor;
 
-  /// Pazartesi'den Pazar'a. Tek harf kullanılamaz: Pazartesi, Perşembe ve
-  /// Pazar aynı harfle başlıyor (§4.4). Referans set İngilizce (`Mo Tu We`)
-  /// ama uygulamanın dili Türkçe.
-  static const _labels = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
-
-  /// Bu haftanın Pazartesi–Pazar'ı. Gelen veri **son 7 gün** olduğu için
-  /// hafta sınırını aşıyor: bugün Perşembe ise listede geçen haftanın Cuma,
-  /// Cumartesi ve Pazar'ı var.
-  ///
-  /// Bu yüzden sıralama gün adına göre yapılamaz — geçen haftanın Cuma'sı bu
-  /// haftanın Cuma'sıymış gibi **dolu** görünürdü. Eşleştirme **tarihe** göre
-  /// yapılıyor; bu haftanın henüz gelmemiş günleri `null` kalıyor ve boş
-  /// çiziliyor.
-  List<StreakDay?> get _mondayFirst {
-    if (week.isEmpty) return List<StreakDay?>.filled(7, null);
-
-    final anchor = week
-        .firstWhere(
-          (day) => day.isToday,
-          orElse: () => week.last,
-        )
-        .date;
-    final monday = DateTime(anchor.year, anchor.month, anchor.day)
-        .subtract(Duration(days: anchor.weekday - 1));
-
-    return [
-      for (var i = 0; i < 7; i++) _dayOn(monday.add(Duration(days: i))),
-    ];
-  }
-
-  StreakDay? _dayOn(DateTime date) {
-    for (final day in week) {
-      if (day.date.year == date.year &&
-          day.date.month == date.month &&
-          day.date.day == date.day) {
-        return day;
-      }
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     final dot = StreakDayCard._dotSize * scale;
@@ -497,7 +454,9 @@ class _WeekRow extends StatelessWidget {
             StreakDayCard._labelSize) *
         scale;
 
-    final days = _mondayFirst;
+    // Tarih eşleştirmesi ve etiketler profil şeridiyle **ortak**
+    // (`streak_week_strip.dart`); aynı hafta iki yerde ayrı okunmasın.
+    final days = mondayFirstWeek(week);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -509,7 +468,7 @@ class _WeekRow extends StatelessWidget {
               SizedBox(
                 width: pitch,
                 child: Text(
-                  _labels[i],
+                  kWeekdayLabels[i],
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   style: TextStyle(

@@ -6,7 +6,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:lingualloop/models/responses/DailyActivityResponse.dart';
 import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
-import 'package:lingualloop/ui/widgets/home_streak_strip.dart';
+import 'package:lingualloop/ui/widgets/streak_milestones.dart';
 import 'package:lingualloop/ui/widgets/league_badge_mark.dart';
 import 'package:lingualloop/ui/widgets/level_bars_icon.dart';
 import 'package:lingualloop/ui/widgets/points_star_icon.dart';
@@ -792,7 +792,12 @@ class ProfileStreakCard extends StatelessWidget {
                   freezeCount: stats?.freezeCount ?? 0,
                 ),
                 SizedBox(height: 22 * scale),
-                StreakWeekStrip(days: week.toStrip(), scale: scale),
+                // Ana ekran seri kartıyla aynı hafta: Pazartesi'den Pazar'a,
+                // tarihe göre eşleşmiş; henüz gelmemiş günler boş.
+                StreakWeekStrip(
+                  days: calendarWeekStrip(week.toStrip()),
+                  scale: scale,
+                ),
               ],
             ),
           ),

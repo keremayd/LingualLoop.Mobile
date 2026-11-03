@@ -46,7 +46,7 @@ void main() {
                   ('istikrar_guclendirir', 3, true),
                   ('kendi_rekorun', 23, true),
                   ('serin_korundu', 8, false),
-                  ('bugun_geri_don', 2, false),
+                  ('gunluk_seri_bekliyor', 2, false),
                   ('beyni_esnet', 0, false),
                   ('seni_ozledik', 0, false),
                 ]) ...[
@@ -98,6 +98,77 @@ void main() {
     await expectLater(
       find.byType(MaterialApp),
       matchesGoldenFile('goldens/streak_day_card.png'),
+    );
+  });
+
+  testWidgets('ilk gün, normal gün ve rekor aynı görselli düzeni kullanır',
+      (tester) async {
+    const size = Size(430, 510);
+    await tester.binding.setSurfaceSize(size);
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 1;
+    final today = DateTime(2026, 10, 12);
+
+    Widget card(int days, int longest) {
+      final scene = StreakScene.resolve(StreakSceneContext(
+        streak: days,
+        playedToday: true,
+        hasEverStreaked: true,
+        freezeUsedRecently: false,
+        isAtPersonalBest: days > 1 && days == longest,
+      ));
+      return StreakDayCard(
+        scale: 430 / 750,
+        days: days,
+        message: scene.message,
+        sceneAsset: scene.asset,
+        sceneAspect: scene.aspect,
+        cardColor: scene.cardColor,
+        sceneEdgeColor: scene.sceneEdgeColor,
+        faceOpacity: scene.faceOpacity,
+        sceneZoom: scene.zoom,
+        sceneAnchorY: scene.anchorY,
+        sceneFadeEnd: scene.fadeEnd,
+        week: [
+          for (var i = 6; i >= 0; i--)
+            StreakDay(
+              date: today.subtract(Duration(days: i)),
+              active: i < days,
+              frozen: false,
+              isToday: i == 0,
+            ),
+        ],
+        playedToday: true,
+      );
+    }
+
+    await tester.pumpWidget(MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        backgroundColor: const Color(0xFF041227),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              card(1, 1),
+              const SizedBox(height: 24),
+              card(4, 8),
+              const SizedBox(height: 24),
+              card(4, 4),
+            ],
+          ),
+        ),
+      ),
+    ));
+    await tester.runAsync(() async {
+      for (final element in find.byType(Image).evaluate()) {
+        await precacheImage((element.widget as Image).image, element);
+      }
+    });
+    await tester.pump();
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('goldens/streak_day_card_daily.png'),
     );
   });
 }

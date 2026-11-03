@@ -19,7 +19,7 @@ import 'package:lingualloop/ui/widgets/streak_freeze_flake.dart';
 ///
 /// **Seri buradan çıkarıldı, yerine lig kondu.** İki gerekçe:
 ///
-/// 1. Seri artık ana ekranda kendi şeridine sahip (`HomeStreakStrip`) ve orada
+/// 1. Seri artık ana ekranda kendi kartına sahip (`StreakDayCard`) ve orada
 ///    yalnız sayıyı değil bugünün kurtarılıp kurtarılmadığını da söylüyor.
 ///    Üst çubuktaki alev aynı sayıyı **tekrarlıyordu**.
 /// 2. Lig bir ara buraya konup çıkarılmıştı çünkü "sayısı olmayan tek öğe

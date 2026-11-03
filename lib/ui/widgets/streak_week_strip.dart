@@ -3,6 +3,75 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+/// Pazartesi'den Pazar'a Türkçe gün kısaltmaları — uygulamadaki **bütün**
+/// hafta şeritlerinin tek kaynağı.
+///
+/// **Tek harf kullanılamaz:** Türkçede Pazartesi, Perşembe ve Pazar aynı
+/// harfle başlıyor — şerit `P S Ç P C C P` olarak okunuyor ve hangi P'nin
+/// hangi gün olduğu ayırt edilemiyordu. Kullanıcı pazartesideki tiki pazar
+/// sanıp "seri 0 ama bugün tikli" diye hata bildirdi; veri doğruydu,
+/// **etiket yanlıştı.**
+///
+/// Bir dönem profil iki harf (`Pt Sa Ça`), ana ekran üç harf (`Pzt Sal Çar`)
+/// yazıyordu; aynı veri iki ayrı biçimde okunuyordu. Üç harfe birleştirildi
+/// (kullanıcı kararı, 3 Kas 2026).
+const kWeekdayLabels = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+
+/// Son 7 günü (dönen sıra, bugün sonda) **bu haftanın Pazartesi–Pazar'ına**
+/// çevirir. Henüz gelmemiş günler `null`.
+///
+/// Gelen veri son 7 gün olduğu için hafta sınırını aşıyor: bugün Perşembe ise
+/// listede geçen haftanın Cuma, Cumartesi ve Pazar'ı var. Sıralama gün adına
+/// göre yapılırsa geçen haftanın Cuma'sı bu haftanın Cuma'sıymış gibi **dolu**
+/// görünür. Eşleştirme bu yüzden **tarihe** göre yapılıyor.
+///
+/// Ana ekran seri kartı ve profil aynı fonksiyonu kullanıyor; ikisi bir dönem
+/// ayrı mantıkla çalıştığı için aynı hafta iki farklı biçimde okunuyordu.
+List<StreakDay?> mondayFirstWeek(List<StreakDay> rolling) {
+  if (rolling.isEmpty) return List<StreakDay?>.filled(7, null);
+
+  final anchor =
+      rolling.firstWhere((day) => day.isToday, orElse: () => rolling.last).date;
+  final monday = DateTime(anchor.year, anchor.month, anchor.day)
+      .subtract(Duration(days: anchor.weekday - 1));
+
+  StreakDay? dayOn(DateTime date) {
+    for (final day in rolling) {
+      if (day.date.year == date.year &&
+          day.date.month == date.month &&
+          day.date.day == date.day) {
+        return day;
+      }
+    }
+    return null;
+  }
+
+  return [for (var i = 0; i < 7; i++) dayOn(monday.add(Duration(days: i)))];
+}
+
+/// [mondayFirstWeek]'in [StreakWeekStrip]'e verilebilen hâli: henüz gelmemiş
+/// günler boş gün olarak doldurulur (ana ekran kartı da onları boş çiziyor).
+List<StreakDay> calendarWeekStrip(List<StreakDay> rolling) {
+  final week = mondayFirstWeek(rolling);
+  if (rolling.isEmpty) return const [];
+
+  final today =
+      rolling.firstWhere((day) => day.isToday, orElse: () => rolling.last).date;
+  final monday = DateTime(today.year, today.month, today.day)
+      .subtract(Duration(days: today.weekday - 1));
+
+  return [
+    for (var i = 0; i < 7; i++)
+      week[i] ??
+          StreakDay(
+            date: monday.add(Duration(days: i)),
+            active: false,
+            frozen: false,
+            isToday: false,
+          ),
+  ];
+}
+
 /// Son yedi günün seri şeridi: hangi gün girildi, hangi gün korumayla
 /// kurtarıldı, hangi gün boş geçti.
 ///
@@ -38,18 +107,6 @@ class StreakWeekStrip extends StatelessWidget {
 
   static const _muted = Color(0xFF8FA0B5);
 
-  /// Pazartesi'den Pazar'a Türkçe gün kısaltmaları.
-  ///
-  /// **Tek harf kullanılamaz:** Türkçede Pazartesi, Perşembe ve Pazar aynı
-  /// harfle başlıyor — şerit `P S Ç P C C P` olarak okunuyor ve hangi P'nin
-  /// hangi gün olduğu ayırt edilemiyordu. Kullanıcı pazartesideki tiki pazar
-  /// sanıp "seri 0 ama bugün tikli" diye hata bildirdi; veri doğruydu,
-  /// **etiket yanlıştı.**
-  ///
-  /// İki harf hem ayırt edici hem dar şeride sığıyor (üç harfli `Pzt/Per/Paz`
-  /// ana ekrandaki 33 birimlik sütuna sığmıyor).
-  static const _initials = ['Pt', 'Sa', 'Ça', 'Pe', 'Cu', 'Ct', 'Pa'];
-
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -66,7 +123,7 @@ class StreakWeekStrip extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          _initials[day.date.weekday - 1],
+          kWeekdayLabels[day.date.weekday - 1],
           style: TextStyle(
             color: day.isToday ? Colors.white : _muted,
             fontSize: 22 * scale,
