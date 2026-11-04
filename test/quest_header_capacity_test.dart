@@ -58,9 +58,6 @@ class _FakeQuestService extends QuestService {
 ScoreWithLivesResponse _score(int lives, int maxLives) => ScoreWithLivesResponse(
       score: 120,
       experience: 120,
-      level: 3,
-      levelProgress: 20,
-      levelBandSize: 50,
       lives: lives,
       maxLives: maxLives,
     );

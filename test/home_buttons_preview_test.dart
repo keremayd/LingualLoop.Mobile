@@ -15,9 +15,6 @@ import 'package:lingualloop/ui/app_typography.dart';
 final _score = ScoreWithLivesResponse(
   score: 107,
   experience: 107,
-  level: 3,
-  levelProgress: 7,
-  levelBandSize: 50,
   lives: 15,
   maxLives: 15,
   streak: 7,

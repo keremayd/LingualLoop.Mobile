@@ -10,8 +10,8 @@ import 'package:flutter/material.dart';
 ///
 /// Yeşil seçimi keyfi değil: XP **doğru cevaptan** kazanılır, doğrunun rengi
 /// de yeşildir — sayaç kaynağının rengini taşır (§2.9'daki ilerleme barı
-/// ilkesinin aynısı). Böylece üç sayaç hem biçim hem renk olarak ayrışır:
-/// yeşil yıldız (puan) / mavi çubuk (seviye) / altın bilet.
+/// ilkesinin aynısı). Böylece sayaçlar hem biçim hem renk olarak ayrışır:
+/// yeşil yıldız (puan) / altın bilet.
 ///
 /// §2.5 reçetesi: tombul gövde (aynı yol `StrokeJoin.round` ile konturlanır),
 /// altında kalınlık bandı, üst uçlarda açık ton, sol üstte beyaz parlama.

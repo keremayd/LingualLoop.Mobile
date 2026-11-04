@@ -8,7 +8,6 @@ import 'package:lingualloop/models/responses/DailyActivityResponse.dart';
 import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
 import 'package:lingualloop/ui/widgets/streak_milestones.dart';
 import 'package:lingualloop/ui/widgets/league_badge_mark.dart';
-import 'package:lingualloop/ui/widgets/level_bars_icon.dart';
 import 'package:lingualloop/ui/widgets/points_star_icon.dart';
 import 'package:lingualloop/ui/widgets/Popups/streak_at_risk_popup.dart';
 import 'package:lingualloop/ui/widgets/quest_icons.dart';
@@ -23,24 +22,20 @@ import 'package:provider/provider.dart';
 /// "Personal Records", Busuu'da ders yolu aynı işi görüyor: kullanıcıya
 /// **nerede olduğunu ve sırada ne olduğunu** söylemek.
 ///
-/// Üç satırın üçü de aynı kalıpta: hedefin adı + kalan mesafe + ilerleme.
-/// Çıplak bir dolum çubuğu yerine "4. seviyeye ulaş · 45 puan
-/// kaldı" — bar bir şey vaat ediyor ve mevcut seviye sanılmıyor.
+/// Satırların hepsi aynı kalıpta: hedefin adı + kalan mesafe + ilerleme.
+/// Çıplak bir dolum çubuğu yerine "Bir üst lig · 45 puan kaldı" — bar bir
+/// şey vaat ediyor ve mevcut durum sanılmıyor.
+///
+/// Seviye satırı 4 Kasım 2026'da kalktı: seviye, emekli olan zorluk
+/// puanından türüyordu.
 class ProfileGoalsCard extends StatelessWidget {
   const ProfileGoalsCard({
     super.key,
-    required this.level,
-    required this.levelProgress,
-    required this.levelBandSize,
     required this.leagueKey,
     required this.pointsToNextLeague,
     required this.leagueProgressRatio,
     required this.currentStreak,
   });
-
-  final int level;
-  final int levelProgress;
-  final int levelBandSize;
 
   final String leagueKey;
 
@@ -53,7 +48,6 @@ class ProfileGoalsCard extends StatelessWidget {
   static const _backgroundColor = Color(0xFF041227);
   static const _borderColor = Color(0xFF0B2143);
   static const _track = Color(0xFF0C2244);
-  static const _blue = Color(0xFF1CB1F5);
   static const _gold = Color(0xFFFFC93A);
   static const _flame = Color(0xFFFF6536);
 
@@ -63,20 +57,6 @@ class ProfileGoalsCard extends StatelessWidget {
     final nextMilestone = StreakMilestones.next(currentStreak);
 
     final rows = <Widget>[
-      _goalRow(
-        scale: scale,
-        icon: LevelBarsIcon(size: 52 * scale),
-        // `level` mevcut seviyedir; bu bölüm ise sonraki hedefi anlatır.
-        // Yalnızca "Seviye 4" yazmak topbardaki mevcut "3" ile veri
-        // tutarsızlığı gibi okunuyordu.
-        title: '${level + 1}. seviyeye ulaş',
-        hint:
-            '${(levelBandSize - levelProgress).clamp(0, levelBandSize)} puan kaldı',
-        fraction: levelBandSize == 0
-            ? 0
-            : (levelProgress / levelBandSize).clamp(0.0, 1.0),
-        color: _blue,
-      ),
       _goalRow(
         scale: scale,
         icon: LeagueBadgeMark(size: 52 * scale, leagueKey: leagueKey),

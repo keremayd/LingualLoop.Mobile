@@ -12,9 +12,6 @@ ScoreWithLivesResponse _score({
     ScoreWithLivesResponse(
       score: 0,
       experience: 0,
-      level: 1,
-      levelProgress: 0,
-      levelBandSize: 50,
       lives: 15,
       maxLives: 15,
       streak: streak,

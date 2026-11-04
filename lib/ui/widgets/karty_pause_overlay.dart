@@ -6,21 +6,18 @@ import 'package:flutter/material.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:lingualloop/ui/widgets/Buttons/secondary_action_button.dart';
 import 'package:lingualloop/ui/widgets/karty_control_glyphs.dart';
-import 'package:lingualloop/ui/widgets/level_bars_icon.dart';
 import 'package:lingualloop/ui/widgets/quest_icons.dart';
 
 class KartyPauseOverlay extends StatelessWidget {
   const KartyPauseOverlay({
     super.key,
     required this.scale,
-    required this.level,
     required this.streak,
     required this.onResume,
     required this.onExit,
   });
 
   final double scale;
-  final int level;
   final int streak;
   final VoidCallback onResume;
   final VoidCallback onExit;
@@ -82,12 +79,10 @@ class KartyPauseOverlay extends StatelessWidget {
                       fontSize: 48 * scale,
                       fontWeight: AppTypography.heading)),
               SizedBox(height: 48 * scale),
-              Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                statistic(LevelBarsIcon(size: 48 * scale), level, 'Seviye',
-                    const Color(0xFF1CB1F5)),
-                statistic(QuestIcon(questKey: 'streak_three', size: 48 * scale),
-                    streak, 'Doğru serisi', const Color(0xFFF52A2A)),
-              ]),
+              // Seviye 4 Kas 2026'da kalktı (zorluk puanı emekli oldu);
+              // menüde yalnız bu oturumun doğru serisi kalıyor.
+              statistic(QuestIcon(questKey: 'streak_three', size: 48 * scale),
+                  streak, 'Doğru serisi', const Color(0xFFF52A2A)),
               SizedBox(height: 52 * scale),
               DepthPressableButton(
                 text: 'DEVAM ET',

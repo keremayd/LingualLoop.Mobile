@@ -19,8 +19,8 @@ import 'package:lingualloop/ui/widgets/quest_icons.dart';
 /// | Gradyan/doku | yok | var |
 /// | Buz işareti | alttaki **damlalar** | fasetler, sarkıtlar, kırağı |
 ///
-/// Kural: 40 pikselde bir kutuya **iki nesne sığmaz**. Yanındaki bilet,
-/// seviye ve lig ikonlarının hepsi tek nesne; okunmalarının sebebi bu. Bu
+/// Kural: 40 pikselde bir kutuya **iki nesne sığmaz**. Yanındaki bilet ve
+/// lig ikonları tek nesne; okunmalarının sebebi bu. Bu
 /// yüzden buz ile alev iki ayrı cisim değil **tek siluet**: alevin kendisi,
 /// alt kenarından buz damlıyor.
 ///

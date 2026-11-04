@@ -107,7 +107,7 @@ void main() {
       (tester) async {
     final audio = await _mountQuiz(tester);
     expect(find.byType(KartyTopBar), findsOneWidget);
-    expect(find.text('Seviye'), findsNothing);
+    expect(find.text('Doğru serisi'), findsNothing);
     final topGlyph = find.descendant(
         of: find.byType(KartyTopBar), matching: find.byType(KartyControlMark));
     expect(tester.widget<KartyControlMark>(topGlyph).glyph,
@@ -130,7 +130,7 @@ void main() {
         KartyControlGlyph.play);
     expect(find.byType(SecondaryActionButton), findsOneWidget);
     expect(tester.widget<SpeakerMark>(find.byType(SpeakerMark)).wave, 0);
-    expect(find.text('Seviye'), findsOneWidget);
+    expect(find.text('Doğru serisi'), findsOneWidget);
     expect(audio.stops, greaterThan(0));
     await tester.pump(const Duration(seconds: 6));
     expect(find.text('Süre doldu'), findsNothing);

@@ -17,7 +17,6 @@ import 'package:lingualloop/ui/widgets/karty_boost_activation_effect.dart';
 import 'package:lingualloop/ui/widgets/karty_review_complete_state.dart';
 import 'package:lingualloop/ui/widgets/karty_success_celebration.dart';
 import 'package:provider/provider.dart';
-import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/ui/widgets/karty_play_surface.dart';
 import 'package:lingualloop/ui/widgets/karty_answer_actions.dart';
 import 'package:lingualloop/ui/widgets/karty_pause_overlay.dart';
@@ -926,15 +925,11 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
                               // Efekt de süreyi durdurur; menü yalnız kullanıcının
                               // duraklatma eylemiyle açılır.
                               if (_pauseMenuOpen)
-                                Consumer<ScoreWithLivesProvider>(
-                                  builder: (context, scores, _) =>
-                                      KartyPauseOverlay(
-                                    scale: scale,
-                                    level: scores.scoreWithLives?.level ?? 1,
-                                    streak: streak,
-                                    onResume: _togglePauseMenu,
-                                    onExit: _closeKartyScreen,
-                                  ),
+                                KartyPauseOverlay(
+                                  scale: scale,
+                                  streak: streak,
+                                  onResume: _togglePauseMenu,
+                                  onExit: _closeKartyScreen,
                                 ),
                             ],
                           );

@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 
 /// Seviye simgesi: yükselen üç çubuk.
 ///
+/// **Uygulamadan kalktı (4 Kas 2026).** Seviye, emekli olan zorluk
+/// puanından türüyordu. Çizim yalnız eski profil/Karty konsept
+/// önizlemeleri derlenmeye devam etsin diye burada; yeni bir ekrana
+/// bağlanmamalı.
+///
 /// Uygulamadaki hiçbir ikonla çakışmaz — şimşek (boost/lig/görev), alev
 /// (seri), kitap, güneş, bilet ve kupa zaten dolu. Yükselen çubuk evrensel
 /// olarak "kademe" okunur ve seviyenin ne olduğunu etiketsiz de anlatır.

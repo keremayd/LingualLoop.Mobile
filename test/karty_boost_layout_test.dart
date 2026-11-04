@@ -303,9 +303,6 @@ class _ScreenState extends State<_Screen> {
     provider.setScoreWithLives(ScoreWithLivesResponse(
         score: 107,
         experience: 107,
-        level: 3,
-        levelProgress: 7,
-        levelBandSize: 50,
         lives: 15,
         maxLives: 15,
         league: LeagueProgressResponse(
@@ -441,7 +438,6 @@ class _ScreenState extends State<_Screen> {
                     if (widget.menuOpen)
                       KartyPauseOverlay(
                           scale: s,
-                          level: 3,
                           streak: 5,
                           onResume: () {},
                           onExit: () {}),

@@ -103,9 +103,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     SizedBox(height: 15 * scale),
                     ProfileGoalsCard(
-                      level: data?.level ?? 1,
-                      levelProgress: data?.levelProgress ?? 0,
-                      levelBandSize: data?.levelBandSize ?? 50,
                       leagueKey: league?.leagueKey ?? 'merkur',
                       pointsToNextLeague: league?.pointsToNextLeague,
                       leagueProgressRatio: league?.progressRatio ?? 0,

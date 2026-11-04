@@ -87,12 +87,7 @@ class _FakeUserService extends UserService {
       BuildContext context) async {
     final data = ScoreWithLivesResponse(
       score: 79,
-      // Seviye alanları skorla tutarlı: LevelRules'a göre 79 / 50 + 1 = 2,
-      // bant içindeki ilerleme 29.
       experience: 79,
-      level: 2,
-      levelProgress: 29,
-      levelBandSize: 50,
       lives: 4,
       maxLives: 15,
       league: _sampleLeague(solo: solo),

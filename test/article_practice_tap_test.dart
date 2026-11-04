@@ -66,9 +66,6 @@ class _User extends Fake implements UserService {
         data: ScoreWithLivesResponse(
           score: 1,
           experience: 0,
-          level: 1,
-          levelProgress: 0,
-          levelBandSize: 50,
           lives: 15,
           maxLives: 15,
         ),

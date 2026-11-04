@@ -1,7 +1,6 @@
 import 'package:lingualloop/ui/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:lingualloop/ui/widgets/league_badge_mark.dart';
-import 'package:lingualloop/ui/widgets/level_bars_icon.dart';
 import 'package:lingualloop/ui/widgets/streak_freeze_flake.dart';
 
 /// Ana ekranın üst şeridi.
@@ -14,8 +13,11 @@ import 'package:lingualloop/ui/widgets/streak_freeze_flake.dart';
 /// Gösterilenler, her biri bir soruya cevap veriyor:
 ///   * **Lig** — sıralamada neredeyim (rekabet)
 ///   * **Bilet** — oynayabilir miyim (girişin bedeli)
-///   * **Seviye** — hangi zorlukta oynayacağım
 ///   * **Koruma** — seri kırılırsa elimde ne var
+///
+/// **Seviye 4 Kasım 2026'da kalktı.** Zorluk puanından türüyordu; puan
+/// emekli olunca (içerik artık Karty Yolu'nda ünitelerle açılıyor) seviye
+/// hiçbir şeyi söylemez oldu.
 ///
 /// **Seri buradan çıkarıldı, yerine lig kondu.** İki gerekçe:
 ///
@@ -32,7 +34,6 @@ class HomeTopBar extends StatelessWidget {
     required this.leagueKey,
     required this.leagueRank,
     required this.tickets,
-    required this.level,
     required this.freezeCount,
     this.onTicketsTap,
   });
@@ -46,7 +47,6 @@ class HomeTopBar extends StatelessWidget {
   final int? leagueRank;
 
   final int tickets;
-  final int level;
   final int freezeCount;
 
   final VoidCallback? onTicketsTap;
@@ -73,10 +73,6 @@ class HomeTopBar extends StatelessWidget {
           ),
           value: '$tickets',
           onTap: onTicketsTap,
-        ),
-        _item(
-          icon: LevelBarsIcon(size: 54 * scale),
-          value: '$level',
         ),
         _item(
           // Koruma, genel bir kalkan değil: seri alevinin buzun içinde

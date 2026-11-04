@@ -11,9 +11,6 @@ ScoreWithLivesResponse _$ScoreWithLivesResponseFromJson(
     ScoreWithLivesResponse(
       score: (json['score'] as num).toInt(),
       experience: (json['experience'] as num?)?.toInt() ?? 0,
-      level: (json['level'] as num?)?.toInt() ?? 1,
-      levelProgress: (json['levelProgress'] as num?)?.toInt() ?? 0,
-      levelBandSize: (json['levelBandSize'] as num?)?.toInt() ?? 50,
       lives: (json['lives'] as num).toInt(),
       maxLives: (json['maxLives'] as num?)?.toInt() ?? 15,
       nextTicketAt: json['nextTicketAt'] == null
@@ -38,9 +35,6 @@ Map<String, dynamic> _$ScoreWithLivesResponseToJson(
     <String, dynamic>{
       'score': instance.score,
       'experience': instance.experience,
-      'level': instance.level,
-      'levelProgress': instance.levelProgress,
-      'levelBandSize': instance.levelBandSize,
       'lives': instance.lives,
       'maxLives': instance.maxLives,
       'nextTicketAt': instance.nextTicketAt?.toIso8601String(),

@@ -472,7 +472,6 @@ class _ProfileSummaryCard extends StatelessWidget {
             leagueKey: data?.league?.leagueKey ?? 'kuyruklu',
             leagueRank: data?.league?.leaderboardRank,
             tickets: data?.lives ?? 0,
-            level: data?.level ?? 1,
             freezeCount: data?.freezeCount ?? 0,
           );
         },

@@ -6,25 +6,14 @@ part 'ScoreWithLivesResponse.g.dart';
 
 @JsonSerializable()
 class ScoreWithLivesResponse {
-  /// Zorluk termostatı: doğru cevapta artar, yanlışta azalır ve hangi
-  /// zorluktaki kartın geleceğini belirler. Kullanıcıya ham gösterilmez.
+  /// Eski zorluk termostatı. 4 Kas 2026'dan beri sunucuda oynatılmıyor ve
+  /// hiçbir şeyi belirlemiyor; içerik Karty Yolu'nda ünitelerle açılıyor.
+  /// Yanıtta durduğu için modelde; kullanıcıya gösterilmez.
   int score;
 
   /// İlerleme sayacı: yalnızca doğru cevapta artar. Ekranda gösterilen sayı.
   @JsonKey(defaultValue: 0)
   int experience;
-
-  /// Skordan türetilen zorluk seviyesi. Ham skor kullanıcıya gösterilmez.
-  @JsonKey(defaultValue: 1)
-  int level;
-
-  /// Bulunulan seviyenin içindeki ilerleme.
-  @JsonKey(defaultValue: 0)
-  int levelProgress;
-
-  /// Bir seviyenin kapsadığı skor aralığı.
-  @JsonKey(defaultValue: 50)
-  int levelBandSize;
 
   int lives;
 
@@ -64,9 +53,6 @@ class ScoreWithLivesResponse {
   ScoreWithLivesResponse({
     required this.score,
     required this.experience,
-    required this.level,
-    required this.levelProgress,
-    required this.levelBandSize,
     required this.lives,
     required this.maxLives,
     this.nextTicketAt,

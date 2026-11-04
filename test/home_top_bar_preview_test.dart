@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lingualloop/ui/widgets/home_top_bar.dart';
 
-/// Ana ekranın üst şeridi: lig · bilet · seviye · koruma.
+/// Ana ekranın üst şeridi: lig · bilet · koruma.
 ///
 ///   flutter test --update-goldens test/home_top_bar_preview_test.dart
 void main() {
@@ -42,7 +42,6 @@ void main() {
                     leagueKey: 'kosmoz',
                     leagueRank: 1,
                     tickets: 15,
-                    level: 2,
                     freezeCount: 2,
                   ),
                   SizedBox(height: 40),
@@ -52,7 +51,6 @@ void main() {
                     leagueKey: 'supernova',
                     leagueRank: null,
                     tickets: 8,
-                    level: 4,
                     freezeCount: 0,
                   ),
                 ],
@@ -103,7 +101,6 @@ void main() {
                 leagueKey: 'yildiz',
                 leagueRank: 1,
                 tickets: 15,
-                level: 2,
                 freezeCount: 2,
               ),
             ),
