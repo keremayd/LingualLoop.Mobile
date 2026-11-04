@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:lingualloop/models/responses/GetKartyByScoreResponse.dart';
+import 'package:lingualloop/models/responses/KartyPathResponse.dart';
 import 'package:lingualloop/models/responses/ResolveWrongKartyReviewResponse.dart';
 
 import '../models/ApiResponse.dart';
@@ -32,6 +33,26 @@ class KartyService {
     kartyQuestion = apiResponse.data;
 
     return apiResponse;
+  }
+
+  /// Karty Yolu: üniteler, geçmiş günler, bugün, yarın.
+  Future<ApiResponse<KartyPathResponse>> path() async {
+    final token = await _storage.read(key: 'accessToken');
+    final userId = await _storage.read(key: 'userId');
+
+    final response = await _dio.get(
+      'karty/path/$userId',
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      ),
+    );
+
+    return ApiResponse<KartyPathResponse>.fromJson(
+      response.data,
+      (data) => KartyPathResponse.fromJson(data as Map<String, dynamic>),
+    );
   }
 
   Future<ApiResponse<GetKartyByScoreResponse>> randomWrong() async {

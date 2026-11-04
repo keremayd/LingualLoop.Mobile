@@ -5,13 +5,10 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
-import 'package:lingualloop/Utils/AppNotifier.dart';
 import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
-import 'package:lingualloop/providers/QuestsProvider.dart';
 import 'package:lingualloop/ui/widgets/NavbarWidget.dart';
 import 'package:lingualloop/ui/widgets/home_top_bar.dart';
-import 'package:lingualloop/ui/widgets/Popups/out_of_tickets_popup.dart';
 import 'package:lingualloop/models/responses/DailyActivityResponse.dart';
 import 'package:lingualloop/models/responses/ProfileLearningStatsResponse.dart';
 import 'package:lingualloop/ui/widgets/Popups/streak_at_risk_popup.dart';
@@ -20,6 +17,7 @@ import 'package:lingualloop/ui/widgets/pressable_layered_card.dart';
 import 'package:lingualloop/ui/widgets/streak_day_card.dart';
 import 'package:lingualloop/ui/widgets/streak_day_scenes.dart';
 import 'package:lingualloop/ui/flows/league_promotion_flow.dart';
+import 'package:lingualloop/ui/flows/ticketed_game_flow.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/ScoreWithLivesProvider.dart';
@@ -110,82 +108,43 @@ class _HomeScreenScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Biletin yetmediği durumda sunucu E4116 döndürür ve oyun açılmaz.
-  static const _noLivesErrorCode = 'E4116';
-
   Future<void> _updateLivesAndRouter(String routeUrl) async {
     final userService = Provider.of<UserService>(context, listen: false);
 
-    var apiResponse = await userService.updateLivesById();
-    if (apiResponse.errorCode == null) {
-      if (!mounted) return;
-      // **Beklenmesi şart.** `pushNamed` route kapanınca tamamlanan bir Future
-      // döndürüyor; beklenmezse tazeleme oyun *açılırken* çalışır ve
-      // kullanıcı oynayıp döndüğünde hiçbir şey güncellenmez. Seri kartının
-      // geçişi de bu yüzden hiç tetiklenemiyordu.
-      _holdLearningCardState();
-      try {
-        await Navigator.pushNamed(context, '/$routeUrl');
-        if (!mounted) return;
-        await _refreshAfterGameplayReturn(userService);
-      } finally {
-        _releaseLearningCardState();
-      }
-      if (!mounted) return;
-      await _showPendingLeaguePromotion();
-      return;
-    }
-
-    // Giriş reddedildi. Bilet duvarı düz bir uyarı mesajı değil, kendi
-    // penceresini hak ediyor: kullanıcıya neden oynayamadığını, ne zaman
-    // oynayabileceğini ve beklemek istemiyorsa ne olduğunu birlikte anlatır.
-    if (apiResponse.errorCode != _noLivesErrorCode) {
-      AppNotifier.showMessage('Oyun açılamadı. Daha sonra tekrar dene.');
-      return;
-    }
-
-    // Geri sayımı doğru gösterebilmek için önce güncel bileti çek.
-    if (!mounted) return;
-    await userService.scoreWithLivesById(context);
-    if (!mounted) return;
-
-    // Popup, yolların yalnız adını değil o anki gerçek değerini gösterir:
-    // bekleyen Rövanş yoksa yol pasifleşir; görev satırında bugün hâlâ
-    // kazanılabilecek toplam bilet görünür.
-    final questsProvider = context.read<QuestsProvider>();
-    final profileStatsProvider = context.read<ProfileLearningStatsProvider>();
-    await Future.wait([
-      questsProvider.load(silent: questsProvider.data != null),
-      profileStatsProvider.refreshFromService(userService),
-    ]);
-    if (!mounted) return;
-
-    final questTickets = questsProvider.data?.quests
-        .where((quest) => !quest.isClaimed)
-        .fold<int>(0, (total, quest) => total + quest.rewardTickets);
-    final reviewAvailable =
-        (profileStatsProvider.stats?.reviewPendingCount ?? 0) > 0;
-
-    final scoreProvider = context.read<ScoreWithLivesProvider>();
-    await showOutOfTicketsPopup(
+    final entered = await spendTicketForGame(
       context,
-      nextTicketAt: scoreProvider.scoreWithLives?.nextTicketAt,
-      onRefreshTickets: () async {
-        if (!mounted) return false;
-        final refreshed = await userService.scoreWithLivesById(context);
-        return (refreshed.data?.lives ?? 0) > 0;
-      },
-      questTickets: questTickets,
-      reviewAvailable: reviewAvailable,
       onGoToReview: () => unawaited(_openReview()),
       onGoToQuests: () =>
           NavbarWidget.requestedTab.value = NavbarWidget.questsTabIndex,
-      onGoPremium: () {
-        // Premium akışı henüz yok; niyet kaydı burada duruyor ki pencere
-        // hazır olduğunda tek yerden bağlansın.
-        AppNotifier.showMessage('Premium yakında!');
-      },
     );
+    if (!entered || !mounted) return;
+
+    // **Beklenmesi şart.** `pushNamed` route kapanınca tamamlanan bir Future
+    // döndürüyor; beklenmezse tazeleme oyun *açılırken* çalışır ve
+    // kullanıcı oynayıp döndüğünde hiçbir şey güncellenmez. Seri kartının
+    // geçişi de bu yüzden hiç tetiklenemiyordu.
+    await _openAndRefresh('/$routeUrl', userService);
+  }
+
+  /// Karty kartı önce Karty Yolu'nu açar; bilet yolda DEVAM'a basınca
+  /// harcanır. Yoldan oyuna girilip dönülebileceği için dönüşte ana ekran
+  /// oyundan dönmüş gibi tazelenir.
+  Future<void> _openKartyPath() => _openAndRefresh(
+        '/kartypath',
+        Provider.of<UserService>(context, listen: false),
+      );
+
+  Future<void> _openAndRefresh(String route, UserService userService) async {
+    _holdLearningCardState();
+    try {
+      await Navigator.pushNamed(context, route);
+      if (!mounted) return;
+      await _refreshAfterGameplayReturn(userService);
+    } finally {
+      _releaseLearningCardState();
+    }
+    if (!mounted) return;
+    await _showPendingLeaguePromotion();
   }
 
   /// `Navigator.push` dönüş değeri, üst rota kapanış animasyonunu bitirmeden
@@ -422,7 +381,7 @@ class _HomeScreenScreenState extends State<HomeScreen> {
                         scale: scale,
                         dueWordCount: stats?.dueWordCount ?? 0,
                         onTap: () async {
-                          await _updateLivesAndRouter('kartyquiz');
+                          await _openKartyPath();
                         },
                       );
                     },

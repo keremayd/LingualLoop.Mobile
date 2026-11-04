@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:lingualloop/providers/BadgeProvider.dart';
 import 'package:lingualloop/providers/ArticlePracticeProvider.dart';
+import 'package:lingualloop/providers/KartyPathProvider.dart';
 import 'package:lingualloop/providers/KartyProvider.dart';
 import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
 import 'package:lingualloop/providers/QuestsProvider.dart';
@@ -24,6 +25,7 @@ import 'package:lingualloop/services/AuthenticationService.dart';
 import 'package:lingualloop/services/VideoService.dart';
 import 'package:lingualloop/ui/screens/SignUpScreen.dart';
 import 'package:lingualloop/ui/screens/article_practice_screen.dart';
+import 'package:lingualloop/ui/screens/karty_path_page.dart';
 import 'package:lingualloop/ui/screens/karty_quiz_screen.dart';
 import 'package:lingualloop/ui/screens/profile_screen.dart';
 import 'package:lingualloop/ui/screens/word_collection_screen.dart';
@@ -152,6 +154,9 @@ void main() {
         ChangeNotifierProvider<QuestsProvider>(
           create: (context) => QuestsProvider(context.read<QuestService>()),
         ),
+        ChangeNotifierProvider<KartyPathProvider>(
+          create: (context) => KartyPathProvider(context.read<KartyService>()),
+        ),
       ],
       child: MyApp(),
     ),
@@ -170,6 +175,7 @@ class MyApp extends StatelessWidget {
         '/signin': (context) => LoginScreen(),
         '/home': (context) => NavbarWidget(),
         '/videoquiz': (context) => VideoQuizScreen(),
+        '/kartypath': (context) => const KartyPathPage(),
         '/kartyquiz': (context) => KartyQuizScreen(),
         '/kartyreview': (context) => KartyQuizScreen(reviewMode: true),
         '/articlepractice': (context) => const ArticlePracticeScreen(),
