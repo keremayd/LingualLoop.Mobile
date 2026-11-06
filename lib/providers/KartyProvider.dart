@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lingualloop/models/Karty.dart';
+import 'package:lingualloop/models/responses/GetKartyByScoreResponse.dart';
 import 'package:lingualloop/services/FileService.dart';
 import 'package:lingualloop/services/KartyService.dart';
 import 'package:provider/provider.dart';
@@ -15,9 +16,23 @@ class KartyProvider with ChangeNotifier {
   int? _sessionUnit;
   int? _sessionDeck;
 
+  /// Oyunda cevaplanan tekrar kartı sayısı. Sunucu tekrarı oyunun payı kadar
+  /// verir; ona bildirilen "verilen tekrar" bu sayı ile kuyrukta bekleyen
+  /// tekrarlardan türetilir. Ayrı bir sayaç tutulsaydı kuyruktan elenen bir
+  /// kart sayıda kalır, sunucu payı doldu sanıp tekrarı keser ve oyun
+  /// bitişe hiç varamazdı.
+  int _reviewsAnswered = 0;
+  int get reviewsAnswered => _reviewsAnswered;
+
   void startSession({int? unit, int? deck}) {
     _sessionUnit = unit;
     _sessionDeck = deck;
+    _reviewsAnswered = 0;
+  }
+
+  /// Sunucunun kaydettiği cevap; tekrar kartıysa oyunun tekrar sayısına girer.
+  void recordAnswered(Karty card) {
+    if (card.stage == KartyCardStage.review) _reviewsAnswered += 1;
   }
 
   List<Karty> get cards =>
@@ -116,11 +131,14 @@ class KartyProvider with ChangeNotifier {
   }) async {
     final cardsToCheck = queuedCards ?? _cards;
 
+    final reviewsServed = _reviewsAnswered +
+        cardsToCheck.where((item) => item.stage == KartyCardStage.review).length;
     for (var attempt = 0; attempt < 5; attempt++) {
       final card = await _fetchKarty(
         kartyService,
         localFileService,
         reviewMode: reviewMode,
+        reviewsServed: reviewsServed,
       );
 
       if (card == null) {
@@ -139,11 +157,15 @@ class KartyProvider with ChangeNotifier {
 
   Future<Karty?> _fetchKarty(
       KartyService kartyService, LocalFileService localFileService,
-      {required bool reviewMode}) async {
+      {required bool reviewMode, required int reviewsServed}) async {
     try {
       final apiResponse = reviewMode
           ? await kartyService.randomWrong()
-          : await kartyService.random(unit: _sessionUnit, deck: _sessionDeck);
+          : await kartyService.random(
+              unit: _sessionUnit,
+              deck: _sessionDeck,
+              reviews: _sessionUnit == null ? null : reviewsServed,
+            );
       if (apiResponse.errorCode != null || apiResponse.data == null) {
         return null;
       }
@@ -164,6 +186,7 @@ class KartyProvider with ChangeNotifier {
         isCorrect: apiResponse.data!.isCorrect,
         audioUrl: apiResponse.data!.audioUrl,
         mode: apiResponse.data!.mode,
+        stage: apiResponse.data!.stage,
       );
     } catch (_) {
       return null;

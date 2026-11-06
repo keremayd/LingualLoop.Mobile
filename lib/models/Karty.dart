@@ -18,6 +18,9 @@ class Karty {
   /// bugünkü gibi yazım sorusu olarak davranır.
   final KartyCardMode mode;
 
+  /// Kartın hangi aşamadan geldiği; oyunun tekrar sayısı buradan tutulur.
+  final KartyCardStage stage;
+
   Karty({
     required this.kartyId,
     required this.kartyUrl,
@@ -27,5 +30,6 @@ class Karty {
     required this.isCorrect,
     this.audioUrl,
     this.mode = KartyCardMode.spelling,
+    this.stage = KartyCardStage.practice,
   });
 }

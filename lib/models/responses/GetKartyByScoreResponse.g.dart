@@ -21,6 +21,9 @@ GetKartyByScoreResponse _$GetKartyByScoreResponseFromJson(
       mode: $enumDecodeNullable(_$KartyCardModeEnumMap, json['mode'],
               unknownValue: KartyCardMode.spelling) ??
           KartyCardMode.spelling,
+      stage: $enumDecodeNullable(_$KartyCardStageEnumMap, json['stage'],
+              unknownValue: KartyCardStage.practice) ??
+          KartyCardStage.practice,
     );
 
 Map<String, dynamic> _$GetKartyByScoreResponseToJson(
@@ -36,9 +39,17 @@ Map<String, dynamic> _$GetKartyByScoreResponseToJson(
       'maxScore': instance.maxScore,
       'audioUrl': instance.audioUrl,
       'mode': _$KartyCardModeEnumMap[instance.mode]!,
+      'stage': _$KartyCardStageEnumMap[instance.stage]!,
     };
 
 const _$KartyCardModeEnumMap = {
   KartyCardMode.introduce: 'Introduce',
   KartyCardMode.spelling: 'Spelling',
+};
+
+const _$KartyCardStageEnumMap = {
+  KartyCardStage.review: 'review',
+  KartyCardStage.test: 'test',
+  KartyCardStage.newWord: 'new',
+  KartyCardStage.practice: 'practice',
 };

@@ -508,6 +508,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
 
   void _countAnswer(Karty karty) {
     _sessionAnswered += 1;
+    kartyProvider.recordAnswered(karty);
     _sessionWords[karty.kartyId] = KartyWord(
       word: karty.correctText,
       article: karty.article,
@@ -529,6 +530,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
       final response = await kartyService.sessionStatus(
         unit: session.unit.number,
         deck: session.deck,
+        reviews: kartyProvider.reviewsAnswered,
       );
       status = response.errorCode == null ? response.data : null;
     } catch (_) {
@@ -594,7 +596,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
             ]
           : _sessionWords.values.toList(),
       newCount: session.deck != null ? status.deckSize : 0,
-      reviewCount: _sessionWords.length,
+      reviewCount: kartyProvider.reviewsAnswered,
       consolidatedBefore: before.consolidatedCount,
       points: _sessionPoints,
       correct: _sessionCorrect,

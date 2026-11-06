@@ -15,10 +15,12 @@ class KartyService {
   KartyService(this._dio);
 
   /// Sıradaki kart. [unit] ve [deck] oyunun destesi: yeni kelime yalnız
-  /// oradan gelir (sunucuda `KartyScheduler`).
+  /// oradan gelir (sunucuda `KartyScheduler`). [reviews] oyunda şimdiye kadar
+  /// verilen tekrar kartı sayısı; tekrar oyunun payı kadar gelir.
   Future<ApiResponse<GetKartyByScoreResponse>> random({
     int? unit,
     int? deck,
+    int? reviews,
   }) async {
     final token = await _storage.read(key: 'accessToken');
     final userId = await _storage.read(key: 'userId');
@@ -28,6 +30,7 @@ class KartyService {
       queryParameters: {
         if (unit != null) 'unit': unit,
         if (deck != null) 'deck': deck,
+        if (reviews != null) 'reviews': reviews,
       },
       options: Options(
         headers: {
@@ -65,11 +68,13 @@ class KartyService {
     );
   }
 
-  /// Oyunun durumu: destesi bitti mi, tekrar kaldı mı. Oyun her cevaptan
-  /// sonra sorar; bitince özeti gösterir.
+  /// Oyunun durumu: destesi bitti mi, tekrar payı doldu mu ([reviews] =
+  /// oyunda cevaplanan tekrar). Oyun her cevaptan sonra sorar; bitince
+  /// özeti gösterir.
   Future<ApiResponse<KartySessionStatusResponse>> sessionStatus({
     required int unit,
     int? deck,
+    int reviews = 0,
   }) async {
     final token = await _storage.read(key: 'accessToken');
     final userId = await _storage.read(key: 'userId');
@@ -79,6 +84,7 @@ class KartyService {
       queryParameters: {
         'unit': unit,
         if (deck != null) 'deck': deck,
+        'reviews': reviews,
       },
       options: Options(
         headers: {

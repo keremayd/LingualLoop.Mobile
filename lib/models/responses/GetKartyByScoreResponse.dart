@@ -16,6 +16,22 @@ enum KartyCardMode {
   spelling,
 }
 
+/// Kartın hangi aşamadan geldiği (sunucuda `KartyScheduler`). İstemci oyunda
+/// verilen tekrarları buradan sayar; sunucu tekrarı oyunun payı kadar,
+/// yeni kelimelerle karışık verir.
+enum KartyCardStage {
+  @JsonValue('review')
+  review,
+  @JsonValue('test')
+  test,
+
+  /// Yeni kelime (sunucuda `new`).
+  @JsonValue('new')
+  newWord,
+  @JsonValue('practice')
+  practice,
+}
+
 @JsonSerializable()
 class GetKartyByScoreResponse {
   final int kartyId;
@@ -36,6 +52,10 @@ class GetKartyByScoreResponse {
   @JsonKey(defaultValue: KartyCardMode.spelling, unknownEnumValue: KartyCardMode.spelling)
   final KartyCardMode mode;
 
+  /// Eski sunucu sürümleri göndermiyor; o durumda kart tekrar sayılmaz.
+  @JsonKey(defaultValue: KartyCardStage.practice, unknownEnumValue: KartyCardStage.practice)
+  final KartyCardStage stage;
+
   GetKartyByScoreResponse(
     this.kartyId,
     this.questionText,
@@ -47,6 +67,7 @@ class GetKartyByScoreResponse {
     this.maxScore, {
     this.audioUrl,
     this.mode = KartyCardMode.spelling,
+    this.stage = KartyCardStage.practice,
   });
 
   factory GetKartyByScoreResponse.fromJson(Map<String, dynamic> json) =>
