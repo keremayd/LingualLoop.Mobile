@@ -581,7 +581,7 @@ class _KartyPathBody extends StatelessWidget {
     final geo = _NodeGeometry(_PathLayout.gateWidth);
     final left = gate.center.dx - _PathLayout.gateWidth / 2;
     final top = gate.center.dy - geo.total / 2;
-    final labelLeft = gate.center.dx + _PathLayout.ringRadius + 40;
+    final labelLeft = gate.center.dx + gate.radius + 40;
 
     // Gelişte: önceki ünitenin kapısı zıplayarak onaya döner; açılan
     // ünitenin kendi kapısı fitil halkasına varana kadar kilitli görünür.
@@ -592,7 +592,7 @@ class _KartyPathBody extends StatelessWidget {
     final pop = opening
         ? a.gate
         : closing
-            ? a.endGate(gate.center.dy - _PathLayout.ringRadius)
+            ? a.endGate(gate.top)
             : 1.0;
     final locked = unit.state == KartyUnitState.locked || (closing && pop <= 0);
     final ready =
@@ -678,10 +678,22 @@ class _NodeSpot {
 }
 
 class _GateSpot {
-  const _GateSpot({required this.unit, required this.center});
+  const _GateSpot({
+    required this.unit,
+    required this.center,
+    required this.radius,
+  });
 
   final KartyUnit unit;
   final Offset center;
+
+  /// Halkanın yarıçapı; ünitenin kelime sayısından
+  /// ([_PathLayout.ringRadiusFor]).
+  final double radius;
+
+  /// Yolun halkaya girdiği ve çıktığı yükseklik.
+  double get top => center.dy - radius;
+  double get bottom => center.dy + radius;
 }
 
 class _HeaderSpot {
@@ -701,6 +713,8 @@ class _TrailSegment {
     required this.unit,
     this.trimStart = _PathLayout.nodeClearance,
     this.trimEnd = _PathLayout.nodeClearance,
+    this.anchorStart = false,
+    this.anchorEnd = false,
   });
 
   final Offset from;
@@ -714,6 +728,12 @@ class _TrailSegment {
   /// Uçlarda taş konmayan pay: düğümün altına yarım taş girmesin.
   final double trimStart;
   final double trimEnd;
+
+  /// Taşlar bu uca yaslanır: halkaya giren ve halkadan çıkan iz, halkanın
+  /// taşlarına bir taş aralığında bağlansın. Yaslanmasa taşlar aralığa
+  /// ortalanır ve uçta yarım aralık kadar fazladan boşluk kalabilir.
+  final bool anchorStart;
+  final bool anchorEnd;
 }
 
 /// Bütün konumlar tasarım biriminde (750 genişlik). Düğümler her ünitede
@@ -738,7 +758,20 @@ class _PathLayout {
   static const nodeWidth = 132.0;
   static const currentWidth = 150.0;
   static const gateWidth = 150.0;
-  static const ringRadius = 160.0;
+
+  /// Pekiştirme halkası kapıyı sarar: yol tepeden halkaya girer, kapıyı
+  /// dolaşır ve alttan çıkar. Her taş ünitenin bir kelimesi. Halka 16
+  /// kelimede düğümün köşelerine ~17 birim kalır; kelime çoğaldıkça taş
+  /// aralığı yoldakine yakın kalacak kadar büyür, 132'yi geçmez — ötesinde
+  /// taşlar orantılı küçülür (bkz. `_PathPainter._paintRing`). Bir tur halka 160
+  /// birimdi ve noktalardan oluşuyordu; kapıdan uzak, yoldan kopuk ve
+  /// kapıyla ilgisiz okunuyordu (kullanıcı geri bildirimi, 5 Kas 2026).
+  static const ringRadiusMin = 118.0;
+  static const ringRadiusMax = 132.0;
+  static const ringSpacing = 46.0;
+
+  static double ringRadiusFor(int words) =>
+      (words * ringSpacing / (2 * math.pi)).clamp(ringRadiusMin, ringRadiusMax);
   static const stepGap = 184.0;
   static const nodeClearance = 84.0;
   static const _currentRoom = 120.0;
@@ -802,13 +835,15 @@ class _PathLayout {
         previousCurrent = current;
       }
 
+      final radius = ringRadiusFor(unit.wordCount);
       final gateCenter = Offset(
         centerX - 60,
-        y + 176 + ringRadius + (previousCurrent ? 40 : 0),
+        y + 176 + radius + (previousCurrent ? 40 : 0),
       );
-      gates.add(_GateSpot(unit: unit, center: gateCenter));
-      final ringTop = gateCenter.translate(0, -ringRadius);
-      final ringBottom = gateCenter.translate(0, ringRadius);
+      final gate = _GateSpot(unit: unit, center: gateCenter, radius: radius);
+      gates.add(gate);
+      final ringTop = Offset(gateCenter.dx, gate.top);
+      final ringBottom = Offset(gateCenter.dx, gate.bottom);
 
       // Önceki ünitenin halkasından bu ünitenin ilk düğümüne; başlığın
       // arkasından geçer.
@@ -831,6 +866,7 @@ class _PathLayout {
           styleTo(0),
           unit: unit.number,
           trimStart: 26,
+          anchorStart: true,
         ));
       }
       // Şu anki düğümün çevresinde kelime halkası var; taşlar ona girmez.
@@ -859,6 +895,7 @@ class _PathLayout {
           unit: unit.number,
           trimStart: clearance(points.length - 1),
           trimEnd: 26,
+          anchorEnd: true,
         ));
       }
 
@@ -925,11 +962,9 @@ class _Arrival {
     final index = layout.unitIndex(unit);
     if (index < 0) return null;
     final head = layout.headers[index];
-    final start = index > 0
-        ? layout.gates[index - 1].center.dy + _PathLayout.ringRadius
-        : head.top;
+    final start = index > 0 ? layout.gates[index - 1].bottom : head.top;
     final headerBottom = head.top + KartyUnitHeader.height;
-    final end = layout.gates[index].center.dy - _PathLayout.ringRadius;
+    final end = layout.gates[index].top;
     double lerp(double from, double to, double x) => from + (to - from) * x;
     final fuseY = t < 0.06
         ? start
@@ -971,8 +1006,9 @@ class _Arrival {
 /// Taşlar, kapı halkaları, şu anki destenin kelime halkası ve yıldızlar.
 ///
 /// İz düz bir şerit değil **basamak taşları**: her taş §2.5'teki gibi koyu
-/// kalınlık bandının üstünde tombul bir parça. Kapı halkasında her taş
-/// ünitenin bir kelimesi; pekişen kelime kadar taş yeşil yanar.
+/// kalınlık bandının üstünde tombul bir parça. Yol kapıyı aynı taşlarla
+/// sarar; halkadaki her taş ünitenin bir kelimesi, pekişen kelime kadar taş
+/// yeşil yanar.
 class _PathPainter extends CustomPainter {
   _PathPainter({required this.layout, required this.scale, this.arrival});
 
@@ -985,10 +1021,6 @@ class _PathPainter extends CustomPainter {
   static const _stoneWidth = 21.0;
   static const _stoneSpacing = 50.0;
   static const _stoneDepth = 6.0;
-
-  // Halkadaki boncuk: ünitenin bir kelimesi.
-  static const _beadRadius = 9.5;
-  static const _beadDepth = 5.0;
 
   static (Color, Color) _colors(_TrailStyle style) => switch (style) {
         _TrailStyle.done => (_C.green, _C.greenDepth),
@@ -1053,9 +1085,9 @@ class _PathPainter extends CustomPainter {
     bool held(int index, _GateSpot gate) =>
         a != null &&
         index == arriving &&
-        !a.reached(gate.center.dy - _PathLayout.ringRadius);
+        !a.reached(gate.top);
     for (final (i, gate) in layout.gates.indexed) {
-      _paintBeads(canvas, gate, locked: held(i, gate));
+      _paintRing(canvas, gate, locked: held(i, gate));
     }
 
     for (final (i, gate) in layout.gates.indexed) {
@@ -1094,7 +1126,13 @@ class _PathPainter extends CustomPainter {
     if (usable <= 0) return;
     final spacing = _stoneSpacing * s;
     final count = (usable / spacing).floor() + 1;
-    final first = start + (usable - (count - 1) * spacing) / 2;
+    final slack = usable - (count - 1) * spacing;
+    final first = start +
+        (segment.anchorStart
+            ? 0
+            : segment.anchorEnd
+                ? slack
+                : slack / 2);
     for (var i = 0; i < count; i++) {
       final tangent = metric.getTangentForOffset(first + i * spacing);
       if (tangent == null) continue;
@@ -1105,46 +1143,63 @@ class _PathPainter extends CustomPainter {
     }
   }
 
-  /// Kapı halkası: tepeden saat yönünde, kelime başına bir boncuk. Pekişen
-  /// kelime kadar boncuk yeşil yanar.
-  void _paintBeads(Canvas canvas, _GateSpot gate, {bool locked = false}) {
+  /// Kapı halkası: tepeden saat yönünde, kelime başına bir taş. Taşlar
+  /// yoldakilerle aynı kapsül ve halkaya teğet; iz kapıya girip onu
+  /// dolaşıyor gibi okunur. Pekişen kelime kadar taş yeşil yanar.
+  void _paintRing(Canvas canvas, _GateSpot gate, {bool locked = false}) {
     final s = scale;
     final unit = gate.unit;
     final n = math.max(1, unit.wordCount);
-    final r = _PathLayout.ringRadius * s;
-    final c = gate.center * s;
-    final centers = [
-      for (var i = 0; i < n; i++)
-        c +
-            Offset(
-                  math.cos(-math.pi / 2 + (i + 0.5) * 2 * math.pi / n),
-                  math.sin(-math.pi / 2 + (i + 0.5) * 2 * math.pi / n),
-                ) *
-                r,
-    ];
+    final step = 2 * math.pi / n;
+    // Halka büyüyemeyince taş yoldakinin oranlarıyla küçülür: boy aralığın
+    // %65'i, en boyun %70'i, kalınlık bandı enle birlikte. 16 kelimede taş
+    // yoldakiyle aynı.
+    final length = math.min(_stoneLength, gate.radius * step * 0.65);
+    final width = length * _stoneWidth / _stoneLength;
+    final band = _stoneDepth * width / _stoneWidth;
+    final stone = RRect.fromRectAndRadius(
+      Rect.fromCenter(
+        center: Offset.zero,
+        width: length * s,
+        height: width * s,
+      ),
+      Radius.circular(width * s / 2),
+    );
     _TrailStyle style(int i) => locked || unit.state == KartyUnitState.locked
         ? _TrailStyle.locked
         : i < unit.consolidatedCount
             ? _TrailStyle.done
             : _TrailStyle.ahead;
-    for (var i = 0; i < n; i++) {
-      canvas.drawCircle(centers[i].translate(0, _beadDepth * s),
-          _beadRadius * s, Paint()..color = _colors(style(i)).$2);
-    }
-    for (var i = 0; i < n; i++) {
-      canvas.drawCircle(
-          centers[i], _beadRadius * s, Paint()..color = _colors(style(i)).$1);
+    for (final pass in [0, 1]) {
+      for (var i = 0; i < n; i++) {
+        final angle = -math.pi / 2 + (i + 0.5) * step;
+        final (face, depth) = _colors(style(i));
+        canvas.save();
+        canvas.translate(
+          (gate.center.dx + math.cos(angle) * gate.radius) * s,
+          (gate.center.dy + math.sin(angle) * gate.radius) * s +
+              (pass == 0 ? band * s : 0),
+        );
+        canvas.rotate(angle + math.pi / 2);
+        canvas.drawRRect(stone, Paint()..color = pass == 0 ? depth : face);
+        canvas.restore();
+      }
     }
   }
 
   /// Ünite hedefinin çentiği ve yüzdesi (halkanın dışında).
+  ///
+  /// Çentik iki taşın arasına düşer: hedefe varmak için yanması gereken son
+  /// taşın hemen ardına (16 kelimede %80 → 13. taştan sonra).
   void _paintGoalMark(Canvas canvas, _GateSpot gate) {
     final s = scale;
     final unit = gate.unit;
-    final angle = -math.pi / 2 + unit.unlockGoal * 2 * math.pi;
+    final n = math.max(1, unit.wordCount);
+    final needed = (unit.unlockGoal * n).ceil().clamp(1, n);
+    final angle = -math.pi / 2 + needed * 2 * math.pi / n;
     final c = gate.center * s;
     final dir = Offset(math.cos(angle), math.sin(angle));
-    final r = _PathLayout.ringRadius * s;
+    final r = gate.radius * s;
     final inner = c + dir * (r - 20 * s);
     final outer = c + dir * (r + 20 * s);
     for (final (shift, color) in [
@@ -1172,7 +1227,7 @@ class _PathPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    final anchor = c + dir * (r + 50 * s);
+    final anchor = c + dir * (r + 48 * s);
     label.paint(canvas, anchor - Offset(label.width / 2, label.height / 2));
   }
 
@@ -1238,7 +1293,7 @@ class _PathPainter extends CustomPainter {
     }
     for (final gate in layout.gates) {
       final d = u - gate.center;
-      if (d.dx.abs() < 440 && d.dy.abs() < _PathLayout.ringRadius + 40) {
+      if (d.dx.abs() < 440 && d.dy.abs() < gate.radius + 40) {
         return true;
       }
     }
