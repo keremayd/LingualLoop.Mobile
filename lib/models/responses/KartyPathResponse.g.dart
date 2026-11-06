@@ -12,16 +12,15 @@ KartyPathResponse _$KartyPathResponseFromJson(Map<String, dynamic> json) =>
               ?.map((e) => KartyPathUnitDto.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      dailyNewWordLimit: (json['dailyNewWordLimit'] as num).toInt(),
-      tomorrowStartsAtUtc:
-          DateTime.parse(json['tomorrowStartsAtUtc'] as String),
+      deckSize: (json['deckSize'] as num).toInt(),
+      pendingUnlockSequence: (json['pendingUnlockSequence'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$KartyPathResponseToJson(KartyPathResponse instance) =>
     <String, dynamic>{
       'units': instance.units,
-      'dailyNewWordLimit': instance.dailyNewWordLimit,
-      'tomorrowStartsAtUtc': instance.tomorrowStartsAtUtc.toIso8601String(),
+      'deckSize': instance.deckSize,
+      'pendingUnlockSequence': instance.pendingUnlockSequence,
     };
 
 KartyPathUnitDto _$KartyPathUnitDtoFromJson(Map<String, dynamic> json) =>
@@ -54,7 +53,7 @@ Map<String, dynamic> _$KartyPathUnitDtoToJson(KartyPathUnitDto instance) =>
 KartyPathStepDto _$KartyPathStepDtoFromJson(Map<String, dynamic> json) =>
     KartyPathStepDto(
       state: json['state'] as String,
-      day: json['day'] as String?,
+      deck: (json['deck'] as num?)?.toInt(),
       newCount: (json['newCount'] as num).toInt(),
       newGoal: (json['newGoal'] as num).toInt(),
       reviewCount: (json['reviewCount'] as num).toInt(),
@@ -72,7 +71,7 @@ KartyPathStepDto _$KartyPathStepDtoFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$KartyPathStepDtoToJson(KartyPathStepDto instance) =>
     <String, dynamic>{
       'state': instance.state,
-      'day': instance.day,
+      'deck': instance.deck,
       'newCount': instance.newCount,
       'newGoal': instance.newGoal,
       'reviewCount': instance.reviewCount,

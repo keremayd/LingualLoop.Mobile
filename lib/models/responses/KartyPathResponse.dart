@@ -2,21 +2,23 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'KartyPathResponse.g.dart';
 
-/// `GET karty/path/{userId}` — Karty Yolu: üniteler ve adımları.
+/// `GET karty/path/{userId}` — Karty Yolu: üniteler ve desteleri.
 /// Görsel adresleri imzalı S3 adresleridir.
 @JsonSerializable()
 class KartyPathResponse {
   @JsonKey(defaultValue: [])
   final List<KartyPathUnitDto> units;
-  final int dailyNewWordLimit;
 
-  /// Yarının (İstanbul günü) başladığı an, UTC (`Z` ile gelir).
-  final DateTime tomorrowStartsAtUtc;
+  /// Bir destedeki kelime sayısı.
+  final int deckSize;
+
+  /// Açılıp kutlaması henüz gösterilmemiş ünitenin sırası; yoksa null.
+  final int? pendingUnlockSequence;
 
   KartyPathResponse({
     required this.units,
-    required this.dailyNewWordLimit,
-    required this.tomorrowStartsAtUtc,
+    required this.deckSize,
+    this.pendingUnlockSequence,
   });
 
   factory KartyPathResponse.fromJson(Map<String, dynamic> json) =>
@@ -58,11 +60,11 @@ class KartyPathUnitDto {
 
 @JsonSerializable()
 class KartyPathStepDto {
-  /// `done` · `today` · `tomorrow` · `upcoming` · `locked`.
+  /// `done` · `current` · `upcoming` · `locked`.
   final String state;
 
-  /// Geçmiş günün ve bugünün İstanbul tarihi: `2026-11-02`.
-  final String? day;
+  /// Ünite içindeki deste numarası (1'den); yalnız tekrar adımında null.
+  final int? deck;
   final int newCount;
   final int newGoal;
   final int reviewCount;
@@ -74,7 +76,7 @@ class KartyPathStepDto {
 
   KartyPathStepDto({
     required this.state,
-    this.day,
+    this.deck,
     required this.newCount,
     required this.newGoal,
     required this.reviewCount,

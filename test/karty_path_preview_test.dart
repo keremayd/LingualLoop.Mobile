@@ -42,8 +42,9 @@ void main() {
       steps: [
         KartyStep(
           state: KartyStepState.done,
-          label: '1 Kas',
-          title: '1 Kasım',
+          deck: 1,
+          label: 'Deste 1',
+          title: 'Deste 1',
           dueCount: 2,
           words: [
             w('Buch', 'das', 'buch', 5),
@@ -58,8 +59,9 @@ void main() {
         ),
         KartyStep(
           state: KartyStepState.done,
-          label: '2 Kas',
-          title: '2 Kasım',
+          deck: 2,
+          label: 'Deste 2',
+          title: 'Deste 2',
           dueCount: 3,
           words: [
             w('Haus', 'das', 'haus', 4),
@@ -73,18 +75,18 @@ void main() {
           ],
         ),
         const KartyStep(
-          state: KartyStepState.today,
-          label: 'Bugün',
-          title: 'Bugün',
+          state: KartyStepState.current,
+          deck: 3,
+          label: 'Deste 3',
+          title: 'Deste 3',
           newCount: 3,
           reviewCount: 5,
         ),
         KartyStep(
-          state: KartyStepState.tomorrow,
-          label: 'Yarın',
-          title: 'Yarın',
-          reviewCount: 5,
-          opensIn: '5 sa 12 dk',
+          state: KartyStepState.upcoming,
+          deck: 4,
+          label: 'Deste 4',
+          title: 'Deste 4',
           upcoming: [
             for (final name in [
               'apfel',
@@ -99,7 +101,12 @@ void main() {
               img(name),
           ],
         ),
-        const KartyStep(state: KartyStepState.upcoming),
+        const KartyStep(
+          state: KartyStepState.upcoming,
+          deck: 5,
+          label: 'Deste 5',
+          title: 'Deste 5',
+        ),
       ],
     );
     final yolculuk = KartyUnit(
@@ -110,8 +117,8 @@ void main() {
       emblem: img('koffer'),
       unlockHint: "Evde'nin %80'i pekişince açılır",
       steps: [
-        for (var i = 0; i < 5; i++)
-          const KartyStep(state: KartyStepState.locked),
+        for (var i = 1; i <= 5; i++)
+          KartyStep(state: KartyStepState.locked, deck: i),
       ],
     );
     return KartyPathData(tickets: 12, units: [evde, yolculuk]);
@@ -213,7 +220,7 @@ void main() {
                   data: sample(),
                   onBack: () {},
                   onContinue: () {},
-                  scrollToToday: false,
+                  scrollToCurrent: false,
                 ),
                 // Uzun görüntünün altı sayfa zeminine söner.
                 const Positioned(
@@ -253,7 +260,7 @@ void main() {
                 onBack: () {},
                 onContinue: () {},
                 controller: ScrollController(initialScrollOffset: offset),
-                scrollToToday: false,
+                scrollToCurrent: false,
               ),
               const Positioned.fill(
                 child: ColoredBox(color: Color(0x8C000000)),
@@ -275,12 +282,12 @@ void main() {
       const Size(40 + 430 + 40 + 430 + 40, 932 + 180),
       board([
         (
-          'Geçmiş güne dokununca',
-          'O gün tanıştığın kelimeler ve ustalıkları',
+          'Bitmiş desteye dokununca',
+          'Kelimeleri ve ustalıkları',
           withSheet(unit.steps[1], 0),
         ),
         (
-          'Yarına dokununca',
+          'Sıradaki desteye dokununca',
           'Ne zaman açılacağı, ne geleceği',
           withSheet(unit.steps[3], 260 * scale),
         ),

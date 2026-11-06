@@ -5,8 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lingualloop/models/karty_path.dart';
 import 'package:lingualloop/models/responses/KartyPathResponse.dart';
 
-/// `GET karty/path` yanıtının ekran modeline çevrilmesi: durumlar, Türkçe
-/// tarih etiketleri, kilitli ünitenin açılma koşulu, yarının geri sayımı.
+/// `GET karty/path` yanıtının ekran modeline çevrilmesi: deste durumları ve
+/// etiketleri, yalnız tekrar adımı, kilitli ünitenin açılma koşulu.
 void main() {
   final json = <String, dynamic>{
     'units': [
@@ -21,7 +21,7 @@ void main() {
         'steps': [
           {
             'state': 'done',
-            'day': '2026-11-02',
+            'deck': 1,
             'newCount': 8,
             'newGoal': 8,
             'reviewCount': 0,
@@ -39,8 +39,8 @@ void main() {
             'upcomingImageUrls': <String>[],
           },
           {
-            'state': 'today',
-            'day': '2026-11-04',
+            'state': 'current',
+            'deck': 2,
             'newCount': 3,
             'newGoal': 8,
             'reviewCount': 5,
@@ -49,10 +49,11 @@ void main() {
             'upcomingImageUrls': <String>[],
           },
           {
-            'state': 'tomorrow',
+            'state': 'upcoming',
+            'deck': 3,
             'newCount': 0,
             'newGoal': 5,
-            'reviewCount': 2,
+            'reviewCount': 0,
             'dueCount': 0,
             'words': <dynamic>[],
             'upcomingImageUrls': ['https://s3/a.png', 'https://s3/b.png'],
@@ -69,6 +70,7 @@ void main() {
         'steps': [
           {
             'state': 'locked',
+            'deck': 1,
             'newCount': 0,
             'newGoal': 8,
             'reviewCount': 0,
@@ -79,8 +81,7 @@ void main() {
         ],
       },
     ],
-    'dailyNewWordLimit': 8,
-    'tomorrowStartsAtUtc': '2026-11-04T21:00:00Z',
+    'deckSize': 8,
   };
 
   test('yanıt ekran modeline çevrilir', () {
@@ -101,30 +102,70 @@ void main() {
 
     final done = first.steps[0];
     expect(done.state, KartyStepState.done);
-    expect(done.label, '2 Kas');
-    expect(done.title, '2 Kasım');
+    expect(done.deck, 1);
+    expect(done.label, 'Deste 1');
+    expect(done.title, 'Deste 1');
     expect(done.dueCount, 2);
     expect(done.words.single.word, 'Haus');
 
-    final today = first.steps[1];
-    expect(today.label, 'Bugün');
-    expect(today.newCount, 3);
-    expect(today.reviewCount, 5);
+    final current = first.steps[1];
+    expect(current.state, KartyStepState.current);
+    expect(current.label, 'Deste 2');
+    expect(current.newCount, 3);
+    expect(current.reviewCount, 5);
 
-    final tomorrow = first.steps[2];
-    expect(tomorrow.label, 'Yarın');
-    expect(tomorrow.upcoming, hasLength(2));
-    // Saat dilimi: sunucu UTC gönderir, kalan süre UTC'ye göre hesaplanır.
-    expect(
-      tomorrow.remainingText(DateTime.utc(2026, 11, 4, 15, 48)),
-      '5 sa 12 dk',
-    );
-    expect(tomorrow.remainingText(DateTime.utc(2026, 11, 4, 20, 30)), '30 dk');
-    expect(tomorrow.remainingText(DateTime.utc(2026, 11, 4, 22)), isNull);
+    final upcoming = first.steps[2];
+    expect(upcoming.state, KartyStepState.upcoming);
+    expect(upcoming.label, 'Deste 3');
+    expect(upcoming.upcoming, hasLength(2));
 
     final locked = data.units[1];
     expect(locked.state, KartyUnitState.locked);
     expect(locked.unlockHint, "Ünite 1'in %80'i pekişince açılır");
     expect(requested, contains('https://s3/a.png'));
+  });
+
+  test('desteler bitince şu anki adım yalnız tekrardır', () {
+    final data = KartyPathData.fromResponse(
+      KartyPathResponse.fromJson({
+        'units': [
+          {
+            'sequence': 1,
+            'title': 'İlk kelimeler',
+            'state': 'current',
+            'wordCount': 8,
+            'consolidatedCount': 3,
+            'unlockGoal': 0.8,
+            'steps': [
+              {
+                'state': 'done',
+                'deck': 1,
+                'newCount': 8,
+                'newGoal': 8,
+                'reviewCount': 0,
+                'dueCount': 0,
+              },
+              {
+                'state': 'current',
+                'newCount': 0,
+                'newGoal': 0,
+                'reviewCount': 4,
+                'dueCount': 0,
+              },
+            ],
+          },
+        ],
+        'deckSize': 8,
+      }),
+      tickets: 3,
+      image: (_) => MemoryImage(Uint8List(0)),
+    );
+
+    final review = data.units.single.steps.last;
+    expect(review.state, KartyStepState.current);
+    expect(review.deck, isNull);
+    expect(review.label, 'Tekrar');
+    expect(review.newGoal, 0);
+    expect(review.reviewCount, 4);
   });
 }

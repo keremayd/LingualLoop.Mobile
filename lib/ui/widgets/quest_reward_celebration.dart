@@ -287,6 +287,42 @@ class LightRaysOnly extends StatelessWidget {
   }
 }
 
+/// Kalıcı kutlama ekranlarının ışığı (ünite açılışı). Reçete görev
+/// ödülündekinin aynısı — 10 dilim, %30 ışık, krem ton, keskin kenar + mesafe
+/// sönümü, sıcak merkez hâlesi — çünkü iki ayrı ışık dili olmamalı. Fark
+/// yalnız zamanlamada: görev ödülünde ışık açılıp kapanan bir olay, burada
+/// ekran durdukça kalan bir ortam.
+///
+/// [open] ışığın açılması (0–1), [drift] dilimlerin açısı (radyan). On katlı
+/// simetri yüzünden bir dilim aralığı (2π/10) dönüş dikişsiz bir döngüdür.
+/// [reach] ışığın söndüğü yarıçap: özneye göre seçilir, ekrana göre değil
+/// (reçetede özne yarıçapının ~2 katı).
+class CelebrationLightRays extends StatelessWidget {
+  const CelebrationLightRays({
+    super.key,
+    required this.reach,
+    required this.open,
+    required this.drift,
+  });
+
+  final double reach;
+  final double open;
+  final double drift;
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size.square(reach * 2),
+      painter: _LightRaysPainter(
+        progress: 0,
+        scale: reach / _LightRaysPainter.reach,
+        open: open,
+        drift: drift,
+      ),
+    );
+  }
+}
+
 /// Ödülün arkasındaki **ışıltı**: yumuşak sıcak hâle ve çok sönük, ağır ağır
 /// sürüklenen ışık dilimleri.
 ///
@@ -312,10 +348,21 @@ class LightRaysOnly extends StatelessWidget {
 /// Sonra `BlendMode.dstIn` ile radyal bir maske uygulanır; ışık böylece
 /// kenara doğru söner ve "fırıldak" değil "ışık" okunur.
 class _LightRaysPainter extends CustomPainter {
-  const _LightRaysPainter({required this.progress, required this.scale});
+  const _LightRaysPainter({
+    required this.progress,
+    required this.scale,
+    this.open,
+    this.drift,
+  });
 
   final double progress;
   final double scale;
+
+  /// Kalıcı sahnede ([CelebrationLightRays]) açılma ve dönüş dışarıdan
+  /// gelir; null ise ikisi de [progress] zaman çizelgesinden hesaplanır
+  /// (görev ödülü: ışık açılır, sürüklenir, geri çekilir).
+  final double? open;
+  final double? drift;
 
   /// Dilim sayısı. Referans görselde (Finch seri kartı) 360 derecede
   /// **10 şerit** sayıldı — kullanıcı saydı, göz kararı değil.
@@ -342,11 +389,11 @@ class _LightRaysPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // Işık ödülle birlikte yumuşakça açılır; çıkış alfa ile değil geri
     // çekilerek yapılır (alfa düşünce sıcak ton kirleniyor).
-    final open = Curves.easeOutCubic.transform(
+    final opening = Curves.easeOutCubic.transform(
       ((progress - 0.02) / 0.32).clamp(0.0, 1.0),
     );
     final retract = 1 - ((progress - 0.82) / 0.18).clamp(0.0, 1.0);
-    final grow = open * retract;
+    final grow = open ?? opening * retract;
     if (grow <= 0.01) return;
 
     final center = size.center(Offset.zero);
@@ -378,7 +425,7 @@ class _LightRaysPainter extends CustomPainter {
 
     for (var i = 0; i < _bandCount; i++) {
       // Ağır sürüklenme: dönme hissi değil, ışığın canlı olduğu hissi.
-      final a = i * sector + progress * 0.42;
+      final a = i * sector + (drift ?? progress * 0.42);
       canvas.drawPath(
         Path()
           ..moveTo(0, 0)
@@ -434,6 +481,9 @@ class _LightRaysPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _LightRaysPainter oldDelegate) {
-    return oldDelegate.progress != progress || oldDelegate.scale != scale;
+    return oldDelegate.progress != progress ||
+        oldDelegate.scale != scale ||
+        oldDelegate.open != open ||
+        oldDelegate.drift != drift;
   }
 }

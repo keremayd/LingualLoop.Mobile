@@ -35,7 +35,7 @@ class KartyService {
     return apiResponse;
   }
 
-  /// Karty Yolu: üniteler, geçmiş günler, bugün, yarın.
+  /// Karty Yolu: üniteler ve desteleri.
   Future<ApiResponse<KartyPathResponse>> path() async {
     final token = await _storage.read(key: 'accessToken');
     final userId = await _storage.read(key: 'userId');
@@ -52,6 +52,26 @@ class KartyService {
     return ApiResponse<KartyPathResponse>.fromJson(
       response.data,
       (data) => KartyPathResponse.fromJson(data as Map<String, dynamic>),
+    );
+  }
+
+  /// Ünite açılış kutlaması görüldü; patika onu bir daha göstermez.
+  Future<ApiResponse<Object?>> acknowledgeUnitUnlock() async {
+    final token = await _storage.read(key: 'accessToken');
+    final userId = await _storage.read(key: 'userId');
+
+    final response = await _dio.post(
+      'karty/path/$userId/unlock/acknowledge',
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      ),
+    );
+
+    return ApiResponse<Object?>.fromJson(
+      response.data,
+      (data) => data,
     );
   }
 

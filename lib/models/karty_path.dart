@@ -1,14 +1,28 @@
 import 'package:flutter/widgets.dart';
 import 'package:lingualloop/models/responses/KartyPathResponse.dart';
 
-/// Karty Yolu'nun ekran modeli: ünite → adım (8 yeni kelimelik deste) →
-/// kelime. Sunucudaki karşılığı `GET karty/path/{userId}`
+/// Karty Yolu'nun ekran modeli: ünite → deste (8 kelime) → kelime. Sunucudaki karşılığı `GET karty/path/{userId}`
 /// ([KartyPathResponse]); ekran yalnız bu modeli tanır.
 class KartyPathData {
-  const KartyPathData({required this.tickets, required this.units});
+  const KartyPathData({
+    required this.tickets,
+    required this.units,
+    this.pendingUnlock,
+  });
 
   final int tickets;
   final List<KartyUnit> units;
+
+  /// Açılıp kutlaması henüz gösterilmemiş ünite; yoksa null.
+  final KartyUnitUnlock? pendingUnlock;
+
+  /// [number] sıralı ünitenin açılışı: ünite ve kilidini açan önceki ünite.
+  /// İlk ünite hep açık olduğu için onun açılışı yok.
+  KartyUnitUnlock? unlockFor(int number) {
+    final index = units.indexWhere((unit) => unit.number == number);
+    if (index <= 0) return null;
+    return KartyUnitUnlock(unlocked: units[index], completed: units[index - 1]);
+  }
 
   /// Sunucu yanıtını ekran modeline çevirir. [image] testte yerel görsel
   /// vermek için; uygulamada imzalı adresten [NetworkImage].
@@ -19,8 +33,7 @@ class KartyPathData {
   }) {
     KartyStepState stepState(String state) => switch (state) {
           'done' => KartyStepState.done,
-          'today' => KartyStepState.today,
-          'tomorrow' => KartyStepState.tomorrow,
+          'current' => KartyStepState.current,
           'upcoming' => KartyStepState.upcoming,
           _ => KartyStepState.locked,
         };
@@ -43,14 +56,15 @@ class KartyPathData {
         emblem: unit.emblemUrl == null ? null : image(unit.emblemUrl!),
         unlockHint: previous == null
             ? null
-            : 'Ünite ${previous.number}${_genitive(previous.number)} '
+            : 'Ünite ${previous.number}${genitive(previous.number)} '
                 '%${(unit.unlockGoal * 100).round()}\'i pekişince açılır',
         steps: [
           for (final step in unit.steps)
             KartyStep(
               state: stepState(step.state),
-              label: _label(stepState(step.state), step.day, short: true),
-              title: _label(stepState(step.state), step.day, short: false),
+              deck: step.deck,
+              label: step.deck == null ? 'Tekrar' : 'Deste ${step.deck}',
+              title: step.deck == null ? 'Tekrar' : 'Deste ${step.deck}',
               newCount: step.newCount,
               newGoal: step.newGoal,
               reviewCount: step.reviewCount,
@@ -66,48 +80,25 @@ class KartyPathData {
                   ),
               ],
               upcoming: [for (final url in step.upcomingImageUrls) image(url)],
-              opensAt: stepState(step.state) == KartyStepState.tomorrow
-                  ? response.tomorrowStartsAtUtc
-                  : null,
             ),
         ],
       ));
     }
-    return KartyPathData(tickets: tickets, units: units);
+    final data = KartyPathData(tickets: tickets, units: units);
+    final pending = response.pendingUnlockSequence;
+    return pending == null
+        ? data
+        : KartyPathData(
+            tickets: tickets,
+            units: units,
+            pendingUnlock: data.unlockFor(pending),
+          );
   }
 
   static ImageProvider _network(String url) => NetworkImage(url);
 
-  static const _monthsShort = [
-    'Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', //
-    'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara',
-  ];
-  static const _months = [
-    'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', //
-    'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık',
-  ];
-
-  /// Yol üstü etiketi ("2 Kas") ya da pencere başlığı ("2 Kasım").
-  static String _label(KartyStepState state, String? day,
-      {required bool short}) {
-    switch (state) {
-      case KartyStepState.today:
-        return 'Bugün';
-      case KartyStepState.tomorrow:
-        return 'Yarın';
-      case KartyStepState.done:
-        final date = day == null ? null : DateTime.tryParse(day);
-        if (date == null) return '';
-        final months = short ? _monthsShort : _months;
-        return '${date.day} ${months[date.month - 1]}';
-      case KartyStepState.upcoming:
-      case KartyStepState.locked:
-        return '';
-    }
-  }
-
   /// Sayının ilgi hâli eki: 1'in, 2'nin, 3'ün, 6'nın, 10'un.
-  static String _genitive(int n) {
+  static String genitive(int n) {
     const byLastDigit = [
       '',
       "'in",
@@ -139,6 +130,20 @@ class KartyPathData {
 }
 
 enum KartyUnitState { done, current, open, locked }
+
+/// Açılan ünite ve kilidini açan önceki ünite.
+class KartyUnitUnlock {
+  const KartyUnitUnlock({required this.unlocked, required this.completed});
+
+  final KartyUnit unlocked;
+  final KartyUnit completed;
+
+  /// Kapının kuralı, patikadaki kilit cümlesiyle ("Ünite 1'in %80'i
+  /// pekişince açılır") aynı dilde.
+  String get reason =>
+      'Ünite ${completed.number}${KartyPathData.genitive(completed.number)} '
+      '%${(completed.unlockGoal * 100).round()}\'ini pekiştirdin.';
+}
 
 class KartyUnit {
   const KartyUnit({
@@ -175,13 +180,15 @@ class KartyUnit {
       wordCount == 0 ? 0 : (consolidatedCount / wordCount).clamp(0.0, 1.0);
 }
 
-enum KartyStepState { done, today, tomorrow, upcoming, locked }
+enum KartyStepState { done, current, upcoming, locked }
 
-/// Patikadaki bir düğüm: 8 yeni kelimelik deste. Günlük yeni kelime tavanı 8
-/// olduğu için her gün oynayan kullanıcıda bir adım bir güne denk gelir.
+/// Patikadaki bir düğüm: ünitenin 8 kelimelik bir destesi. Bir oyun bir
+/// destedir; deste bitince sıradaki açılır (bkz. `KartyDeckRules`).
+/// Açık bütün desteler bittiyse şu anki adım yalnız tekrardır ([deck] null).
 class KartyStep {
   const KartyStep({
     required this.state,
+    this.deck,
     this.label = '',
     this.title = '',
     this.newCount = 0,
@@ -190,50 +197,32 @@ class KartyStep {
     this.dueCount = 0,
     this.words = const [],
     this.upcoming = const [],
-    this.opensAt,
-    this.opensIn,
   });
 
   final KartyStepState state;
 
-  /// Yol üstündeki kısa etiket: "1 Kas", "Bugün", "Yarın".
-  final String label;
+  /// Ünite içindeki deste numarası; yalnız tekrar adımında null.
+  final int? deck;
 
-  /// Adım penceresinin başlığı: "2 Kasım".
+  /// Yol üstündeki kısa etiket ve pencere başlığı: "Deste 2", "Tekrar".
+  final String label;
   final String title;
 
-  /// Bu destede tanışılan yeni kelime / hedef (bugün için 3/8).
+  /// Bu destede tanışılan kelime / destenin büyüklüğü (3/8).
   final int newCount;
   final int newGoal;
 
-  /// O gün yapılacak tekrar sayısı (bugün ve yarın için).
+  /// Şu anki adımda: oyunun önce soracağı, vadesi gelmiş tekrar sayısı.
   final int reviewCount;
 
-  /// Bu destede vadesi gelmiş kelime sayısı — geçmiş düğümün rozeti.
+  /// Bu destede vadesi gelmiş kelime sayısı — bitmiş düğümün rozeti.
   final int dueCount;
 
   final List<KartyWord> words;
 
-  /// Henüz açılmamış kelimelerin görselleri; pencerede siluet olarak durur.
+  /// Destenin henüz tanışılmamış kelimelerinin görselleri; pencerede
+  /// silüet olarak durur.
   final List<ImageProvider> upcoming;
-
-  /// Yarının açıldığı an (UTC). Kalan süre pencere açılınca hesaplanır.
-  final DateTime? opensAt;
-
-  /// Hazır kalan süre metni ("5 sa 12 dk"); önizlemede sabit süre için.
-  final String? opensIn;
-
-  /// Pencerede gösterilecek kalan süre: [opensIn] ya da [opensAt]'ten.
-  String? remainingText(DateTime now) {
-    if (opensIn != null) return opensIn;
-    final opensAt = this.opensAt;
-    if (opensAt == null) return null;
-    final left = opensAt.difference(now.toUtc());
-    if (left.isNegative) return null;
-    final hours = left.inHours;
-    final minutes = left.inMinutes.remainder(60);
-    return hours > 0 ? '$hours sa $minutes dk' : '${left.inMinutes} dk';
-  }
 }
 
 class KartyWord {

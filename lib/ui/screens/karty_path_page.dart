@@ -1,14 +1,17 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lingualloop/main.dart';
 import 'package:lingualloop/models/karty_path.dart';
 import 'package:lingualloop/providers/KartyPathProvider.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
+import 'package:lingualloop/services/KartyService.dart';
 import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/ui/app_typography.dart';
 import 'package:lingualloop/ui/flows/ticketed_game_flow.dart';
 import 'package:lingualloop/ui/screens/karty_path_screen.dart';
+import 'package:lingualloop/ui/screens/karty_unit_unlock_screen.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:lingualloop/ui/widgets/NavbarWidget.dart';
 import 'package:provider/provider.dart';
@@ -19,6 +22,10 @@ import 'package:provider/provider.dart';
 /// Veri dört yoldan tazelenir (§3.1): açılış, oyundan dönüş (`didPopNext`),
 /// uygulamaya dönüş ve aşağı çekme. Ağ hatası ekranı bozmaz; eldeki son
 /// veriyle devam edilir.
+///
+/// Tazelenen veride bekleyen bir ünite açılışı varsa önce kutlama ekranı
+/// ([KartyUnitUnlockScreen]) açılır; DEVAM ET'ten sonra patika kamerayı
+/// açılan üniteye kaydırır ve açılışı yerinde oynatır.
 class KartyPathPage extends StatefulWidget {
   const KartyPathPage({super.key});
 
@@ -31,13 +38,23 @@ class _KartyPathPageState extends State<KartyPathPage>
   ModalRoute<void>? _subscribedRoute;
   bool _starting = false;
 
+  /// Gelişi süren ünite; patika onu açılmamış gibi çizer.
+  int? _arrivalUnit;
+  bool _playArrival = false;
+
+  /// Bu sayfada kutlaması gösterilen ünite: onay yeniden yüklenmeden önceki
+  /// tazelemeler aynı kutlamayı ikinci kez açmasın.
+  int? _shownUnlock;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<KartyPathProvider>();
-      unawaited(provider.load(silent: provider.data != null));
+      unawaited(provider
+          .load(silent: provider.data != null)
+          .then((_) => _maybeShowUnlock()));
     });
   }
 
@@ -76,6 +93,67 @@ class _KartyPathPageState extends State<KartyPathPage>
       provider.load(silent: true),
       userService.scoreWithLivesById(context),
     ]);
+    if (mounted) unawaited(_maybeShowUnlock());
+  }
+
+  /// Bekleyen ünite açılışını gösterir: patika üniteyi açılmamış gibi
+  /// çizer, kutlama ekranı açılır; DEVAM ET'ten sonra kamera üniteye kayar
+  /// ve açılış patikada oynar. Patika o sırada en üstteki ekran değilse
+  /// (oyun açıkken tazelendiyse) dönüşte yakalanır.
+  Future<void> _maybeShowUnlock({KartyUnitUnlock? simulated}) async {
+    final response = context.read<KartyPathProvider>().data;
+    if (!mounted || response == null || _arrivalUnit != null) return;
+    if (ModalRoute.of(context)?.isCurrent != true) return;
+    final unlock = simulated ??
+        KartyPathData.fromResponse(response, tickets: 0).pendingUnlock;
+    if (unlock == null) return;
+    if (simulated == null && _shownUnlock == unlock.unlocked.number) return;
+    _shownUnlock = unlock.unlocked.number;
+
+    setState(() => _arrivalUnit = unlock.unlocked.number);
+    final kartyService = context.read<KartyService>();
+    final route = MaterialPageRoute<bool>(
+      fullscreenDialog: true,
+      builder: (_) => KartyUnitUnlockScreen(
+        unlock: unlock,
+        // Tasarım simülasyonu gerçek kaydı kapatmaz.
+        onContinue: simulated != null
+            ? () async => true
+            : () async {
+                final ack = await kartyService.acknowledgeUnitUnlock();
+                return ack.errorCode == null;
+              },
+      ),
+    );
+    final shown = await Navigator.of(context).push(route) ?? false;
+    // Kutlama ekranının çıkışı bitsin: kamera görünen patikada kaysın.
+    await route.completed;
+    if (!mounted) return;
+    if (!shown) {
+      setState(() => _arrivalUnit = null);
+      return;
+    }
+    setState(() => _playArrival = true);
+  }
+
+  void _arrivalDone() {
+    if (!mounted) return;
+    setState(() {
+      _arrivalUnit = null;
+      _playArrival = false;
+    });
+  }
+
+  /// Debug: en ileri açık ünitenin açılışını sunucuya dokunmadan oynatır
+  /// (lig ekranındaki TERFİ düğmesinin karşılığı).
+  void _simulateUnlock(KartyPathData data) {
+    for (final unit in data.units.reversed) {
+      if (unit.state == KartyUnitState.locked) continue;
+      final unlock = data.unlockFor(unit.number);
+      if (unlock == null) continue;
+      unawaited(_maybeShowUnlock(simulated: unlock));
+      return;
+    }
   }
 
   Future<void> _continue() async {
@@ -115,11 +193,63 @@ class _KartyPathPageState extends State<KartyPathPage>
       );
     }
 
-    return KartyPathScreen(
-      data: KartyPathData.fromResponse(response, tickets: tickets),
+    final data = KartyPathData.fromResponse(response, tickets: tickets);
+    final screen = KartyPathScreen(
+      data: data,
       onBack: () => Navigator.of(context).maybePop(),
       onContinue: _continue,
       onRefresh: _refresh,
+      arrivalUnit: _arrivalUnit,
+      playArrival: _playArrival,
+      onArrivalDone: _arrivalDone,
+    );
+    if (!kDebugMode) return screen;
+    return Stack(
+      children: [
+        screen,
+        Positioned(
+          right: 16,
+          bottom: MediaQuery.paddingOf(context).bottom + 24,
+          child: _DebugUnlockButton(onTap: () => _simulateUnlock(data)),
+        ),
+      ],
+    );
+  }
+}
+
+/// Debug: ünite açılışını dene. Yayından önce kaldırılacak (CLAUDE.md §8).
+class _DebugUnlockButton extends StatelessWidget {
+  const _DebugUnlockButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    // Scaffold'un dışında; Material olmadan metin sarı çizgiyle çizilir.
+    return Material(
+      type: MaterialType.transparency,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1CB1F5),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: const [
+              BoxShadow(color: Color(0xFF1B84B5), offset: Offset(0, 5)),
+            ],
+          ),
+          child: const Text(
+            'AÇILIŞ',
+            style: TextStyle(
+              color: Colors.white,
+              fontFamily: AppTypography.family,
+              fontSize: 15,
+              fontWeight: AppTypography.action,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
