@@ -6,9 +6,17 @@ import 'dart:ui' show lerpDouble;
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:lingualloop/Utils/AppNotifier.dart';
+import 'package:lingualloop/models/Karty.dart';
+import 'package:lingualloop/models/karty_path.dart';
+import 'package:lingualloop/models/karty_session.dart';
+import 'package:lingualloop/models/karty_session_summary.dart';
 import 'package:lingualloop/models/responses/GetKartyByScoreResponse.dart';
+import 'package:lingualloop/models/responses/KartySessionStatusResponse.dart';
 import 'package:lingualloop/providers/KartyProvider.dart';
 import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
+import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
+import 'package:lingualloop/ui/screens/karty_session_summary_screen.dart';
+import 'package:lingualloop/ui/widgets/league_badge_mark.dart';
 import 'package:lingualloop/services/KartyService.dart';
 import 'package:lingualloop/services/PronunciationService.dart';
 import 'package:lingualloop/ui/widgets/SwipableCard.dart';
@@ -26,7 +34,10 @@ import '../../services/UserService.dart';
 class KartyQuizScreen extends StatefulWidget {
   final bool reviewMode;
 
-  const KartyQuizScreen({super.key, this.reviewMode = false});
+  /// Karty Yolu'ndan açıldıysa oyunun destesi; deste bitince özet çıkar.
+  final KartySessionArgs? session;
+
+  const KartyQuizScreen({super.key, this.reviewMode = false, this.session});
 
   @override
   _KartyQuizScreenState createState() => _KartyQuizScreenState();
@@ -96,6 +107,19 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
   final GlobalKey _boostLeagueTargetKey = GlobalKey();
   bool _pauseMenuOpen = false;
 
+  /// Karty Yolu oyununun sayaçları: deste bitince özette gösterilir.
+  /// Puan XP ile lig puanının ikisi de (Karty'de aynı miktarda artarlar).
+  int _sessionPoints = 0;
+  int _sessionCorrect = 0;
+  int _sessionAnswered = 0;
+  final Set<int> _sessionWrongIds = {};
+
+  /// Cevaplanan kelimeler; yalnız tekrar oyununun özetinde karolar bunlar.
+  final Map<int, KartyWord> _sessionWords = {};
+
+  /// Özetten sonra PRATİK YAP: aynı oturum sürer, bitiş bir daha sorulmaz.
+  late bool _practicing = !(widget.session?.hasWork ?? false);
+
   @override
   void initState() {
     super.initState();
@@ -109,6 +133,11 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
 
     Future.microtask(() async {
       kartyProvider.reset();
+      // Yeni kelime yalnız Karty Yolu'ndaki şu anki desteden istenir.
+      kartyProvider.startSession(
+        unit: widget.session?.unit.number,
+        deck: widget.session?.deck,
+      );
       if (widget.reviewMode) {
         setState(() {
           _reviewTotalStack =
@@ -402,6 +431,9 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
       );
       if (!mounted) return;
       if (apiResponse.errorCode == null) {
+        _sessionPoints += awardedPoints;
+        _sessionCorrect += 1;
+        _countAnswer(currentKarty);
         setState(() {
           streak += 1;
           _recordCorrectBoostAnswer();
@@ -446,6 +478,8 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
         await userService.updateScoreById(-1, kartyId: currentKarty.kartyId);
     if (!mounted) return;
     if (apiResponse.errorCode == null) {
+      _sessionWrongIds.add(currentKarty.kartyId);
+      _countAnswer(currentKarty);
       setState(() {
         streak = 0;
         _recordWrongBoostAnswer();
@@ -470,6 +504,122 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
 
       timeBarResetNotifier.value += 1; // ProgressBar'ı sıfırla
     }
+  }
+
+  void _countAnswer(Karty karty) {
+    _sessionAnswered += 1;
+    _sessionWords[karty.kartyId] = KartyWord(
+      word: karty.correctText,
+      article: karty.article,
+      image: FileImage(File(karty.kartyUrl)),
+      box: 1,
+    );
+  }
+
+  /// Karty Yolu oyununda destenin bitip bitmediğini sunucuya sorar
+  /// (`karty/session`); bittiyse özeti gösterir. Özetten patikaya
+  /// dönülürse oyun kapanır ve `true` döner; PRATİK YAP'ta aynı oturum
+  /// sürer. Ağ hatası oyunu durdurmaz: bitiş bir sonraki cevapta sorulur.
+  Future<bool> _finishSessionIfDone() async {
+    final session = widget.session;
+    if (session == null || widget.reviewMode || _practicing) return false;
+
+    KartySessionStatusResponse? status;
+    try {
+      final response = await kartyService.sessionStatus(
+        unit: session.unit.number,
+        deck: session.deck,
+      );
+      status = response.errorCode == null ? response.data : null;
+    } catch (_) {
+      status = null;
+    }
+    if (!mounted || status == null || !status.complete) return false;
+
+    final summary = _buildSummary(session, status);
+    await Future.wait([
+      for (final word in summary.words.take(8))
+        precacheImage(word.image, context, onError: (_, __) {}),
+      if (summary.unit.emblem != null)
+        precacheImage(summary.unit.emblem!, context, onError: (_, __) {}),
+    ]).timeout(const Duration(milliseconds: 1500), onTimeout: () => []);
+    if (!mounted) return false;
+
+    final choice = await Navigator.of(context).push<KartySummaryChoice>(
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 360),
+        reverseTransitionDuration: const Duration(milliseconds: 240),
+        pageBuilder: (_, __, ___) =>
+            KartySessionSummaryScreen(summary: summary),
+        transitionsBuilder: (_, animation, __, child) => FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+          child: child,
+        ),
+      ),
+    );
+    if (!mounted) return true;
+    if (choice == KartySummaryChoice.practice) {
+      _practicing = true;
+      return false;
+    }
+    await _closeKartyScreen();
+    return true;
+  }
+
+  KartySessionSummary _buildSummary(
+    KartySessionArgs session,
+    KartySessionStatusResponse status,
+  ) {
+    final before = session.unit;
+    return KartySessionSummary(
+      unit: KartyUnit(
+        number: before.number,
+        title: before.title,
+        state: before.state,
+        wordCount: status.unitWordCount,
+        consolidatedCount: status.unitConsolidated,
+        unlockGoal: before.unlockGoal,
+        emblem: before.emblem,
+      ),
+      deck: session.deck,
+      words: session.deck != null
+          ? [
+              for (final word in status.words)
+                KartyWord(
+                  word: word.nounText,
+                  article: word.article,
+                  image: NetworkImage(word.kartyUrl),
+                  box: word.box,
+                ),
+            ]
+          : _sessionWords.values.toList(),
+      newCount: session.deck != null ? status.deckSize : 0,
+      reviewCount: _sessionWords.length,
+      consolidatedBefore: before.consolidatedCount,
+      points: _sessionPoints,
+      correct: _sessionCorrect,
+      answered: _sessionAnswered,
+      revenge: _sessionWrongIds.length,
+      league: _leagueNote(),
+    );
+  }
+
+  /// Lig satırı yalnız sıradaki lige yaklaşıldığında (10 puan ve altı):
+  /// her özette görünen bir hatırlatma birkaç oyunda görünmez olurdu.
+  KartyLeagueNote? _leagueNote() {
+    final league =
+        context.read<ScoreWithLivesProvider>().scoreWithLives?.league;
+    final left = league?.pointsToNextLeague;
+    if (league == null || left == null || left <= 0 || left > 10) return null;
+    if (league.rank < 1 || league.rank >= LeagueVisuals.order.length) {
+      return null;
+    }
+    final next = LeagueVisuals.order[league.rank];
+    return KartyLeagueNote(
+      nextLeagueKey: next,
+      nextLeagueName: LeagueVisuals.names[next] ?? '',
+      pointsLeft: left,
+    );
   }
 
   Future<void> _nextKarty(BuildContext context) async {
@@ -612,6 +762,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
       }
 
       await _answerQuestion(context, pressedRight);
+      if (await _finishSessionIfDone()) return;
       await _finishAnsweredCard(context);
     } catch (_) {
       if (!mounted) return;

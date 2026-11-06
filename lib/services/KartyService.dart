@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:lingualloop/models/responses/GetKartyByScoreResponse.dart';
 import 'package:lingualloop/models/responses/KartyPathResponse.dart';
+import 'package:lingualloop/models/responses/KartySessionStatusResponse.dart';
 import 'package:lingualloop/models/responses/ResolveWrongKartyReviewResponse.dart';
 
 import '../models/ApiResponse.dart';
@@ -13,12 +14,21 @@ class KartyService {
 
   KartyService(this._dio);
 
-  Future<ApiResponse<GetKartyByScoreResponse>> random() async {
+  /// Sıradaki kart. [unit] ve [deck] oyunun destesi: yeni kelime yalnız
+  /// oradan gelir (sunucuda `KartyScheduler`).
+  Future<ApiResponse<GetKartyByScoreResponse>> random({
+    int? unit,
+    int? deck,
+  }) async {
     final token = await _storage.read(key: 'accessToken');
     final userId = await _storage.read(key: 'userId');
 
     final response = await _dio.get(
       'karty/random/$userId',
+      queryParameters: {
+        if (unit != null) 'unit': unit,
+        if (deck != null) 'deck': deck,
+      },
       options: Options(
         headers: {
           'Authorization': 'Bearer $token',
@@ -52,6 +62,35 @@ class KartyService {
     return ApiResponse<KartyPathResponse>.fromJson(
       response.data,
       (data) => KartyPathResponse.fromJson(data as Map<String, dynamic>),
+    );
+  }
+
+  /// Oyunun durumu: destesi bitti mi, tekrar kaldı mı. Oyun her cevaptan
+  /// sonra sorar; bitince özeti gösterir.
+  Future<ApiResponse<KartySessionStatusResponse>> sessionStatus({
+    required int unit,
+    int? deck,
+  }) async {
+    final token = await _storage.read(key: 'accessToken');
+    final userId = await _storage.read(key: 'userId');
+
+    final response = await _dio.get(
+      'karty/session/$userId',
+      queryParameters: {
+        'unit': unit,
+        if (deck != null) 'deck': deck,
+      },
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      ),
+    );
+
+    return ApiResponse<KartySessionStatusResponse>.fromJson(
+      response.data,
+      (data) =>
+          KartySessionStatusResponse.fromJson(data as Map<String, dynamic>),
     );
   }
 

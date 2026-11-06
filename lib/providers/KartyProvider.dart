@@ -10,6 +10,16 @@ class KartyProvider with ChangeNotifier {
   Future<Karty?>? _prefetchFuture;
   bool? _prefetchReviewMode;
 
+  /// Oyunun destesi (Karty Yolu'ndaki şu anki deste). Yeni kelime yalnız
+  /// buradan istenir; oyun açılırken [startSession] ile kurulur.
+  int? _sessionUnit;
+  int? _sessionDeck;
+
+  void startSession({int? unit, int? deck}) {
+    _sessionUnit = unit;
+    _sessionDeck = deck;
+  }
+
   List<Karty> get cards =>
       List.unmodifiable(_cards); // Dışarıdan değiştirilemez liste
   bool get isLoaded => _isLoaded;
@@ -133,7 +143,7 @@ class KartyProvider with ChangeNotifier {
     try {
       final apiResponse = reviewMode
           ? await kartyService.randomWrong()
-          : await kartyService.random();
+          : await kartyService.random(unit: _sessionUnit, deck: _sessionDeck);
       if (apiResponse.errorCode != null || apiResponse.data == null) {
         return null;
       }

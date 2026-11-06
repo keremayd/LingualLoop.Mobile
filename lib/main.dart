@@ -1,3 +1,4 @@
+import 'package:lingualloop/models/karty_session.dart';
 import 'package:lingualloop/ui/app_typography.dart';
 import 'dart:io';
 
@@ -176,7 +177,11 @@ class MyApp extends StatelessWidget {
         '/home': (context) => NavbarWidget(),
         '/videoquiz': (context) => VideoQuizScreen(),
         '/kartypath': (context) => const KartyPathPage(),
-        '/kartyquiz': (context) => KartyQuizScreen(),
+        // Karty Yolu'ndan açılınca oyunun destesi argümanla gelir.
+        '/kartyquiz': (context) => KartyQuizScreen(
+              session: ModalRoute.of(context)?.settings.arguments
+                  as KartySessionArgs?,
+            ),
         '/kartyreview': (context) => KartyQuizScreen(reviewMode: true),
         '/articlepractice': (context) => const ArticlePracticeScreen(),
         '/profile': (context) => ProfileScreen(),

@@ -37,33 +37,9 @@ class _LeagueScreenState extends State<LeagueScreen>
   static const _firstRankColor = Color(0xFFFFB020);
   static const _accentColor = Color(0xFF1CB1F5);
 
-  static const _leagueNames = <String, String>{
-    'merkur': 'Merkür',
-    'aytasi': 'Aytaşı',
-    'yildiz': 'Yıldız',
-    'kuyruklu': 'Kuyruklu',
-    'mars': 'Mars',
-    'uranus': 'Uranüs',
-    'saturn': 'Satürn',
-    'nebula': 'Nebula',
-    'kosmoz': 'Kosmoz',
-    'supernova': 'Supernova',
-    'pulsar': 'Pulsar',
-  };
-
-  static const _leagueKeys = [
-    'merkur',
-    'aytasi',
-    'yildiz',
-    'kuyruklu',
-    'mars',
-    'uranus',
-    'saturn',
-    'nebula',
-    'kosmoz',
-    'supernova',
-    'pulsar',
-  ];
+  // Sıra ve adlar lig rozetinin ortak tablosunda (oyun özeti de kullanıyor).
+  static const _leagueNames = LeagueVisuals.names;
+  static const _leagueKeys = LeagueVisuals.order;
 
   bool _isRefreshing = false;
   bool _isShowingPromotion = false;

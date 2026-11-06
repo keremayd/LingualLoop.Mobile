@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lingualloop/main.dart';
 import 'package:lingualloop/models/karty_path.dart';
+import 'package:lingualloop/models/karty_session.dart';
 import 'package:lingualloop/providers/KartyPathProvider.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/services/KartyService.dart';
@@ -156,6 +157,25 @@ class _KartyPathPageState extends State<KartyPathPage>
     }
   }
 
+  /// Şu anki adımın oyunu: hangi ünitenin hangi destesi (yoksa yalnız
+  /// tekrar). Oyun yeni kelimeyi yalnız bu desteden ister ve bitişini sorar.
+  KartySessionArgs? _session() {
+    final response = context.read<KartyPathProvider>().data;
+    if (response == null) return null;
+    final data = KartyPathData.fromResponse(response, tickets: 0);
+    for (final unit in data.units) {
+      for (final step in unit.steps) {
+        if (step.state != KartyStepState.current) continue;
+        return KartySessionArgs(
+          unit: unit,
+          deck: step.deck,
+          reviewCount: step.reviewCount,
+        );
+      }
+    }
+    return null;
+  }
+
   Future<void> _continue() async {
     if (_starting) return;
     _starting = true;
@@ -172,7 +192,7 @@ class _KartyPathPageState extends State<KartyPathPage>
       );
       if (!entered || !mounted) return;
       // Dönüşte didPopNext tazeler.
-      await Navigator.pushNamed(context, '/kartyquiz');
+      await Navigator.pushNamed(context, '/kartyquiz', arguments: _session());
     } finally {
       _starting = false;
     }

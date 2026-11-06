@@ -52,6 +52,35 @@ class LeagueBadgePalette {
 }
 
 class LeagueVisuals {
+  /// Liglerin sırası: rütbe 1 Merkür, 11 Pulsar (`LeagueRules.Leagues`).
+  static const order = [
+    'merkur',
+    'aytasi',
+    'yildiz',
+    'kuyruklu',
+    'mars',
+    'uranus',
+    'saturn',
+    'nebula',
+    'kosmoz',
+    'supernova',
+    'pulsar',
+  ];
+
+  static const names = <String, String>{
+    'merkur': 'Merkür',
+    'aytasi': 'Aytaşı',
+    'yildiz': 'Yıldız',
+    'kuyruklu': 'Kuyruklu',
+    'mars': 'Mars',
+    'uranus': 'Uranüs',
+    'saturn': 'Satürn',
+    'nebula': 'Nebula',
+    'kosmoz': 'Kosmoz',
+    'supernova': 'Supernova',
+    'pulsar': 'Pulsar',
+  };
+
   static const _palettes = <String, LeagueBadgePalette>{
     'merkur': LeagueBadgePalette(
       light: Color(0xFFE7BD84),
