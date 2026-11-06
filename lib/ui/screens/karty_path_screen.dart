@@ -423,8 +423,8 @@ class _TopBar extends StatelessWidget {
 // Patika
 // ---------------------------------------------------------------------------
 
-/// Patikanın kaydırılan gövdesi: taş izler, düğümler, kapılar, sonraki
-/// ünitelerin başlıkları ve maskot. Patikada kart görseli yok (kullanıcı
+/// Patikanın kaydırılan gövdesi: taş izler, düğümler, kapılar ve sonraki
+/// ünitelerin başlıkları. Patikada kart görseli ve maskot yok (kullanıcı
 /// kararı); kelimeler yalnız adım penceresinde. Tüm yerleşim [_PathLayout]'ta.
 class _KartyPathBody extends StatelessWidget {
   const _KartyPathBody({
@@ -444,8 +444,6 @@ class _KartyPathBody extends StatelessWidget {
 
   /// Yeni açılan ünitenin gelişi sürüyorsa o anki hâli.
   final _Arrival? arrival;
-
-  static const _mascotHeight = 236.0;
 
   @override
   Widget build(BuildContext context) {
@@ -491,7 +489,7 @@ class _KartyPathBody extends StatelessWidget {
 
     // Gelişte açılan ünitenin düğümü fitil varana kadar kilitli görünür;
     // fitil geçerken zıplar ve zıplamanın tepesinde gerçek hâline döner.
-    // Etiketi, balonu ve maskotu ondan sonra belirir.
+    // Etiketi ve balonu ondan sonra belirir.
     final a = arrival;
     final reveal =
         a != null && a.unit == node.unit.number ? a.nodeT(node.center.dy) : 1.0;
@@ -501,12 +499,6 @@ class _KartyPathBody extends StatelessWidget {
     final current = isCurrent && shown;
 
     return [
-      if (current)
-        Positioned(
-          left: _mascotLeft(node) * s,
-          top: (top + geo.total + 12 - _mascotHeight) * s,
-          child: _fade(settle, _Mascot(scale: s)),
-        ),
       Positioned(
         left: left * s,
         top: top * s,
@@ -562,16 +554,6 @@ class _KartyPathBody extends StatelessWidget {
           ),
         ),
     ];
-  }
-
-  /// Maskot şu anki düğümün etiketsiz yanında durur ve ekrandan taşmaz.
-  /// Yeni açılan ünitede şu anki deste ilk düğümdür ve etiketi sağa düşer; maskot
-  /// hep sağda kalsaydı etiketin üstüne binerdi.
-  static double _mascotLeft(_NodeSpot node) {
-    final left = node.labelLeft
-        ? node.center.dx + node.width / 2 + 36
-        : node.center.dx - node.width / 2 - 36 - _Mascot.width;
-    return left.clamp(8.0, 750 - 8 - _Mascot.width);
   }
 
   /// Etiketin ikinci satırı. Açık bütün desteler bittiyse (ünite kapısı
@@ -1728,58 +1710,6 @@ class _NodeLabel extends StatelessWidget {
           ),
         ],
       ],
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Maskot ve görseller
-// ---------------------------------------------------------------------------
-
-/// Şu anki düğümün yanında duran maskot. Şimşeği kaldıran poz Karty'nin
-/// enerjisi; ayağının altında küçük lacivert gölge.
-class _Mascot extends StatelessWidget {
-  const _Mascot({required this.scale});
-
-  final double scale;
-
-  /// Görselin en-boy oranından (595 × 750).
-  static const width = _KartyPathBody._mascotHeight * 595 / 750;
-
-  @override
-  Widget build(BuildContext context) {
-    final s = scale;
-    const height = _KartyPathBody._mascotHeight;
-    return SizedBox(
-      width: width * s,
-      height: (height + 10) * s,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            left: width * 0.2 * s,
-            right: width * 0.2 * s,
-            bottom: 0,
-            height: 22 * s,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: _C.panel,
-                borderRadius: BorderRadius.circular(11 * s),
-              ),
-            ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 8 * s,
-            child: Image.asset(
-              'assets/icons/mascot_flex.png',
-              fit: BoxFit.contain,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
