@@ -144,33 +144,7 @@ class _QuestIconPainter extends CustomPainter {
       ..close();
   }
 
-  Path _revengeBody(double u) {
-    final ring = Path.combine(
-      PathOperation.difference,
-      Path()
-        ..addOval(
-            Rect.fromCircle(center: Offset(50 * u, 54 * u), radius: 34 * u)),
-      Path()
-        ..addOval(
-            Rect.fromCircle(center: Offset(50 * u, 54 * u), radius: 17 * u)),
-    );
-    // Sağ üstte ok başına yer açan kesik.
-    final gap = Path()
-      ..moveTo(50 * u, 54 * u)
-      ..lineTo(50 * u, -10 * u)
-      ..lineTo(110 * u, -10 * u)
-      ..lineTo(110 * u, 54 * u)
-      ..close();
-    final open = Path.combine(PathOperation.difference, ring, gap);
-
-    final arrow = Path()
-      ..moveTo(50 * u, 4 * u)
-      ..lineTo(84 * u, 22 * u)
-      ..lineTo(50 * u, 40 * u)
-      ..close();
-
-    return Path.combine(PathOperation.union, open, arrow);
-  }
+  Path _revengeBody(double u) => revengeArrowBody(u);
 
   Path _flameBody(double u) => streakFlameBody(u);
 
@@ -446,4 +420,35 @@ Path streakFlameInner(double u, {double innerSway = 0}) {
     ..cubicTo(47 * u, 57 * u, 49 * u, 61 * u, 52 * u, 64 * u)
     ..cubicTo(55 * u, 58 * u, 55 * u, 52 * u, (52 + innerSway) * u, 47 * u)
     ..close();
+}
+
+/// Rövanş'ın dönüş oku: sağ üstü açık halka ve ok başı. Görev ikonu
+/// (`review_two`), Pekiştirme kapısı ve yoldaki Rövanş durağı aynı yoldan
+/// çizer — ayrı çizilselerdi zamanla birbirinden ayrılırdı (§2.5).
+Path revengeArrowBody(double u) {
+  final ring = Path.combine(
+    PathOperation.difference,
+    Path()
+      ..addOval(
+          Rect.fromCircle(center: Offset(50 * u, 54 * u), radius: 34 * u)),
+    Path()
+      ..addOval(
+          Rect.fromCircle(center: Offset(50 * u, 54 * u), radius: 17 * u)),
+  );
+  // Sağ üstte ok başına yer açan kesik.
+  final gap = Path()
+    ..moveTo(50 * u, 54 * u)
+    ..lineTo(50 * u, -10 * u)
+    ..lineTo(110 * u, -10 * u)
+    ..lineTo(110 * u, 54 * u)
+    ..close();
+  final open = Path.combine(PathOperation.difference, ring, gap);
+
+  final arrow = Path()
+    ..moveTo(50 * u, 4 * u)
+    ..lineTo(84 * u, 22 * u)
+    ..lineTo(50 * u, 40 * u)
+    ..close();
+
+  return Path.combine(PathOperation.union, open, arrow);
 }
