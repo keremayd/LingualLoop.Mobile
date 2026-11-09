@@ -1,7 +1,6 @@
 import 'package:lingualloop/ui/app_typography.dart';
 import 'package:lingualloop/ui/widgets/app_shape_style.dart';
 import 'dart:async';
-import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show kDebugMode;
@@ -14,6 +13,7 @@ import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:lingualloop/ui/widgets/countdown_pill.dart';
+import 'package:lingualloop/ui/widgets/hop_motion.dart';
 import 'package:lingualloop/ui/widgets/quest_icons.dart';
 import 'package:lingualloop/ui/widgets/quest_reward_celebration.dart';
 import 'package:lingualloop/ui/widgets/ticket_with_count.dart';
@@ -1345,14 +1345,6 @@ class _ClaimButtonState extends State<_ClaimButton>
   /// evresinde yükseklik de eziliş de tam sıfır, yani t=1 ile t=0 aynı kare.
   late final AnimationController _pulse;
 
-  /// Döngünün zıplamaya ayrılan kısmı ve iniş sonrası eziliş penceresi.
-  static const _hopSpan = 0.30;
-  static const _squashStart = 0.30;
-  static const _squashSpan = 0.09;
-
-  /// Sıçrama yüksekliği (tasarım birimi).
-  static const _hopHeight = 12.0;
-
   /// Hâlenin biletten her yöne taşma payı (tasarım birimi).
   static const _glowPad = 13.0;
 
@@ -1361,31 +1353,9 @@ class _ClaimButtonState extends State<_ClaimButton>
     super.initState();
     _pulse = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1900),
+      duration: HopMotion.duration,
     );
     if (!widget.isClaiming) _pulse.repeat();
-  }
-
-  /// Zıplamanın o andaki yüksekliği (0–1) ve iniş ezilişi (0–1).
-  ({double lift, double squash}) _hop(double v) {
-    if (v < _hopSpan) {
-      final p = v / _hopSpan;
-      if (p < 0.42) {
-        // Çıkış: hızlı başlar, zirveye yavaşlayarak varır.
-        return (lift: Curves.easeOut.transform(p / 0.42), squash: 0);
-      }
-      // İniş: zirvede yavaş, yere doğru hızlanır.
-      final f = (p - 0.42) / 0.58;
-      return (lift: 1 - Curves.easeIn.transform(f), squash: 0);
-    }
-    if (v < _squashStart + _squashSpan) {
-      // Yere değdikten hemen sonra kısa bir eziliş — sıçramaya ağırlık verir.
-      return (
-        lift: 0,
-        squash: math.sin(math.pi * (v - _squashStart) / _squashSpan),
-      );
-    }
-    return (lift: 0, squash: 0);
   }
 
   @override
@@ -1448,9 +1418,10 @@ class _ClaimButtonState extends State<_ClaimButton>
           animation: _pulse,
           builder: (context, child) {
             // Basılıyken zıplama durur: o an kullanıcının hareketi baskın.
-            final hop =
-                _isPressed ? (lift: 0.0, squash: 0.0) : _hop(_pulse.value);
-            final lift = hop.lift * _hopHeight * scale;
+            final hop = _isPressed
+                ? (lift: 0.0, squash: 0.0)
+                : HopMotion.at(_pulse.value);
+            final lift = hop.lift * HopMotion.height * scale;
             return Stack(
               clipBehavior: Clip.none,
               children: [
@@ -1508,11 +1479,7 @@ class _ClaimButtonState extends State<_ClaimButton>
                     // İniş ezilişi: alttan basılmış gibi yayılır. Hacim
                     // korunsun diye yatayda genişleyip dikeyde kısalıyor.
                     // Gruba uygulanır ki band da aynı deformasyonu yaşasın.
-                    transform: Matrix4.diagonal3Values(
-                      1 + 0.09 * hop.squash,
-                      1 - 0.11 * hop.squash,
-                      1,
-                    ),
+                    transform: HopMotion.squash(hop.squash),
                     child: SizedBox(
                       width: w,
                       height: h + depth,
