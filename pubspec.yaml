@@ -104,8 +104,6 @@ flutter:
     # Images
     - assets/images/otta.png
     - assets/images/otta_login.png
-    - assets/images/karty.png
-    - assets/images/review_history.png
     - assets/images/catsbattle.png
     - assets/gifs/diamond1.gif
 

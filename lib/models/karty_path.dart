@@ -5,12 +5,10 @@ import 'package:lingualloop/models/responses/KartyPathResponse.dart';
 /// ([KartyPathResponse]); ekran yalnız bu modeli tanır.
 class KartyPathData {
   const KartyPathData({
-    required this.tickets,
     required this.units,
     this.pendingUnlock,
   });
 
-  final int tickets;
   final List<KartyUnit> units;
 
   /// Açılıp kutlaması henüz gösterilmemiş ünite; yoksa null.
@@ -28,7 +26,6 @@ class KartyPathData {
   /// vermek için; uygulamada imzalı adresten [NetworkImage].
   factory KartyPathData.fromResponse(
     KartyPathResponse response, {
-    required int tickets,
     ImageProvider Function(String url) image = _network,
   }) {
     KartyStepState stepState(String state) => switch (state) {
@@ -84,12 +81,11 @@ class KartyPathData {
         ],
       ));
     }
-    final data = KartyPathData(tickets: tickets, units: units);
+    final data = KartyPathData(units: units);
     final pending = response.pendingUnlockSequence;
     return pending == null
         ? data
         : KartyPathData(
-            tickets: tickets,
             units: units,
             pendingUnlock: data.unlockFor(pending),
           );

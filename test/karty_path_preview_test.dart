@@ -6,6 +6,7 @@ import 'package:lingualloop/models/karty_path.dart';
 import 'package:lingualloop/ui/app_typography.dart';
 import 'package:lingualloop/ui/screens/karty_path_screen.dart';
 
+import 'helpers/karty_path_preview.dart';
 import 'helpers/preview_fonts.dart';
 
 /// Karty Yolu prototipinin önizlemesi (örnek veri).
@@ -121,7 +122,7 @@ void main() {
           KartyStep(state: KartyStepState.locked, deck: i),
       ],
     );
-    return KartyPathData(tickets: 12, units: [evde, yolculuk]);
+    return KartyPathData(units: [evde, yolculuk]);
   }
 
   Widget phone({
@@ -218,7 +219,8 @@ void main() {
               children: [
                 KartyPathScreen(
                   data: sample(),
-                  onBack: () {},
+                  header: previewPathHeader,
+                  stations: previewStations(),
                   onContinue: () {},
                   scrollToCurrent: false,
                 ),
@@ -257,7 +259,8 @@ void main() {
             children: [
               KartyPathScreen(
                 data: data,
-                onBack: () {},
+                header: previewPathHeader,
+                stations: previewStations(),
                 onContinue: () {},
                 controller: ScrollController(initialScrollOffset: offset),
                 scrollToCurrent: false,

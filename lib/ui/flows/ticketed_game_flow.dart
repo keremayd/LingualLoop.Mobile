@@ -12,10 +12,9 @@ const _noLivesErrorCode = 'E4116';
 
 /// Oyuna giriş bedeli olan bileti harcar; harcandıysa `true`.
 ///
-/// Ana ekran (Karty, Artikel) ve Karty Yolu'nun DEVAM'ı aynı yoldan geçer.
-/// Bilet yetmezse "bilet bitti" penceresi açılır ve `false` döner; pencerenin
-/// Rövanş ve Görevler yolları çağıranın bulunduğu yere göre farklı olduğu
-/// için geri çağrı olarak alınır.
+/// Karty'nin DEVAM'ı ve Artikel durağı aynı yoldan geçer. Bilet yetmezse
+/// "bilet bitti" penceresi açılır ve `false` döner; pencerenin Rövanş ve
+/// Görevler yolları geri çağrı olarak alınır.
 Future<bool> spendTicketForGame(
   BuildContext context, {
   required VoidCallback onGoToReview,

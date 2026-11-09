@@ -6,6 +6,7 @@ import 'package:lingualloop/models/karty_path.dart';
 import 'package:lingualloop/ui/app_typography.dart';
 import 'package:lingualloop/ui/screens/karty_path_screen.dart';
 
+import 'helpers/karty_path_preview.dart';
 import 'helpers/preview_fonts.dart';
 
 /// Ünite açılışından sonra patikaya geliş: kamera açılan üniteye vardıktan
@@ -20,7 +21,6 @@ void main() {
       );
 
   KartyPathData sample() => KartyPathData(
-        tickets: 11,
         units: [
           KartyUnit(
             number: 1,
@@ -159,7 +159,8 @@ void main() {
                           child: phone(
                             KartyPathScreen(
                               data: data,
-                              onBack: () {},
+                              header: previewPathHeader,
+                              stations: previewStations(),
                               onContinue: () {},
                               scrollToCurrent: false,
                               arrivalUnit: 2,

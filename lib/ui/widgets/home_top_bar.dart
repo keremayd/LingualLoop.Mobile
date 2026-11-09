@@ -1,6 +1,7 @@
 import 'package:lingualloop/ui/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:lingualloop/ui/widgets/league_badge_mark.dart';
+import 'package:lingualloop/ui/widgets/quest_icons.dart';
 import 'package:lingualloop/ui/widgets/streak_freeze_flake.dart';
 
 /// Ana ekranın üst şeridi.
@@ -12,6 +13,7 @@ import 'package:lingualloop/ui/widgets/streak_freeze_flake.dart';
 ///
 /// Gösterilenler, her biri bir soruya cevap veriyor:
 ///   * **Lig** — sıralamada neredeyim (rekabet)
+///   * **Seri** — kaç gündür aralıksız ve bugünü kurtardım mı
 ///   * **Bilet** — oynayabilir miyim (girişin bedeli)
 ///   * **Koruma** — seri kırılırsa elimde ne var
 ///
@@ -19,14 +21,10 @@ import 'package:lingualloop/ui/widgets/streak_freeze_flake.dart';
 /// emekli olunca (içerik artık Karty Yolu'nda ünitelerle açılıyor) seviye
 /// hiçbir şeyi söylemez oldu.
 ///
-/// **Seri buradan çıkarıldı, yerine lig kondu.** İki gerekçe:
-///
-/// 1. Seri artık ana ekranda kendi kartına sahip (`StreakDayCard`) ve orada
-///    yalnız sayıyı değil bugünün kurtarılıp kurtarılmadığını da söylüyor.
-///    Üst çubuktaki alev aynı sayıyı **tekrarlıyordu**.
-/// 2. Lig bir ara buraya konup çıkarılmıştı çünkü "sayısı olmayan tek öğe
-///    olarak sırıtıyordu". O itiraz artık geçersiz: rozetin yanında
-///    `leaderboardRank` duruyor, yani ligin de bir sayısı var.
+/// **Seri 6 Kasım 2026'da geri geldi.** Bir dönem ana ekranda kendi kartı
+/// (`StreakDayCard`) vardı ve alev aynı sayıyı tekrarlıyordu. Ana ekran
+/// Karty Yolu olunca kart aleve dokununca açılan pencereye taşındı; bugünün
+/// durumunu artık alevin rengi söylüyor.
 class HomeTopBar extends StatelessWidget {
   const HomeTopBar({
     super.key,
@@ -35,7 +33,10 @@ class HomeTopBar extends StatelessWidget {
     required this.leagueRank,
     required this.tickets,
     required this.freezeCount,
+    required this.streakDays,
+    required this.playedToday,
     this.onTicketsTap,
+    this.onStreakTap,
   });
 
   final double scale;
@@ -51,6 +52,13 @@ class HomeTopBar extends StatelessWidget {
 
   final VoidCallback? onTicketsTap;
 
+  final int streakDays;
+
+  /// Bugün oynanmadıysa alev rengini bırakır (seri kartındaki reçete:
+  /// beyaz siluet, %55) — "alev soluk = uyarı".
+  final bool playedToday;
+  final VoidCallback? onStreakTap;
+
   static const _value = Color(0xFFFFFFFF);
 
   @override
@@ -65,6 +73,11 @@ class HomeTopBar extends StatelessWidget {
           // Nokta bilinçli: "3" bir adet değil, **sıra** demek. Diğer
           // sayılarla (4 gün, 15 bilet) karışmasın.
           value: leagueRank == null ? '' : '$leagueRank.',
+        ),
+        _item(
+          icon: _flame(),
+          value: '$streakDays',
+          onTap: onStreakTap,
         ),
         _item(
           icon: Image.asset(
@@ -91,6 +104,20 @@ class HomeTopBar extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Widget _flame() {
+    Widget flame = QuestIcon(questKey: 'streak_three', size: 60 * scale);
+    if (streakDays == 0 || !playedToday) {
+      flame = Opacity(
+        opacity: 0.55,
+        child: ColorFiltered(
+          colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+          child: flame,
+        ),
+      );
+    }
+    return flame;
   }
 
   Widget _item({

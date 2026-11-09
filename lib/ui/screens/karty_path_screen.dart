@@ -6,15 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:lingualloop/models/karty_path.dart';
 import 'package:lingualloop/ui/app_typography.dart';
 import 'package:lingualloop/ui/widgets/Buttons/app_button_style.dart';
-import 'package:lingualloop/ui/widgets/Buttons/app_icon_control_button.dart';
-import 'package:lingualloop/ui/widgets/Buttons/auth_back_button.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:lingualloop/ui/widgets/karty_control_glyphs.dart';
 import 'package:lingualloop/ui/widgets/karty_unit_header.dart';
 import 'package:lingualloop/ui/widgets/karty_unit_marks.dart';
 import 'package:lingualloop/ui/widgets/quest_icons.dart';
 
-/// Karty Yolu (bkz. `docs/KARTY_PATIKA.md` §8).
+/// Ana ekranın içeriği: Karty Yolu (bkz. `docs/KARTY_PATIKA.md` §8, §11).
 ///
 /// Aşağı akan bir patika; her ünitenin başlığı yolun içinde durur ve
 /// kaydırınca görünen ünitenin başlığı üste yapışır. Her düğüm ünitenin
@@ -23,12 +21,14 @@ import 'package:lingualloop/ui/widgets/quest_icons.dart';
 /// ikon kontrolüyle aynı karo (`AppButtonStyle`). Ünitenin sonunda her
 /// kelimenin bir boncuk olduğu pekiştirme halkası durur; %80'i yandığında
 /// sıradaki ünite açılır. Düğüme dokununca adımın penceresi açılır.
-/// Açılışta şu anki destenin düğümü ekranın ortasına gelir.
+/// Açılışta şu anki destenin düğümü ekranın ortasına gelir; iki yanında yan
+/// duraklar (Artikel Pusulası ve Rövanş) durur. Veri ve akış `HomeScreen`'de.
 class KartyPathScreen extends StatefulWidget {
   const KartyPathScreen({
     super.key,
     required this.data,
-    required this.onBack,
+    required this.header,
+    required this.stations,
     required this.onContinue,
     this.onRefresh,
     this.controller,
@@ -40,7 +40,12 @@ class KartyPathScreen extends StatefulWidget {
   });
 
   final KartyPathData data;
-  final VoidCallback onBack;
+
+  /// Üst şerit (lig · seri · bilet · koruma); ekran ölçeğini alır.
+  final Widget Function(double scale) header;
+
+  /// Şu anki destenin iki yanındaki duraklar.
+  final KartyPathStations stations;
   final VoidCallback onContinue;
   final Future<void> Function()? onRefresh;
   final ScrollController? controller;
@@ -63,11 +68,54 @@ class KartyPathScreen extends StatefulWidget {
   State<KartyPathScreen> createState() => _KartyPathScreenState();
 }
 
+/// Yolun "şu an" satırındaki iki yan durak. Karty desteleri yolun kendisi;
+/// Artikel Pusulası ve Rövanş aynı anda yapılabilecek yan işler olduğu için
+/// şu anki destenin iki yanında, yolun taşlarıyla ona bağlı durur.
+class KartyPathStations {
+  const KartyPathStations({required this.article, required this.review});
+
+  final KartyPathStation article;
+  final KartyPathStation review;
+
+  /// Yerleşimi etkileyen kısım: hangi durak açık (yan yol taşlarının rengi).
+  (bool, bool) get _layoutKey => (article.enabled, review.enabled);
+}
+
+class KartyPathStation {
+  const KartyPathStation({
+    required this.title,
+    required this.spokenName,
+    required this.icon,
+    required this.detail,
+    this.onTap,
+    this.ticketCost = 0,
+  });
+
+  /// Karonun altındaki ad ve ekran okuyucunun söylediği tam ad.
+  final String title;
+  final String spokenName;
+
+  /// Karonun içindeki simge; karonun genişliğini alır.
+  final Widget Function(double tileWidth) icon;
+
+  /// Etiketin ikinci satırı: "16 kart" ya da durağın neden kapalı olduğu.
+  final String detail;
+
+  /// Kapalı durakta null: sönük çizilir, basılmaz.
+  final VoidCallback? onTap;
+
+  /// Giriş bedeli; 0 ise bilet rozeti çizilmez.
+  final int ticketCost;
+
+  bool get enabled => onTap != null;
+}
+
 class _KartyPathScreenState extends State<KartyPathScreen>
     with SingleTickerProviderStateMixin {
   late final ScrollController _controller =
       widget.controller ?? ScrollController();
-  late _PathLayout _layout = _PathLayout.compute(widget.data);
+  late _PathLayout _layout =
+      _PathLayout.compute(widget.data, stations: widget.stations);
   late final AnimationController _arrival = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 3200),
@@ -87,9 +135,19 @@ class _KartyPathScreenState extends State<KartyPathScreen>
   @override
   void didUpdateWidget(covariant KartyPathScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.data != widget.data) {
-      _layout = _PathLayout.compute(widget.data);
-      WidgetsBinding.instance.addPostFrameCallback((_) => _updatePinned());
+    if (oldWidget.data != widget.data ||
+        oldWidget.stations._layoutKey != widget.stations._layoutKey) {
+      final before = _layout.current;
+      _layout = _PathLayout.compute(widget.data, stations: widget.stations);
+      final after = _layout.current;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _updatePinned();
+        // Deste bitti, şu anki adım ilerledi: eylem ekranda kalsın. Ünite
+        // açılışında kamerayı geliş yönetiyor.
+        final moved = before?.unit.number != after?.unit.number ||
+            before?.step.deck != after?.step.deck;
+        if (moved && widget.arrivalUnit == null) _animateToCurrent();
+      });
     }
     if (widget.playArrival && !oldWidget.playArrival) unawaited(_runArrival());
     if (widget.arrivalUnit == null && oldWidget.arrivalUnit != null) {
@@ -195,13 +253,59 @@ class _KartyPathScreenState extends State<KartyPathScreen>
     if (pinned != _pinned) setState(() => _pinned = pinned);
   }
 
-  void _centerCurrent() {
+  /// Yapışan başlığın kapladığı yükseklik.
+  double get _pinnedHeight => (KartyUnitHeader.height + 18) * _scale;
+
+  /// Sıradaki ünitenin başlığı üste yaklaşınca yapışan başlığı önünden iter:
+  /// ikisi hiçbir kaydırma konumunda üst üste binmez.
+  double _pinnedPush() {
+    final index = _pinned;
+    if (index == null ||
+        !_controller.hasClients ||
+        index + 1 >= _layout.headers.length) {
+      return 0;
+    }
+    final nextTop =
+        _layout.headers[index + 1].top * _scale - _controller.offset;
+    return math.min(0, nextTop - _pinnedHeight);
+  }
+
+  /// Şu anki düğüm, yapışan ünite başlığının altında kalan alanda ortalanır;
+  /// bütün ekranda ortalanınca önceki deste başlığın altında yarım kalıyordu.
+  /// Kamera ünitenin kendi başlığından yukarı çıkmaz: ünitenin ilk destesinde
+  /// başlığı üste oturur. Yukarıda durulursa önceki ünitenin başlığı yapışık
+  /// kalır ve iki ünite birlikte görünür.
+  double? _currentOffset() {
     final current = _layout.current;
-    if (current == null || !_controller.hasClients) return;
+    if (current == null || !_controller.hasClients) return null;
     final position = _controller.position;
-    final target =
-        current.center.dy * _scale - position.viewportDimension * 0.45;
-    _controller.jumpTo(target.clamp(0.0, position.maxScrollExtent));
+    final centered = current.center.dy * _scale -
+        (_pinnedHeight + (position.viewportDimension - _pinnedHeight) * 0.42);
+    final unitTop =
+        _layout.headers[_layout.unitIndex(current.unit.number)].top * _scale;
+    return math
+        .max(centered, unitTop)
+        .clamp(0.0, position.maxScrollExtent)
+        .toDouble();
+  }
+
+  void _centerCurrent() {
+    final target = _currentOffset();
+    if (target != null) _controller.jumpTo(target);
+  }
+
+  void _animateToCurrent() {
+    final target = _currentOffset();
+    if (target == null || !mounted) return;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _controller.jumpTo(target);
+      return;
+    }
+    unawaited(_controller.animateTo(
+      target,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOutCubic,
+    ));
   }
 
   void _openStep(KartyUnit unit, KartyStep step) {
@@ -257,6 +361,7 @@ class _KartyPathScreenState extends State<KartyPathScreen>
                 onContinue: widget.onContinue,
                 onStepTap: _openStep,
                 arrival: _arrivalState(),
+                stations: widget.stations,
               ),
             ),
           );
@@ -277,46 +382,66 @@ class _KartyPathScreenState extends State<KartyPathScreen>
                 Padding(
                   padding: EdgeInsets.fromLTRB(
                       40 * scale, 18 * scale, 40 * scale, 12 * scale),
-                  child: _TopBar(
-                    scale: scale,
-                    tickets: widget.data.tickets,
-                    onBack: widget.onBack,
-                  ),
+                  child: widget.header(scale),
                 ),
                 Expanded(
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                        child:
-                            IgnorePointer(ignoring: _arriving, child: scroll),
-                      ),
-                      if (pinned != null)
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          top: 0,
-                          // Gelişte gizlenir, bitince yumuşakça döner.
-                          child: IgnorePointer(
-                            ignoring: widget.arrivalUnit != null,
-                            child: AnimatedOpacity(
-                              opacity: widget.arrivalUnit == null ? 1 : 0,
-                              duration: const Duration(milliseconds: 280),
-                              child: ColoredBox(
-                                color: _C.bg,
-                                child: Padding(
-                                  padding: EdgeInsets.fromLTRB(
-                                      40 * scale, 0, 40 * scale, 18 * scale),
-                                  child: KartyUnitHeader(
-                                    unit: pinned.unit,
-                                    scale: scale,
-                                    onTap: () {},
+                  // İtilen başlık üst şeridin altında kesilir; Transform'u
+                  // Stack'in kendi kırpması görmüyor.
+                  child: ClipRect(
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child:
+                              IgnorePointer(ignoring: _arriving, child: scroll),
+                        ),
+                        if (pinned != null)
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            top: 0,
+                            // Gelişte gizlenir, bitince yumuşakça döner.
+                            child: IgnorePointer(
+                              ignoring: widget.arrivalUnit != null,
+                              child: AnimatedOpacity(
+                                opacity: widget.arrivalUnit == null ? 1 : 0,
+                                duration: const Duration(milliseconds: 280),
+                                child: AnimatedBuilder(
+                                  animation: _controller,
+                                  builder: (context, child) =>
+                                      Transform.translate(
+                                    offset: Offset(0, _pinnedPush()),
+                                    child: child,
+                                  ),
+                                  child: Padding(
+                                    padding: EdgeInsets.fromLTRB(
+                                        40 * scale, 0, 40 * scale, 18 * scale),
+                                    child: Stack(
+                                      children: [
+                                        // Yol kartın arkasından geçer; yalnız
+                                        // altında kalan kendi başlığı üst
+                                        // köşelerden görünmesin.
+                                        Positioned(
+                                          left: 0,
+                                          right: 0,
+                                          top: 0,
+                                          height: KartyUnitHeader.cornerRadius(
+                                              scale),
+                                          child: const ColoredBox(color: _C.bg),
+                                        ),
+                                        KartyUnitHeader(
+                                          unit: pinned.unit,
+                                          scale: scale,
+                                          onTap: () {},
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -350,76 +475,6 @@ abstract final class _C {
 }
 
 // ---------------------------------------------------------------------------
-// Üst satır ve ünite başlığı
-// ---------------------------------------------------------------------------
-
-class _TopBar extends StatelessWidget {
-  const _TopBar({
-    required this.scale,
-    required this.tickets,
-    required this.onBack,
-  });
-
-  final double scale;
-  final int tickets;
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: AppIconControlButton.outerHeightForScale(scale),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: AuthBackButton(scale: scale, onPressed: onBack),
-          ),
-          Text(
-            'Karty Yolu',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 40 * scale,
-              fontWeight: AppTypography.heading,
-              fontFamily: AppTypography.displayFamily,
-              height: 1,
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Semantics(
-              label: '$tickets bilet',
-              excludeSemantics: true,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Image.asset(
-                    'assets/icons/ticket.png',
-                    width: 64 * scale,
-                    fit: BoxFit.contain,
-                  ),
-                  SizedBox(width: 10 * scale),
-                  Text(
-                    '$tickets',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 36 * scale,
-                      fontWeight: AppTypography.number,
-                      fontFamily: AppTypography.family,
-                      height: 1,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Patika
 // ---------------------------------------------------------------------------
 
@@ -433,6 +488,7 @@ class _KartyPathBody extends StatelessWidget {
     required this.scale,
     required this.onContinue,
     required this.onStepTap,
+    required this.stations,
     this.arrival,
   });
 
@@ -444,6 +500,9 @@ class _KartyPathBody extends StatelessWidget {
 
   /// Yeni açılan ünitenin gelişi sürüyorsa o anki hâli.
   final _Arrival? arrival;
+
+  /// Şu anki destenin yanındaki duraklar.
+  final KartyPathStations stations;
 
   @override
   Widget build(BuildContext context) {
@@ -485,7 +544,7 @@ class _KartyPathBody extends StatelessWidget {
     final left = node.center.dx - node.width / 2;
     final top = node.center.dy - geo.faceHeight / 2;
     final isCurrent = step.state == KartyStepState.current;
-    final labelGap = isCurrent ? 50.0 : 24.0;
+    const labelGap = 24.0;
 
     // Gelişte açılan ünitenin düğümü fitil varana kadar kilitli görünür;
     // fitil geçerken zıplar ve zıplamanın tepesinde gerçek hâline döner.
@@ -498,7 +557,15 @@ class _KartyPathBody extends StatelessWidget {
     final bump = reveal >= 1 ? 1.0 : 1 + 0.16 * math.sin(math.pi * reveal);
     final current = isCurrent && shown;
 
+    // Şu an satırının üç etiketi aynı hizada: düğümün (halkası varsa
+    // halkasının) altında.
+    final captionTop = top + geo.total + _nowRingPad(step) + 14;
+
     return [
+      if (current) ...[
+        ..._station(node, stations.article, -1, captionTop, settle, s),
+        ..._station(node, stations.review, 1, captionTop, settle, s),
+      ],
       Positioned(
         left: left * s,
         top: top * s,
@@ -535,7 +602,25 @@ class _KartyPathBody extends StatelessWidget {
             ),
           ),
         ),
-      if (shown && step.label.isNotEmpty && step.state != KartyStepState.locked)
+      if (current)
+        Positioned(
+          left: (node.center.dx - 160) * s,
+          width: 320 * s,
+          top: captionTop * s,
+          child: _fade(
+            settle,
+            _CenteredLabel(
+              title: step.label,
+              detail: _labelDetail(step),
+              accent: true,
+              scale: s,
+            ),
+          ),
+        ),
+      if (shown &&
+          !isCurrent &&
+          step.label.isNotEmpty &&
+          step.state != KartyStepState.locked)
         Positioned(
           left: node.labelLeft ? 24 * s : (left + node.width + labelGap) * s,
           width: node.labelLeft
@@ -556,6 +641,58 @@ class _KartyPathBody extends StatelessWidget {
     ];
   }
 
+  /// Şu anki düğümün kelime halkası alttan ne kadar taşar: etiket halkanın
+  /// altına iner. Yeni kelimesi olmayan adım (yalnız tekrar) halka taşımaz.
+  static double _nowRingPad(KartyStep step) => step.newGoal > 0
+      ? _NodeGeometry.ringGap + _NodeGeometry.ringStroke / 2
+      : 0;
+
+  /// Yan durak: şu anki düğümün solunda (Artikel) ya da sağında (Rövanş),
+  /// yüzü düğümün yüzüyle aynı hizada; adı ve durumu altında, düğümün
+  /// etiketiyle aynı satırda.
+  List<Widget> _station(
+    _NodeSpot node,
+    KartyPathStation station,
+    int side,
+    double captionTop,
+    double settle,
+    double s,
+  ) {
+    final geo = _NodeGeometry(_PathLayout.stationWidth);
+    final cx = node.center.dx + side * _PathLayout.stationOffset;
+    final left = cx - _PathLayout.stationWidth / 2;
+    final top = node.center.dy - geo.faceHeight / 2;
+    return [
+      Positioned(
+        left: left * s,
+        top: top * s,
+        child: _fade(
+          settle,
+          _StationTile(
+            station: station,
+            scale: s,
+            label: station.spokenName,
+            icon: station.icon(_PathLayout.stationWidth * s),
+          ),
+        ),
+      ),
+      Positioned(
+        left: (cx - 115) * s,
+        width: 230 * s,
+        top: captionTop * s,
+        child: _fade(
+          settle,
+          _CenteredLabel(
+            title: station.title,
+            detail: station.detail,
+            accent: station.enabled,
+            scale: s,
+          ),
+        ),
+      ),
+    ];
+  }
+
   /// Etiketin ikinci satırı. Açık bütün desteler bittiyse (ünite kapısı
   /// kapalı ya da içerik bitti) şu anki adım yalnız tekrarla anlatılır.
   static String _labelDetail(KartyStep step) {
@@ -568,7 +705,7 @@ class _KartyPathBody extends StatelessWidget {
           return step.reviewCount > 0 ? reviews : 'Pratik';
         }
         final fresh = '${step.newCount}/${step.newGoal} yeni';
-        return step.reviewCount > 0 ? '$fresh\n$reviews' : fresh;
+        return step.reviewCount > 0 ? '$fresh · $reviews' : fresh;
       case KartyStepState.upcoming:
         return '${step.newGoal} yeni kelime';
       case KartyStepState.locked:
@@ -772,6 +909,15 @@ class _PathLayout {
 
   static double ringRadiusFor(int words) =>
       (words * ringSpacing / (2 * math.pi)).clamp(ringRadiusMin, ringRadiusMax);
+
+  /// Yan duraklar: şu anki düğümün merkezinden bu kadar sağda ve solda;
+  /// arada iki taşlık yan yol kalır. Düğümün etiketi altına iner, altındaki
+  /// iz etiketi aşmak için o kadar geç başlar.
+  static const stationWidth = 136.0;
+  static const stationOffset = 258.0;
+  static const _captionRoom = 150.0;
+  static const _captionClearance = 225.0;
+
   static const stepGap = 184.0;
   static const nodeClearance = 84.0;
   static const _currentRoom = 120.0;
@@ -789,7 +935,10 @@ class _PathLayout {
   int unitIndex(int number) =>
       headers.indexWhere((header) => header.unit.number == number);
 
-  static _PathLayout compute(KartyPathData data) {
+  static _PathLayout compute(
+    KartyPathData data, {
+    required KartyPathStations stations,
+  }) {
     final nodes = <_NodeSpot>[];
     final gates = <_GateSpot>[];
     final headers = <_HeaderSpot>[];
@@ -816,11 +965,12 @@ class _PathLayout {
         if (i > 0) {
           y += stepGap +
               (current ? _currentRoom : 0) +
-              (previousCurrent ? 26 : 0);
+              (previousCurrent ? 26 + _captionRoom : 0);
         } else if (current) {
           y += _currentRoom;
         }
-        final x = centerX + _pattern[i % _pattern.length];
+        // Şu anki düğüm ortada: iki yanında durak var.
+        final x = current ? centerX : centerX + _pattern[i % _pattern.length];
         final center = Offset(x, y);
         // Etiket geniş tarafta: düğüm sağa kıvrıldıysa solunda.
         nodes.add(_NodeSpot(
@@ -838,7 +988,7 @@ class _PathLayout {
       final radius = ringRadiusFor(unit.wordCount);
       final gateCenter = Offset(
         centerX - 60,
-        y + 176 + radius + (previousCurrent ? 40 : 0),
+        y + 176 + radius + (previousCurrent ? 40 + _captionRoom : 0),
       );
       final gate = _GateSpot(unit: unit, center: gateCenter, radius: radius);
       gates.add(gate);
@@ -870,16 +1020,42 @@ class _PathLayout {
         ));
       }
       // Şu anki düğümün çevresinde kelime halkası var; taşlar ona girmez.
+      // Etiketi altında: aşağı inen iz etiketten sonra başlar.
       double clearance(int i) => i == currentIndex ? 140 : nodeClearance;
+      double clearanceBelow(int i) =>
+          i == currentIndex ? _captionClearance : nodeClearance;
       for (var i = 0; i + 1 < points.length; i++) {
         segments.add(_TrailSegment(
           points[i],
           points[i + 1],
           styleTo(i + 1),
           unit: unit.number,
-          trimStart: clearance(i),
+          trimStart: clearanceBelow(i),
           trimEnd: clearance(i + 1),
         ));
+      }
+      if (currentIndex >= 0) {
+        // Yan yollar: şu anki düğümden iki yana, durağa kadar iki taş.
+        // Açık durağa giden yol lacivert (yürünebilir), kapalıya giden koyu.
+        final c = points[currentIndex];
+        final ring = currentWidth / 2 +
+            (unit.steps[currentIndex].newGoal > 0
+                ? _NodeGeometry.ringGap + _NodeGeometry.ringStroke / 2
+                : 8);
+        const reach = stationOffset - stationWidth / 2;
+        for (final (side, open) in [
+          (-1.0, stations.article.enabled),
+          (1.0, stations.review.enabled),
+        ]) {
+          segments.add(_TrailSegment(
+            c + Offset(side * ring, 0),
+            c + Offset(side * reach, 0),
+            open && !locked ? _TrailStyle.ahead : _TrailStyle.locked,
+            unit: unit.number,
+            trimStart: 10,
+            trimEnd: 10,
+          ));
+        }
       }
       if (points.isNotEmpty) {
         // Kapıya giden taşlar ancak ünitenin bütün adımları geçildiyse yeşil.
@@ -893,7 +1069,7 @@ class _PathLayout {
                   ? _TrailStyle.done
                   : _TrailStyle.ahead,
           unit: unit.number,
-          trimStart: clearance(points.length - 1),
+          trimStart: clearanceBelow(points.length - 1),
           trimEnd: 26,
           anchorEnd: true,
         ));
@@ -1083,9 +1259,7 @@ class _PathPainter extends CustomPainter {
     // Açılan ünitenin kendi halkası fitil varana kadar kilitli.
     final arriving = a == null ? -1 : layout.unitIndex(a.unit);
     bool held(int index, _GateSpot gate) =>
-        a != null &&
-        index == arriving &&
-        !a.reached(gate.top);
+        a != null && index == arriving && !a.reached(gate.top);
     for (final (i, gate) in layout.gates.indexed) {
       _paintRing(canvas, gate, locked: held(i, gate));
     }
@@ -1283,11 +1457,12 @@ class _PathPainter extends CustomPainter {
     final u = p / scale;
     for (final node in layout.nodes) {
       final d = u - node.center;
-      // Şu anki düğümde üstte balon, çevrede halka var.
+      // Şu anki düğümde üstte balon, çevrede halka, iki yanında duraklar,
+      // altında etiketler.
       final current = node.step.state == KartyStepState.current;
-      if (d.dx.abs() < 300 &&
+      if (d.dx.abs() < (current ? 375 : 300) &&
           d.dy > (current ? -250 : -90) &&
-          d.dy < (current ? 140 : 90)) {
+          d.dy < (current ? 250 : 90)) {
         return true;
       }
     }
@@ -1712,6 +1887,103 @@ class _DueBadge extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Yan durağın karosu: düğümlerle aynı derinlikli karo, içinde durağın
+/// simgesi. Açık durak sıradaki desteler gibi lacivert ama simgesi renkli;
+/// kapalı durak koyu ve simgesi sönük. Giriş bedeli varsa köşede bilet.
+class _StationTile extends StatelessWidget {
+  const _StationTile({
+    required this.station,
+    required this.scale,
+    required this.label,
+    required this.icon,
+  });
+
+  final KartyPathStation station;
+  final double scale;
+  final String label;
+  final Widget icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = scale;
+    final open = station.enabled;
+    final tile = _NodeTile(
+      width: _PathLayout.stationWidth,
+      scale: s,
+      face: open ? _C.raised : _C.tile,
+      depth: open ? _C.panel : _C.base,
+      label: open ? label : '$label, ${station.detail}',
+      onTap: station.onTap ?? () {},
+      child:
+          _ToneIcon(tone: open ? _IconTone.lit : _IconTone.locked, child: icon),
+    );
+    if (!open || station.ticketCost == 0) {
+      return IgnorePointer(ignoring: !open, child: tile);
+    }
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        tile,
+        Positioned(
+          right: -14 * s,
+          top: -12 * s,
+          child: IgnorePointer(
+            child: Image.asset('assets/icons/ticket-one.png', width: 48 * s),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Şu an satırındaki etiketler: düğümün ve durakların altında, ortalı.
+class _CenteredLabel extends StatelessWidget {
+  const _CenteredLabel({
+    required this.title,
+    required this.detail,
+    required this.accent,
+    required this.scale,
+  });
+
+  final String title;
+  final String detail;
+  final bool accent;
+  final double scale;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: _C.value,
+            fontSize: 28 * scale,
+            fontWeight: AppTypography.number,
+            fontFamily: AppTypography.family,
+            height: 1.1,
+          ),
+        ),
+        if (detail.isNotEmpty) ...[
+          SizedBox(height: 6 * scale),
+          Text(
+            detail,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: accent ? _C.accent : _C.muted,
+              fontSize: 22 * scale,
+              fontWeight: AppTypography.label,
+              fontFamily: AppTypography.family,
+              height: 1.25,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

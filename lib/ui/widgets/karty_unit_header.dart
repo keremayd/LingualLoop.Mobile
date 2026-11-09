@@ -56,10 +56,14 @@ class KartyUnitHeader extends StatelessWidget {
   /// Yüz + taban, tasarım biriminde.
   static const height = 244.0;
 
+  /// Köşe yarıçapı; [scale] tasarım biriminden ekrana çevirir.
+  static double cornerRadius(double scale) =>
+      AppButtonStyle.tileRadius(28 * scale);
+
   @override
   Widget build(BuildContext context) {
     final s = scale;
-    final radius = BorderRadius.circular(AppButtonStyle.tileRadius(28 * s));
+    final radius = BorderRadius.circular(cornerRadius(s));
     final depth = AppButtonStyle.tileDepth(8 * s);
     final a = arrival;
     if (a == null) {

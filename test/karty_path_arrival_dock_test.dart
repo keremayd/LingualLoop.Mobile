@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lingualloop/models/karty_path.dart';
 import 'package:lingualloop/ui/screens/karty_path_screen.dart';
 
+import 'helpers/karty_path_preview.dart';
+
 /// Ünite açılışından sonra patikaya geliş bitince açılan ünitenin başlığı
 /// üste oturur ve yapışan başlık o olur. Kamera yerinde kalsaydı önceki
 /// ünitenin başlığı yarı saydam belirip kapının üstüne binerdi.
@@ -14,7 +16,6 @@ void main() {
       );
 
   KartyPathData sample() => KartyPathData(
-        tickets: 11,
         units: [
           KartyUnit(
             number: 1,
@@ -81,7 +82,8 @@ void main() {
             setPage = setState;
             return KartyPathScreen(
               data: data,
-              onBack: () {},
+              header: previewPathHeader,
+              stations: previewStations(),
               onContinue: () {},
               scrollToCurrent: false,
               arrivalUnit: arrivalUnit,

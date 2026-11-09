@@ -26,7 +26,6 @@ import 'package:lingualloop/services/AuthenticationService.dart';
 import 'package:lingualloop/services/VideoService.dart';
 import 'package:lingualloop/ui/screens/SignUpScreen.dart';
 import 'package:lingualloop/ui/screens/article_practice_screen.dart';
-import 'package:lingualloop/ui/screens/karty_path_page.dart';
 import 'package:lingualloop/ui/screens/karty_quiz_screen.dart';
 import 'package:lingualloop/ui/screens/profile_screen.dart';
 import 'package:lingualloop/ui/screens/word_collection_screen.dart';
@@ -176,7 +175,6 @@ class MyApp extends StatelessWidget {
         '/signin': (context) => LoginScreen(),
         '/home': (context) => NavbarWidget(),
         '/videoquiz': (context) => VideoQuizScreen(),
-        '/kartypath': (context) => const KartyPathPage(),
         // Karty Yolu'ndan açılınca oyunun destesi argümanla gelir.
         '/kartyquiz': (context) => KartyQuizScreen(
               session: ModalRoute.of(context)?.settings.arguments

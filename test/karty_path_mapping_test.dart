@@ -88,14 +88,12 @@ void main() {
     final requested = <String>[];
     final data = KartyPathData.fromResponse(
       KartyPathResponse.fromJson(json),
-      tickets: 12,
       image: (url) {
         requested.add(url);
         return MemoryImage(Uint8List(0));
       },
     );
 
-    expect(data.tickets, 12);
     final first = data.units.first;
     expect(first.state, KartyUnitState.current);
     expect(first.emblem, isNotNull);
@@ -157,7 +155,6 @@ void main() {
         ],
         'deckSize': 8,
       }),
-      tickets: 3,
       image: (_) => MemoryImage(Uint8List(0)),
     );
 

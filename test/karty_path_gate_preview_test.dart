@@ -6,6 +6,7 @@ import 'package:lingualloop/models/karty_path.dart';
 import 'package:lingualloop/ui/app_typography.dart';
 import 'package:lingualloop/ui/screens/karty_path_screen.dart';
 
+import 'helpers/karty_path_preview.dart';
 import 'helpers/preview_fonts.dart';
 
 /// Pekiştirme halkası: yol kapıya girip onu dolaşır.
@@ -22,7 +23,6 @@ void main() {
       );
 
   KartyPathData today() => KartyPathData(
-        tickets: 12,
         units: [
           KartyUnit(
             number: 1,
@@ -32,9 +32,21 @@ void main() {
             consolidatedCount: 9,
             emblem: img('haus'),
             steps: const [
-              KartyStep(state: KartyStepState.done, deck: 1, label: 'Deste 1', newGoal: 8),
-              KartyStep(state: KartyStepState.done, deck: 2, label: 'Deste 2', newGoal: 8),
-              KartyStep(state: KartyStepState.current, label: 'Tekrar', newGoal: 0, reviewCount: 7),
+              KartyStep(
+                  state: KartyStepState.done,
+                  deck: 1,
+                  label: 'Deste 1',
+                  newGoal: 8),
+              KartyStep(
+                  state: KartyStepState.done,
+                  deck: 2,
+                  label: 'Deste 2',
+                  newGoal: 8),
+              KartyStep(
+                  state: KartyStepState.current,
+                  label: 'Tekrar',
+                  newGoal: 0,
+                  reviewCount: 7),
             ],
           ),
           KartyUnit(
@@ -53,7 +65,6 @@ void main() {
       );
 
   KartyPathData later() => KartyPathData(
-        tickets: 12,
         units: [
           KartyUnit(
             number: 1,
@@ -63,12 +74,36 @@ void main() {
             consolidatedCount: 30,
             emblem: img('haus'),
             steps: const [
-              KartyStep(state: KartyStepState.done, deck: 1, label: 'Deste 1', newGoal: 8),
-              KartyStep(state: KartyStepState.done, deck: 2, label: 'Deste 2', newGoal: 8),
-              KartyStep(state: KartyStepState.done, deck: 3, label: 'Deste 3', newGoal: 8),
-              KartyStep(state: KartyStepState.done, deck: 4, label: 'Deste 4', newGoal: 8),
-              KartyStep(state: KartyStepState.done, deck: 5, label: 'Deste 5', newGoal: 8),
-              KartyStep(state: KartyStepState.current, label: 'Tekrar', newGoal: 0, reviewCount: 15),
+              KartyStep(
+                  state: KartyStepState.done,
+                  deck: 1,
+                  label: 'Deste 1',
+                  newGoal: 8),
+              KartyStep(
+                  state: KartyStepState.done,
+                  deck: 2,
+                  label: 'Deste 2',
+                  newGoal: 8),
+              KartyStep(
+                  state: KartyStepState.done,
+                  deck: 3,
+                  label: 'Deste 3',
+                  newGoal: 8),
+              KartyStep(
+                  state: KartyStepState.done,
+                  deck: 4,
+                  label: 'Deste 4',
+                  newGoal: 8),
+              KartyStep(
+                  state: KartyStepState.done,
+                  deck: 5,
+                  label: 'Deste 5',
+                  newGoal: 8),
+              KartyStep(
+                  state: KartyStepState.current,
+                  label: 'Tekrar',
+                  newGoal: 0,
+                  reviewCount: 15),
             ],
           ),
           KartyUnit(
@@ -86,7 +121,8 @@ void main() {
         ],
       );
 
-  Widget phone(KartyPathData data, {required double height, double offset = 0}) =>
+  Widget phone(KartyPathData data,
+          {required double height, double offset = 0}) =>
       ClipRRect(
         borderRadius: BorderRadius.circular(44),
         child: SizedBox(
@@ -100,7 +136,8 @@ void main() {
             ),
             child: KartyPathScreen(
               data: data,
-              onBack: () {},
+              header: previewPathHeader,
+              stations: previewStations(),
               onContinue: () {},
               scrollToCurrent: false,
             ),
@@ -158,8 +195,16 @@ void main() {
       MaterialApp(
         debugShowCheckedModeBanner: false,
         home: board([
-          ('Bugün', 'Ünite 16 kelime · 9 pekişti', phone(today(), height: height)),
-          ('İçerik artınca', 'Ünite 40 kelime · 30 pekişti', phone(later(), height: height)),
+          (
+            'Bugün',
+            'Ünite 16 kelime · 9 pekişti',
+            phone(today(), height: height)
+          ),
+          (
+            'İçerik artınca',
+            'Ünite 40 kelime · 30 pekişti',
+            phone(later(), height: height)
+          ),
         ]),
       ),
     );
