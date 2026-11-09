@@ -16,6 +16,15 @@ class KartyProvider with ChangeNotifier {
   int? _sessionUnit;
   int? _sessionDeck;
 
+  /// Bilet sahnesi sürerken başlayan ilk yükleme ve ait olduğu deste.
+  Future<bool>? _preparedLoad;
+  int? _preparedUnit;
+  int? _preparedDeck;
+
+  /// [reset] ile artar: sıfırlanmış oyunun bekleyen yüklemesi yeni oyuna
+  /// kart karıştırmasın.
+  int _generation = 0;
+
   /// Oyunda cevaplanan tekrar kartı sayısı. Sunucu tekrarı oyunun payı kadar
   /// verir; ona bildirilen "verilen tekrar" bu sayı ile kuyrukta bekleyen
   /// tekrarlardan türetilir. Ayrı bir sayaç tutulsaydı kuyruktan elenen bir
@@ -28,6 +37,26 @@ class KartyProvider with ChangeNotifier {
     _sessionUnit = unit;
     _sessionDeck = deck;
     _reviewsAnswered = 0;
+  }
+
+  /// Kartlar bilet sahnesi sürerken inmeye başlar; oyun yükleniyor simgesi
+  /// göstermeden açılsın.
+  void prepareSession(BuildContext context, {int? unit, int? deck}) {
+    reset();
+    startSession(unit: unit, deck: deck);
+    _preparedUnit = unit;
+    _preparedDeck = deck;
+    _preparedLoad = loadKarty(context);
+  }
+
+  /// Bu deste için hazırlanmış yükleme varsa bir kez teslim eder.
+  Future<bool>? takePreparedLoad({int? unit, int? deck}) {
+    final load = _preparedLoad;
+    if (load == null || unit != _preparedUnit || deck != _preparedDeck) {
+      return null;
+    }
+    _preparedLoad = null;
+    return load;
   }
 
   /// Sunucunun kaydettiği cevap; tekrar kartıysa oyunun tekrar sayısına girer.
@@ -49,12 +78,14 @@ class KartyProvider with ChangeNotifier {
       _isLoaded = false;
       notifyListeners();
 
+      final generation = _generation;
       for (var i = 0; i < 3; i++) {
         final card = await _fetchUniqueKarty(
           kartyService,
           localFileService,
           reviewMode: reviewMode,
         );
+        if (generation != _generation) return false;
         if (card == null) {
           _isLoaded = _cards.isNotEmpty;
           notifyListeners();
@@ -132,7 +163,9 @@ class KartyProvider with ChangeNotifier {
     final cardsToCheck = queuedCards ?? _cards;
 
     final reviewsServed = _reviewsAnswered +
-        cardsToCheck.where((item) => item.stage == KartyCardStage.review).length;
+        cardsToCheck
+            .where((item) => item.stage == KartyCardStage.review)
+            .length;
     for (var attempt = 0; attempt < 5; attempt++) {
       final card = await _fetchKarty(
         kartyService,
@@ -226,6 +259,8 @@ class KartyProvider with ChangeNotifier {
   }
 
   void reset() {
+    _generation += 1;
+    _preparedLoad = null;
     _cards.clear();
     _isLoaded = false;
     _prefetchFuture = null;

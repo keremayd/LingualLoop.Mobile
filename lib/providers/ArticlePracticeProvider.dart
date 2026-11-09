@@ -28,6 +28,21 @@ class ArticlePracticeProvider extends ChangeNotifier {
 
   bool get canInteract => status == ArticlePracticeStatus.playing;
 
+  Future<void>? _preparedLoad;
+
+  /// İlk görev bilet sahnesi sürerken inmeye başlar; oyun yükleniyor simgesi
+  /// göstermeden açılsın.
+  void prepareFirstTask() => _preparedLoad = loadNext();
+
+  void discardPreparedTask() => _preparedLoad = null;
+
+  /// Oyunun açılışı: hazırlanmış görev varsa onu kullanır.
+  Future<void> startGame() {
+    final prepared = _preparedLoad;
+    _preparedLoad = null;
+    return prepared ?? loadNext();
+  }
+
   Future<void> loadNext({int completedTaskRetries = 0}) async {
     status = ArticlePracticeStatus.loading;
     answerResult = null;

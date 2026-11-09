@@ -132,12 +132,21 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
         Provider.of<PronunciationService>(context, listen: false);
 
     Future.microtask(() async {
-      kartyProvider.reset();
-      // Yeni kelime yalnız Karty Yolu'ndaki şu anki desteden istenir.
-      kartyProvider.startSession(
-        unit: widget.session?.unit.number,
-        deck: widget.session?.deck,
-      );
+      // Bilet sahnesi sürerken hazırlandıysa kartlar zaten iniyor.
+      final prepared = widget.reviewMode
+          ? null
+          : kartyProvider.takePreparedLoad(
+              unit: widget.session?.unit.number,
+              deck: widget.session?.deck,
+            );
+      if (prepared == null) {
+        kartyProvider.reset();
+        // Yeni kelime yalnız Karty Yolu'ndaki şu anki desteden istenir.
+        kartyProvider.startSession(
+          unit: widget.session?.unit.number,
+          deck: widget.session?.deck,
+        );
+      }
       if (widget.reviewMode) {
         setState(() {
           _reviewTotalStack =
@@ -146,10 +155,11 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
         });
       }
 
-      final isLoaded = await kartyProvider.loadKarty(
-        context,
-        reviewMode: widget.reviewMode,
-      );
+      final isLoaded = await (prepared ??
+          kartyProvider.loadKarty(
+            context,
+            reviewMode: widget.reviewMode,
+          ));
       if (isLoaded) {
         if (mounted) setState(() => _deckReady = true);
         if (widget.reviewMode) {

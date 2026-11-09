@@ -47,7 +47,7 @@ class _ArticlePracticeScreenState extends State<ArticlePracticeScreen>
   void initState() {
     super.initState();
     _motionController = AnimationController(vsync: this);
-    Future.microtask(context.read<ArticlePracticeProvider>().loadNext);
+    Future.microtask(context.read<ArticlePracticeProvider>().startGame);
   }
 
   @override
