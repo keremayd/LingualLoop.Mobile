@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lingualloop/models/ApiResponse.dart';
@@ -7,16 +9,21 @@ import 'package:lingualloop/models/responses/KartyPathResponse.dart';
 import 'package:lingualloop/models/responses/ProfileLearningStatsResponse.dart';
 import 'package:lingualloop/models/responses/ScoreWithLivesResponse.dart';
 import 'package:lingualloop/models/responses/UpdateLivesResponse.dart';
+import 'package:lingualloop/providers/ArticlePracticeProvider.dart';
 import 'package:lingualloop/providers/KartyPathProvider.dart';
+import 'package:lingualloop/providers/KartyProvider.dart';
 import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
+import 'package:lingualloop/services/ArticlePracticeService.dart';
 import 'package:lingualloop/services/KartyService.dart';
 import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/ui/screens/home_screen.dart';
+import 'package:lingualloop/ui/screens/karty_path_screen.dart';
 import 'package:lingualloop/ui/screens/karty_unit_unlock_screen.dart';
 import 'package:lingualloop/ui/widgets/practice_station_marks.dart';
 import 'package:lingualloop/ui/widgets/quest_icons.dart';
 import 'package:lingualloop/ui/widgets/streak_day_card.dart';
+import 'package:lingualloop/ui/widgets/ticket_spend_scene.dart';
 import 'package:provider/provider.dart';
 
 import 'helpers/preview_fonts.dart';
@@ -119,6 +126,7 @@ class _User extends Fake implements UserService {
   ScoreWithLivesResponse score;
   ProfileLearningStatsResponse stats;
   int spent = 0;
+  String? spendError;
 
   @override
   Future<ApiResponse<ScoreWithLivesResponse>> scoreWithLivesById(
@@ -131,13 +139,45 @@ class _User extends Fake implements UserService {
   @override
   Future<ApiResponse<UpdateLivesResponse>> updateLivesById() async {
     spent += 1;
-    return ApiResponse();
+    return ApiResponse(errorCode: spendError);
   }
 
   @override
   Future<ApiResponse<ProfileLearningStatsResponse>>
       profileLearningStatsById() async => ApiResponse(data: stats);
 }
+
+/// Oyunun ilk kartlarının ne zaman hazırlandığını sayar.
+class _Cards extends KartyProvider {
+  int prepared = 0;
+  int? unit;
+  int? deck;
+  int resets = 0;
+
+  @override
+  void prepareSession(BuildContext context, {int? unit, int? deck}) {
+    prepared += 1;
+    this.unit = unit;
+    this.deck = deck;
+  }
+
+  @override
+  void reset() {
+    resets += 1;
+    super.reset();
+  }
+}
+
+class _Articles extends ArticlePracticeProvider {
+  _Articles() : super(_ArticleService());
+
+  int prepared = 0;
+
+  @override
+  void prepareFirstTask() => prepared += 1;
+}
+
+class _ArticleService extends Fake implements ArticlePracticeService {}
 
 class _Karty extends Fake implements KartyService {
   KartyPathResponse response = _path();
@@ -154,10 +194,20 @@ class _Home {
   final _Karty karty;
   String? openedRoute;
   Object? openedArguments;
+  final cards = _Cards();
+  final articles = _Articles();
+  bool? openedThroughPortal;
 }
 
+/// Şu anki düğüm: erişilebilirlik etiketi yaptığı işi söylüyor.
+Finder _currentNode() => find.byWidgetPredicate(
+      (widget) =>
+          widget is Semantics &&
+          (widget.properties.label?.endsWith('Devam et') ?? false),
+    );
+
 Future<void> _settle(WidgetTester tester) async {
-  for (var i = 0; i < 16; i++) {
+  for (var i = 0; i < 24; i++) {
     await tester.pump(const Duration(milliseconds: 100));
   }
 }
@@ -180,6 +230,7 @@ Future<_Home> _pump(
         builder: (context) {
           home.openedRoute = route;
           home.openedArguments = ModalRoute.of(context)?.settings.arguments;
+          home.openedThroughPortal = ModalRoute.of(context) is GamePortalRoute;
           return Scaffold(
             body: Center(
               child: TextButton(
@@ -198,6 +249,10 @@ Future<_Home> _pump(
       ChangeNotifierProvider.value(value: scoreProvider),
       ChangeNotifierProvider(create: (_) => ProfileLearningStatsProvider()),
       ChangeNotifierProvider(create: (_) => KartyPathProvider(karty)),
+      ChangeNotifierProvider<KartyProvider>.value(value: home.cards),
+      ChangeNotifierProvider<ArticlePracticeProvider>.value(
+        value: home.articles,
+      ),
     ],
     child: MaterialApp(
       routes: {
@@ -251,10 +306,15 @@ void main() {
     expect(find.text('Yeni kelime öğren'), findsOneWidget);
   });
 
-  testWidgets('DEVAM bileti harcar, oyunu şu anki desteyle açar',
+  testWidgets('düğüme dokunmak bileti harcar, oyunu şu anki desteyle açar',
       (tester) async {
     final home = await _pump(tester);
-    await tester.tap(find.text('DEVAM ET'));
+    await tester.tap(_currentNode());
+    await tester.pump();
+    // Kartlar sahne sürerken inmeye başlar.
+    expect(home.cards.prepared, 1);
+    expect(home.cards.unit, 1);
+    expect(home.cards.deck, 2);
     await _settle(tester);
 
     expect(home.user.spent, 1);
@@ -265,9 +325,152 @@ void main() {
     expect(session.reviewCount, 5);
   });
 
+  testWidgets('dokununca sayaç düşer, oyun sahne bitmeden açılmaz',
+      (tester) async {
+    final home = await _pump(tester);
+    expect(find.text('12'), findsOneWidget);
+
+    await tester.tap(_currentNode());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.pump(const Duration(milliseconds: 10));
+
+    expect(find.text('11'), findsOneWidget);
+    expect(find.text('12'), findsNothing);
+    expect(home.openedRoute, isNull);
+
+    await _settle(tester);
+    expect(home.openedRoute, '/kartyquiz');
+  });
+
+  testWidgets('giriş reddedilirse sayaç geri gelir, oyun açılmaz',
+      (tester) async {
+    final home = await _pump(tester);
+    home.user.spendError = 'E9999';
+
+    await tester.tap(_currentNode());
+    await _settle(tester);
+
+    expect(find.text('12'), findsOneWidget);
+    expect(home.openedRoute, isNull);
+    expect(home.cards.resets, 1);
+    expect(
+      find.image(const AssetImage('assets/icons/ticket.png')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('yolda bilet etiketi yok, balon yok', (tester) async {
+    await _pump(tester);
+    expect(
+      find.image(const AssetImage('assets/icons/ticket-one.png')),
+      findsNothing,
+    );
+    expect(find.text('DEVAM ET'), findsNothing);
+  });
+
+  testWidgets('etikete dokununca adım penceresi açılır, bilet gitmez',
+      (tester) async {
+    final home = await _pump(tester);
+    await tester.tap(find.text('Deste 2'));
+    await _settle(tester);
+
+    expect(find.byType(KartyStepSheet), findsOneWidget);
+    expect(home.user.spent, 0);
+  });
+
+  testWidgets('bugün henüz oynanmadıysa düğüm aralıklı zıplar', (tester) async {
+    await _pump(tester, played: false);
+    final bottoms = <double>[];
+    // Bir tam döngü; alt kenar ezilişten etkilenmez, yalnız yüksekliği ölçer.
+    for (var i = 0; i < 95; i++) {
+      await tester.pump(const Duration(milliseconds: 20));
+      bottoms.add(tester.getBottomLeft(_currentNode()).dy);
+    }
+    final rest = bottoms.reduce(math.max);
+    final peak = bottoms.reduce(math.min);
+
+    expect(rest - peak, closeTo(12 * 430 / 750, 0.5));
+    // Sıçrama döngünün ilk %30'unda, kalanında yerinde durur.
+    expect(bottoms.where((y) => y == rest).length, greaterThan(60));
+  });
+
+  testWidgets('bugün oynandıysa düğüm zıplamaz', (tester) async {
+    await _pump(tester);
+    final rest = tester.getBottomLeft(_currentNode()).dy;
+    for (var i = 0; i < 40; i++) {
+      await tester.pump(const Duration(milliseconds: 20));
+      expect(tester.getBottomLeft(_currentNode()).dy, rest);
+    }
+  });
+
+  testWidgets('bilet sayaçtan kalkar, kesilir, düğüme girince oyun açılır',
+      (tester) async {
+    final home = await _pump(tester);
+    final tickets = find.image(const AssetImage('assets/icons/ticket.png'));
+    expect(tickets, findsOneWidget);
+    final counter = tester.getCenter(tickets);
+
+    await tester.tap(_currentNode());
+    await tester.pump();
+    // Sayaç + sahnedeki bilet (kalınlık bandı ve yüz).
+    expect(tickets, findsNWidgets(3));
+    expect((tester.getCenter(tickets.last) - counter).distance, lessThan(8));
+
+    await tester.pump(const Duration(milliseconds: 600));
+    // Yırtıldı: koçan ve gövde ayrı.
+    expect(tickets, findsNWidgets(5));
+    expect(home.openedRoute, isNull);
+
+    await _settle(tester);
+    expect(home.openedRoute, '/kartyquiz');
+    expect(home.openedThroughPortal, isTrue);
+  });
+
+  testWidgets('sahne sürerken başka oyun açılmaz', (tester) async {
+    final home = await _pump(tester);
+    await tester.tap(_currentNode());
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.tap(find.byType(RevengeCardMark), warnIfMissed: false);
+    await _settle(tester);
+    expect(home.openedRoute, '/kartyquiz');
+  });
+
+  testWidgets('azaltılmış harekette sahne oynamaz, oyun düz açılır',
+      (tester) async {
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    final home = await _pump(tester);
+
+    await tester.tap(_currentNode());
+    await tester.pump();
+    expect(
+      find.image(const AssetImage('assets/icons/ticket.png')),
+      findsOneWidget,
+    );
+
+    await _settle(tester);
+    expect(home.openedRoute, '/kartyquiz');
+    expect(home.openedThroughPortal, isFalse);
+  });
+
+  testWidgets('Rövanş bedelsiz: bilet uçmaz', (tester) async {
+    await _pump(tester);
+    await tester.tap(find.byType(RevengeCardMark));
+    await tester.pump();
+    expect(
+      find.image(const AssetImage('assets/icons/ticket.png')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('Artikel durağı bilet harcar', (tester) async {
     final home = await _pump(tester);
     await tester.tap(find.byType(ArticleDragMark));
+    await tester.pump();
+    expect(home.articles.prepared, 1);
+    expect(home.cards.prepared, 0);
     await _settle(tester);
     expect(home.user.spent, 1);
     expect(home.openedRoute, '/articlepractice');

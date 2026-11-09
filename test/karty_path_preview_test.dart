@@ -136,6 +136,7 @@ void main() {
           height: height,
           child: MediaQuery(
             data: MediaQueryData(
+              disableAnimations: true,
               size: Size(430, height),
               padding: const EdgeInsets.only(top: 47),
               devicePixelRatio: 2,

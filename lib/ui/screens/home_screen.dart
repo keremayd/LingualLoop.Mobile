@@ -6,7 +6,9 @@ import 'package:lingualloop/models/karty_path.dart';
 import 'package:lingualloop/models/karty_session.dart';
 import 'package:lingualloop/models/responses/KartyPathResponse.dart';
 import 'package:lingualloop/models/responses/ProfileLearningStatsResponse.dart';
+import 'package:lingualloop/providers/ArticlePracticeProvider.dart';
 import 'package:lingualloop/providers/KartyPathProvider.dart';
+import 'package:lingualloop/providers/KartyProvider.dart';
 import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/services/KartyService.dart';
@@ -21,6 +23,7 @@ import 'package:lingualloop/ui/widgets/NavbarWidget.dart';
 import 'package:lingualloop/ui/widgets/home_top_bar.dart';
 import 'package:lingualloop/ui/widgets/practice_station_marks.dart';
 import 'package:lingualloop/ui/widgets/streak_sheet.dart';
+import 'package:lingualloop/ui/widgets/ticket_spend_scene.dart';
 import 'package:provider/provider.dart';
 
 /// Ana ekran Karty Yolu'nun kendisi: üstte lig · seri · bilet · koruma, altında
@@ -43,6 +46,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _starting = false;
   bool _gameOpen = false;
   bool _isShowingLeaguePromotion = false;
+
+  /// Bilet sahnesinin iki ucu: sayaçtan dokunulan karoya.
+  final _ticketIconKey = GlobalKey();
+  final _currentNodeKey = GlobalKey<TicketTargetState>();
+  final _articleTileKey = GlobalKey<TicketTargetState>();
 
   /// Gelişi süren ünite; patika onu açılmamış gibi çizer.
   int? _arrivalUnit;
@@ -167,13 +175,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   /// Oyunu açar; **beklenmesi şart** (§4.4): `pushNamed` route kapanınca
   /// tamamlanır, tazeleme ancak o zaman anlamlı. Tazeleme bitene kadar yeni
   /// oyun açılmaz: patikanın şu anki destesi eskimiş olabilir.
-  Future<void> _openGame(String route, {Object? arguments}) async {
+  Future<void> _openGame(
+    String route, {
+    Object? arguments,
+    GamePortal? portal,
+  }) async {
     if (_gameOpen) return;
     _gameOpen = true;
     final playedBefore =
         context.read<ScoreWithLivesProvider>().scoreWithLives?.playedToday;
     try {
-      await Navigator.pushNamed(context, route, arguments: arguments);
+      await _pushGame(route, arguments, portal);
       if (!mounted) return;
       final refreshed = _refresh();
       await _waitUntilHomeIsVisible();
@@ -183,6 +195,49 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
     if (!mounted) return;
     await _presentAfterGame(firstGameToday: playedBefore == false);
+  }
+
+  /// İlk içerik bilet sahnesi sürerken inmeye başlar; oyun açıldığında hazır
+  /// olsun, yükleniyor simgesi görünmesin.
+  void _prepareGame(String route, Object? arguments) {
+    if (route == '/articlepractice') {
+      context.read<ArticlePracticeProvider>().prepareFirstTask();
+      return;
+    }
+    final session = arguments as KartySessionArgs?;
+    context.read<KartyProvider>().prepareSession(
+          context,
+          unit: session?.unit.number,
+          deck: session?.deck,
+        );
+  }
+
+  void _discardPreparedGame(String route) {
+    if (route == '/articlepractice') {
+      context.read<ArticlePracticeProvider>().discardPreparedTask();
+    } else {
+      context.read<KartyProvider>().reset();
+    }
+  }
+
+  /// Bilet harcanan oyun, biletin girdiği düğümün içinden açılır.
+  Future<Object?> _pushGame(
+    String route,
+    Object? arguments,
+    GamePortal? portal,
+  ) {
+    final builder =
+        context.findAncestorWidgetOfExactType<MaterialApp>()?.routes?[route];
+    if (portal == null || builder == null) {
+      return Navigator.pushNamed(context, route, arguments: arguments);
+    }
+    return Navigator.of(context).push<Object?>(
+      GamePortalRoute<Object?>(
+        settings: RouteSettings(name: route, arguments: arguments),
+        builder: builder,
+        portal: portal,
+      ),
+    );
   }
 
   /// Oyundan dönüşte bekleyenler, biri kapanınca sıradaki: seri penceresi,
@@ -204,21 +259,37 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   /// Giriş bedeli olan oyun: bilet harcandıysa açılır. Bilet yetmezse
   /// "bilet bitti" penceresi çıkar ve yollarından biri seçilebilir.
-  Future<void> _startTicketed(String route, {Object? arguments}) async {
+  Future<void> _startTicketed(
+    String route, {
+    Object? arguments,
+    required GlobalKey<TicketTargetState> tile,
+  }) async {
     if (_starting || _gameOpen) return;
-    _starting = true;
+    // Sahne sürerken düğüm zıplamasın.
+    setState(() => _starting = true);
+    TicketSpendPlayback? playback;
     try {
       final entered = await spendTicketForGame(
         context,
+        playEntrance: () {
+          _prepareGame(route, arguments);
+          return playback =
+              playTicketSpend(context, from: _ticketIconKey, to: tile);
+        },
         onGoToReview: () => unawaited(_openGame('/kartyreview')),
         onGoToQuests: () =>
             NavbarWidget.requestedTab.value = NavbarWidget.questsTabIndex,
       );
-      if (!entered || !mounted) return;
+      if (!mounted) return;
+      if (!entered) {
+        _discardPreparedGame(route);
+        return;
+      }
     } finally {
-      _starting = false;
+      if (mounted) setState(() => _starting = false);
     }
-    await _openGame(route, arguments: arguments);
+    playback?.removeWhenCovered();
+    await _openGame(route, arguments: arguments, portal: playback?.portal);
   }
 
   /// Şu anki adımın oyunu: hangi ünitenin hangi destesi (yoksa yalnız
@@ -349,10 +420,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 : learned < 2
                     ? '${2 - learned} kelime öğren'
                     : 'Yeni kelime öğren',
-        ticketCost: 1,
         onTap: articleOpen
-            ? () => unawaited(_startTicketed('/articlepractice'))
+            ? () => unawaited(
+                  _startTicketed('/articlepractice', tile: _articleTileKey),
+                )
             : null,
+        tileKey: _articleTileKey,
       ),
       // Rövanş bilet harcamaz; yanlışları tekrar ederek oyuna dönüş yolu açar.
       review: KartyPathStation(
@@ -383,6 +456,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             tickets: data?.lives ?? 0,
             freezeCount: data?.freezeCount ?? 0,
             onStreakTap: () => unawaited(showStreakSheet(context)),
+            ticketIconKey: _ticketIconKey,
           );
         },
       );
@@ -391,6 +465,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final provider = context.watch<KartyPathProvider>();
     final stats = context.watch<ProfileLearningStatsProvider>().stats;
+    final hopCurrent = context.select<ScoreWithLivesProvider, bool>(
+      (provider) => provider.scoreWithLives?.playedToday == false,
+    );
     final response = provider.data;
 
     if (_loading || response == null) {
@@ -412,8 +489,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       data: data,
       header: _topBar,
       stations: _stations(stats),
-      onContinue: () =>
-          unawaited(_startTicketed('/kartyquiz', arguments: _session())),
+      onContinue: () => unawaited(
+        _startTicketed(
+          '/kartyquiz',
+          arguments: _session(),
+          tile: _currentNodeKey,
+        ),
+      ),
+      currentNodeKey: _currentNodeKey,
+      hopCurrent: hopCurrent && !_starting,
       onRefresh: () async {
         await _refresh();
         unawaited(_maybeShowUnlock());

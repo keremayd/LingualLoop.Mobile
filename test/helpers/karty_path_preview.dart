@@ -24,7 +24,6 @@ Widget previewPathHeader(
 KartyPathStation previewArticleStation({
   required String detail,
   VoidCallback? onTap,
-  int ticketCost = 1,
 }) =>
     KartyPathStation(
       title: 'Artikel',
@@ -32,7 +31,6 @@ KartyPathStation previewArticleStation({
       icon: (tile) => ArticleDragMark(size: tile * 0.8),
       detail: detail,
       onTap: onTap,
-      ticketCost: ticketCost,
     );
 
 KartyPathStation previewReviewStation({

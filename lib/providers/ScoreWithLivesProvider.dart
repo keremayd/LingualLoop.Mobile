@@ -14,6 +14,14 @@ class ScoreWithLivesProvider with ChangeNotifier {
     }
   }
 
+  /// Bilet harcanınca yalnız bakiye değişir; sayaç tam tazelemeyi beklemez.
+  void setLives(int lives) {
+    final current = _scoreWithLives;
+    if (current == null || current.lives == lives) return;
+    current.lives = lives;
+    notifyListeners();
+  }
+
   void clearScoreWithLives() {
     _scoreWithLives = null;
     notifyListeners();

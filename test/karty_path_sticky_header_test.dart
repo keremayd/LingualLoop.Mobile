@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lingualloop/models/karty_path.dart';
 import 'package:lingualloop/ui/screens/karty_path_screen.dart';
 import 'package:lingualloop/ui/widgets/karty_unit_header.dart';
+import 'package:lingualloop/ui/widgets/practice_station_marks.dart';
 
 import 'helpers/karty_path_preview.dart';
 
@@ -164,7 +165,7 @@ void main() {
     }
 
     expect(controller.offset, greaterThan(before));
-    final bubble = tester.getCenter(find.text('BAŞLA'));
-    expect(bubble.dy, inInclusiveRange(0, 560));
+    final row = tester.getCenter(find.byType(ArticleDragMark));
+    expect(row.dy, inInclusiveRange(0, 560));
   });
 }

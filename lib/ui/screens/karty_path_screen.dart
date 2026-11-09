@@ -8,7 +8,9 @@ import 'package:lingualloop/ui/app_typography.dart';
 import 'package:lingualloop/ui/widgets/Buttons/app_button_style.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:lingualloop/ui/widgets/karty_control_glyphs.dart';
+import 'package:lingualloop/ui/widgets/hop_motion.dart';
 import 'package:lingualloop/ui/widgets/karty_unit_header.dart';
+import 'package:lingualloop/ui/widgets/ticket_spend_scene.dart';
 import 'package:lingualloop/ui/widgets/karty_unit_marks.dart';
 import 'package:lingualloop/ui/widgets/quest_icons.dart';
 
@@ -30,6 +32,8 @@ class KartyPathScreen extends StatefulWidget {
     required this.header,
     required this.stations,
     required this.onContinue,
+    this.currentNodeKey,
+    this.hopCurrent = false,
     this.onRefresh,
     this.controller,
     this.scrollToCurrent = true,
@@ -47,6 +51,12 @@ class KartyPathScreen extends StatefulWidget {
   /// Şu anki destenin iki yanındaki duraklar.
   final KartyPathStations stations;
   final VoidCallback onContinue;
+
+  /// Şu anki düğüm: harcanan bilet buraya iner (`ticket_spend_scene.dart`).
+  final GlobalKey<TicketTargetState>? currentNodeKey;
+
+  /// Şu anki düğüm zıplasın: bugün henüz oynanmadıysa, çağrı o an anlamlı.
+  final bool hopCurrent;
   final Future<void> Function()? onRefresh;
   final ScrollController? controller;
 
@@ -88,7 +98,7 @@ class KartyPathStation {
     required this.icon,
     required this.detail,
     this.onTap,
-    this.ticketCost = 0,
+    this.tileKey,
   });
 
   /// Karonun altındaki ad ve ekran okuyucunun söylediği tam ad.
@@ -104,8 +114,8 @@ class KartyPathStation {
   /// Kapalı durakta null: sönük çizilir, basılmaz.
   final VoidCallback? onTap;
 
-  /// Giriş bedeli; 0 ise bilet rozeti çizilmez.
-  final int ticketCost;
+  /// Harcanan bilet bu karoya iner. Bedelsiz durakta gerekmez.
+  final GlobalKey<TicketTargetState>? tileKey;
 
   bool get enabled => onTap != null;
 }
@@ -359,6 +369,8 @@ class _KartyPathScreenState extends State<KartyPathScreen>
                 layout: _layout,
                 scale: scale,
                 onContinue: widget.onContinue,
+                currentNodeKey: widget.currentNodeKey,
+                hopCurrent: widget.hopCurrent,
                 onStepTap: _openStep,
                 arrival: _arrivalState(),
                 stations: widget.stations,
@@ -466,8 +478,7 @@ abstract final class _C {
   static const muted = Color(0xFF8FA0B5);
   static const value = Color(0xFFE9EEF5);
 
-  // Kart çerçevesinin malzemesi (KartyCardRimPainter): balon da aynı beyaz
-  // yüzde ve aynı açık gri kalınlıkta durur.
+  // Kart çerçevesinin malzemesi (KartyCardRimPainter).
   static const rimBottom = Color(0xFFD8DCE4);
 
   /// Kutlama ışığının kremi: fitilin parlayan ucu (görev ödülü reçetesi).
@@ -487,6 +498,8 @@ class _KartyPathBody extends StatelessWidget {
     required this.layout,
     required this.scale,
     required this.onContinue,
+    required this.currentNodeKey,
+    required this.hopCurrent,
     required this.onStepTap,
     required this.stations,
     this.arrival,
@@ -496,6 +509,8 @@ class _KartyPathBody extends StatelessWidget {
   final _PathLayout layout;
   final double scale;
   final VoidCallback onContinue;
+  final GlobalKey<TicketTargetState>? currentNodeKey;
+  final bool hopCurrent;
   final void Function(KartyUnit unit, KartyStep step) onStepTap;
 
   /// Yeni açılan ünitenin gelişi sürüyorsa o anki hâli.
@@ -548,7 +563,7 @@ class _KartyPathBody extends StatelessWidget {
 
     // Gelişte açılan ünitenin düğümü fitil varana kadar kilitli görünür;
     // fitil geçerken zıplar ve zıplamanın tepesinde gerçek hâline döner.
-    // Etiketi ve balonu ondan sonra belirir.
+    // Etiketi ondan sonra belirir.
     final a = arrival;
     final reveal =
         a != null && a.unit == node.unit.number ? a.nodeT(node.center.dy) : 1.0;
@@ -561,6 +576,20 @@ class _KartyPathBody extends StatelessWidget {
     // halkasının) altında.
     final captionTop = top + geo.total + _nowRingPad(step) + 14;
 
+    final tile = _PathNode(
+      step: shown ? step : const KartyStep(state: KartyStepState.locked),
+      width: node.width,
+      scale: s,
+      dimmed: !shown || node.unit.state == KartyUnitState.locked,
+      // Şu anki düğüm oyunu açar; adım penceresi altındaki etikette.
+      onTap: current ? onContinue : () => onStepTap(node.unit, step),
+    );
+
+    // Gelişte düğüm zaten kendi hareketini oynuyor.
+    final moving = current && a == null && hopCurrent
+        ? _NodeHop(scale: s, child: tile)
+        : tile;
+
     return [
       if (current) ...[
         ..._station(node, stations.article, -1, captionTop, settle, s),
@@ -571,13 +600,9 @@ class _KartyPathBody extends StatelessWidget {
         top: top * s,
         child: _bump(
           bump,
-          _PathNode(
-            step: shown ? step : const KartyStep(state: KartyStepState.locked),
-            width: node.width,
-            scale: s,
-            dimmed: !shown || node.unit.state == KartyUnitState.locked,
-            onTap: () => onStepTap(node.unit, step),
-          ),
+          current && currentNodeKey != null
+              ? TicketTarget(key: currentNodeKey, child: moving)
+              : moving,
         ),
       ),
       if (shown && step.state == KartyStepState.done && step.dueCount > 0)
@@ -588,32 +613,20 @@ class _KartyPathBody extends StatelessWidget {
         ),
       if (current)
         Positioned(
-          left: (node.center.dx - 150) * s,
-          width: 300 * s,
-          top: (top - _NodeGeometry.ringGap - 112) * s,
-          child: Center(
-            child: _fade(
-              settle,
-              _ContinueBubble(
-                scale: s,
-                action: _actionOf(step),
-                onTap: onContinue,
-              ),
-            ),
-          ),
-        ),
-      if (current)
-        Positioned(
           left: (node.center.dx - 160) * s,
           width: 320 * s,
           top: captionTop * s,
           child: _fade(
             settle,
-            _CenteredLabel(
-              title: step.label,
-              detail: _labelDetail(step),
-              accent: true,
-              scale: s,
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => onStepTap(node.unit, step),
+              child: _CenteredLabel(
+                title: step.label,
+                detail: _labelDetail(step),
+                accent: true,
+                scale: s,
+              ),
             ),
           ),
         ),
@@ -874,8 +887,8 @@ class _TrailSegment {
 }
 
 /// Bütün konumlar tasarım biriminde (750 genişlik). Düğümler her ünitede
-/// ortadan başlayan yumuşak bir S çizer; şu anki düğüm balonu için,
-/// kapı halkası için fazladan boşluk alır.
+/// ortadan başlayan yumuşak bir S çizer; şu anki düğüm ve kapı halkası
+/// fazladan boşluk alır.
 class _PathLayout {
   _PathLayout._({
     required this.nodes,
@@ -1457,8 +1470,8 @@ class _PathPainter extends CustomPainter {
     final u = p / scale;
     for (final node in layout.nodes) {
       final d = u - node.center;
-      // Şu anki düğümde üstte balon, çevrede halka, iki yanında duraklar,
-      // altında etiketler.
+      // Şu anki düğümde çevrede halka, iki yanında duraklar, altında
+      // etiketler.
       final current = node.step.state == KartyStepState.current;
       if (d.dx.abs() < (current ? 375 : 300) &&
           d.dy > (current ? -250 : -90) &&
@@ -1524,7 +1537,7 @@ class _PathPainter extends CustomPainter {
 }
 
 // ---------------------------------------------------------------------------
-// Düğüm, kapı, balon, etiketler
+// Düğüm, kapı, etiketler
 // ---------------------------------------------------------------------------
 
 class _PathNode extends StatelessWidget {
@@ -1560,7 +1573,7 @@ class _PathNode extends StatelessWidget {
       depth: depth,
       label: switch (step.state) {
         KartyStepState.done => '${step.label}, tamamlandı',
-        KartyStepState.current => 'Şu anki deste',
+        KartyStepState.current => '${step.label}, ${_actionOf(step).spoken}',
         _ => 'Sıradaki deste',
       },
       onTap: onTap,
@@ -1571,6 +1584,80 @@ class _PathNode extends StatelessWidget {
                 ? _IconTone.locked
                 : _IconTone.muted,
         child: QuestIcon(questKey: 'correct_five', size: width * 0.56 * scale),
+      ),
+    );
+  }
+}
+
+/// Bugün henüz oynanmadıysa şu anki düğüm, Görevler'deki alınabilir ödülle
+/// aynı aralıklı zıplamayla "buraya dokun" der; oynandıktan sonra durur ki
+/// ana ekranda gürültüye dönüşmesin. Yüz ve kalınlık bandı birlikte kalkar;
+/// halka düğümün yuvası, yerinde kalır.
+class _NodeHop extends StatefulWidget {
+  const _NodeHop({required this.scale, required this.child});
+
+  final double scale;
+  final Widget child;
+
+  @override
+  State<_NodeHop> createState() => _NodeHopState();
+}
+
+class _NodeHopState extends State<_NodeHop>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _hop = AnimationController(
+    vsync: this,
+    duration: HopMotion.duration,
+  );
+  bool _pressed = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _hop
+        ..stop()
+        ..value = 0;
+    } else if (!_hop.isAnimating) {
+      _hop.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _hop.dispose();
+    super.dispose();
+  }
+
+  void _setPressed(bool pressed) {
+    if (_pressed != pressed) setState(() => _pressed = pressed);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Yalnız düğüm yeniden çizilsin, koca patika tuvali değil.
+    return RepaintBoundary(
+      child: Listener(
+        onPointerDown: (_) => _setPressed(true),
+        onPointerUp: (_) => _setPressed(false),
+        onPointerCancel: (_) => _setPressed(false),
+        child: AnimatedBuilder(
+          animation: _hop,
+          child: widget.child,
+          builder: (context, child) {
+            // Basılıyken zıplama durur: o an kullanıcının hareketi baskın.
+            final hop =
+                _pressed ? (lift: 0.0, squash: 0.0) : HopMotion.at(_hop.value);
+            return Transform.translate(
+              offset: Offset(0, -hop.lift * HopMotion.height * widget.scale),
+              child: Transform(
+                alignment: Alignment.bottomCenter,
+                transform: HopMotion.squash(hop.squash),
+                child: child,
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -1759,102 +1846,6 @@ _StepAction _actionOf(KartyStep step) => step.newGoal == 0
         ? (label: 'DEVAM ET', spoken: 'Devam et')
         : (label: 'BAŞLA', spoken: 'Başla');
 
-/// Şu anki düğümün üstündeki eylem balonu: kart çerçevesinin beyazı,
-/// altında aynı açık gri kalınlık; yanında giriş bedeli (`ticket-one`).
-class _ContinueBubble extends StatelessWidget {
-  const _ContinueBubble({
-    required this.scale,
-    required this.action,
-    required this.onTap,
-  });
-
-  final double scale;
-  final _StepAction action;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final s = scale;
-    final radius = BorderRadius.circular(24 * s);
-    final body = Container(
-      padding: EdgeInsets.fromLTRB(16 * s, 12 * s, 24 * s, 12 * s),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: radius),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Image.asset('assets/icons/ticket-one.png', width: 50 * s),
-          SizedBox(width: 12 * s),
-          Text(
-            action.label,
-            style: TextStyle(
-              color: _C.accent,
-              fontSize: 28 * s,
-              fontWeight: AppTypography.number,
-              fontFamily: AppTypography.family,
-              height: 1,
-            ),
-          ),
-        ],
-      ),
-    );
-
-    return Semantics(
-      button: true,
-      label: '${action.spoken}, 1 bilet',
-      excludeSemantics: true,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Positioned.fill(
-                  top: 6 * s,
-                  bottom: -6 * s,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: _C.rimBottom,
-                      borderRadius: radius,
-                    ),
-                  ),
-                ),
-                body,
-              ],
-            ),
-            CustomPaint(
-              size: Size(30 * s, 16 * s),
-              painter: const _PointerPainter(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PointerPainter extends CustomPainter {
-  const _PointerPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = Path()
-      ..moveTo(0, -1)
-      ..lineTo(size.width, -1)
-      ..quadraticBezierTo(
-          size.width * 0.58, size.height * 0.92, size.width / 2, size.height)
-      ..quadraticBezierTo(size.width * 0.42, size.height * 0.92, 0, -1)
-      ..close();
-    canvas.drawPath(path.shift(Offset(0, size.height * 0.3)),
-        Paint()..color = _C.rimBottom);
-    canvas.drawPath(path, Paint()..color = Colors.white);
-  }
-
-  @override
-  bool shouldRepaint(covariant _PointerPainter oldDelegate) => false;
-}
-
 class _DueBadge extends StatelessWidget {
   const _DueBadge({required this.count, required this.scale});
 
@@ -1893,7 +1884,7 @@ class _DueBadge extends StatelessWidget {
 
 /// Yan durağın karosu: düğümlerle aynı derinlikli karo, içinde durağın
 /// simgesi. Açık durak sıradaki desteler gibi lacivert ama simgesi renkli;
-/// kapalı durak koyu ve simgesi sönük. Giriş bedeli varsa köşede bilet.
+/// kapalı durak koyu ve simgesi sönük.
 class _StationTile extends StatelessWidget {
   const _StationTile({
     required this.station,
@@ -1921,22 +1912,9 @@ class _StationTile extends StatelessWidget {
       child:
           _ToneIcon(tone: open ? _IconTone.lit : _IconTone.locked, child: icon),
     );
-    if (!open || station.ticketCost == 0) {
-      return IgnorePointer(ignoring: !open, child: tile);
-    }
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        tile,
-        Positioned(
-          right: -14 * s,
-          top: -12 * s,
-          child: IgnorePointer(
-            child: Image.asset('assets/icons/ticket-one.png', width: 48 * s),
-          ),
-        ),
-      ],
-    );
+    final tappable = IgnorePointer(ignoring: !open, child: tile);
+    final key = station.tileKey;
+    return key == null ? tappable : TicketTarget(key: key, child: tappable);
   }
 }
 
@@ -2209,7 +2187,7 @@ class _Explainer extends StatelessWidget {
   }
 }
 
-/// Şu anki destenin penceresindeki eylem: patikadaki balonla aynı iş, aynı bedel.
+/// Şu anki destenin penceresindeki eylem: düğüme dokunmakla aynı iş.
 class _SheetContinueButton extends StatelessWidget {
   const _SheetContinueButton({
     required this.scale,
@@ -2225,7 +2203,7 @@ class _SheetContinueButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = scale;
     return Semantics(
-      label: '${action.spoken}, 1 bilet',
+      label: action.spoken,
       excludeSemantics: true,
       child: DepthPressableButton(
         width: 678 * s,
@@ -2236,22 +2214,17 @@ class _SheetContinueButton extends StatelessWidget {
         shadowColor: _C.accentDepth,
         fontSize: 30 * s,
         onPressed: onPressed,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset('assets/icons/ticket-one.png', width: 54 * s),
-            SizedBox(width: 14 * s),
-            Text(
-              action.label,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 32 * s,
-                fontWeight: AppTypography.action,
-                fontFamily: AppTypography.family,
-                height: 1,
-              ),
+        child: Center(
+          child: Text(
+            action.label,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 32 * s,
+              fontWeight: AppTypography.action,
+              fontFamily: AppTypography.family,
+              height: 1,
             ),
-          ],
+          ),
         ),
       ),
     );

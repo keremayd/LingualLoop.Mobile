@@ -37,6 +37,7 @@ class HomeTopBar extends StatelessWidget {
     required this.playedToday,
     this.onTicketsTap,
     this.onStreakTap,
+    this.ticketIconKey,
   });
 
   final double scale;
@@ -49,6 +50,9 @@ class HomeTopBar extends StatelessWidget {
 
   final int tickets;
   final int freezeCount;
+
+  /// Bilet simgesinin yeri: harcanan bilet buradan kalkar.
+  final GlobalKey? ticketIconKey;
 
   final VoidCallback? onTicketsTap;
 
@@ -80,11 +84,15 @@ class HomeTopBar extends StatelessWidget {
           onTap: onStreakTap,
         ),
         _item(
-          icon: Image.asset(
-            'assets/icons/ticket.png',
-            width: 66 * scale,
+          icon: KeyedSubtree(
+            key: ticketIconKey,
+            child: Image.asset(
+              'assets/icons/ticket.png',
+              width: 66 * scale,
+            ),
           ),
           value: '$tickets',
+          rollingCount: tickets,
           onTap: onTicketsTap,
         ),
         _item(
@@ -123,8 +131,16 @@ class HomeTopBar extends StatelessWidget {
   Widget _item({
     required Widget icon,
     required String value,
+    int? rollingCount,
     VoidCallback? onTap,
   }) {
+    final style = TextStyle(
+      color: _value,
+      fontFamily: AppTypography.family,
+      fontSize: 38 * scale,
+      fontWeight: AppTypography.number,
+      height: 1,
+    );
     final content = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -135,16 +151,10 @@ class HomeTopBar extends StatelessWidget {
         ),
         if (value.isNotEmpty) ...[
           SizedBox(width: 6 * scale),
-          Text(
-            value,
-            style: TextStyle(
-              color: _value,
-              fontFamily: AppTypography.family,
-              fontSize: 38 * scale,
-              fontWeight: AppTypography.number,
-              height: 1,
-            ),
-          ),
+          if (rollingCount != null)
+            _RollingCount(value: rollingCount, style: style)
+          else
+            Text(value, style: style),
         ],
       ],
     );
@@ -154,6 +164,57 @@ class HomeTopBar extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: content,
+    );
+  }
+}
+
+/// Sayı değişince yenisine kayarak döner: azalırken düşer, artarken yükselir.
+/// Bedel yolda yazmadığı için bilet harcandığını bu söylüyor.
+class _RollingCount extends StatefulWidget {
+  const _RollingCount({required this.value, required this.style});
+
+  final int value;
+  final TextStyle style;
+
+  @override
+  State<_RollingCount> createState() => _RollingCountState();
+}
+
+class _RollingCountState extends State<_RollingCount> {
+  bool _falling = true;
+
+  @override
+  void didUpdateWidget(covariant _RollingCount oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value != oldWidget.value) {
+      _falling = widget.value < oldWidget.value;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 240),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (child, animation) {
+        final incoming = child.key == ValueKey(widget.value);
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: Offset(0, incoming == _falling ? -0.8 : 0.8),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
+          ),
+        );
+      },
+      child: Text(
+        '${widget.value}',
+        key: ValueKey(widget.value),
+        style: widget.style,
+      ),
     );
   }
 }

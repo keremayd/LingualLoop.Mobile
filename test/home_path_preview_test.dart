@@ -136,6 +136,7 @@ void main() {
               size: Size(430, 932),
               padding: EdgeInsets.only(top: 47, bottom: 34),
               devicePixelRatio: 2,
+              disableAnimations: true,
             ),
             child: Stack(
               children: [
@@ -308,7 +309,6 @@ void main() {
                 article: previewArticleStation(
                   detail: '6 kart',
                   onTap: open,
-                  ticketCost: 1,
                 ),
                 review: previewReviewStation(detail: '2 kart', onTap: open),
               ),
@@ -327,7 +327,6 @@ void main() {
                 article: previewArticleStation(
                   detail: '16 kart',
                   onTap: open,
-                  ticketCost: 1,
                 ),
                 review: previewReviewStation(detail: '1 kart', onTap: open),
               ),
@@ -346,7 +345,6 @@ void main() {
                 article: previewArticleStation(
                   detail: '16 kart',
                   onTap: open,
-                  ticketCost: 1,
                 ),
                 review: previewReviewStation(detail: '1 kart', onTap: open),
               ),
