@@ -38,6 +38,21 @@ class _Server extends Fake implements KartyService {
   }
 }
 
+/// İlk kartı hemen verir, sonrakileri [rest] açılana kadar bekletir.
+class _SlowQueueServer extends _Server {
+  final rest = Completer<void>();
+
+  @override
+  Future<ApiResponse<GetKartyByScoreResponse>> random({
+    int? unit,
+    int? deck,
+    int? reviews,
+  }) async {
+    if (_next > 0) await rest.future;
+    return super.random(unit: unit, deck: deck, reviews: reviews);
+  }
+}
+
 class _Files extends Fake implements LocalFileService {
   @override
   Future<String> cacheKartyImage(String imageUrl, int kartyId) async =>
@@ -77,6 +92,24 @@ void main() {
     expect(load, isNotNull);
     expect(provider.takePreparedLoad(unit: 1, deck: 2), isNull);
     expect(await load, isTrue);
+    await provider.whenQueueFilled();
+    expect(provider.cards.map((Karty k) => k.kartyId), [1, 2, 3]);
+  });
+
+  testWidgets('oyun ilk kartla açılır, destenin kalanı arkada iner', (
+    tester,
+  ) async {
+    final provider = KartyProvider();
+    final server = _SlowQueueServer();
+    final context = await _context(tester, server);
+
+    // İkinci kart sunucuda beklerken oyun açılabilir.
+    expect(await provider.loadKarty(context), isTrue);
+    expect(provider.isLoaded, isTrue);
+    expect(provider.cards.map((Karty k) => k.kartyId), [1]);
+
+    server.rest.complete();
+    await provider.whenQueueFilled();
     expect(provider.cards.map((Karty k) => k.kartyId), [1, 2, 3]);
   });
 

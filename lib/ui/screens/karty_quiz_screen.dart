@@ -857,6 +857,10 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
       };
 
   Future<void> _advanceDeckVisual() async {
+    // Oyun ilk kartla açılıyor; geçişin biçimi sıradaki karta bağlı.
+    await kartyProvider.whenQueueFilled();
+    if (!mounted) return;
+
     // Gövde sönecekse sıradaki kart hazır olsun: ekran boş beklemesin.
     final fade = !kartyProvider.cards.take(2).every(_usesFullDeck);
     if (fade) await kartyProvider.whenPrefetched();

@@ -25,6 +25,11 @@ class KartyProvider with ChangeNotifier {
   /// kart karıştırmasın.
   int _generation = 0;
 
+  /// Oyun ilk kartla açılır; destenin kalanı arkada iner. Sıradaki kartı
+  /// isteyen her yol önce bunu bekler: kuyruk eksikken sunucuya bildirilen
+  /// tekrar sayısı eksik çıkardı.
+  Future<void>? _fillFuture;
+
   /// Oyunda cevaplanan tekrar kartı sayısı. Sunucu tekrarı oyunun payı kadar
   /// verir; ona bildirilen "verilen tekrar" bu sayı ile kuyrukta bekleyen
   /// tekrarlardan türetilir. Ayrı bir sayaç tutulsaydı kuyruktan elenen bir
@@ -78,26 +83,31 @@ class KartyProvider with ChangeNotifier {
       _isLoaded = false;
       notifyListeners();
 
+      // Üç kart sırayla, her biri görselleriyle beklenince oyun yükleniyor
+      // ekranında kalıyordu; ilk kart yetiyor.
       final generation = _generation;
-      for (var i = 0; i < 3; i++) {
-        final card = await _fetchUniqueKarty(
-          kartyService,
-          localFileService,
-          reviewMode: reviewMode,
-        );
-        if (generation != _generation) return false;
-        if (card == null) {
-          _isLoaded = _cards.isNotEmpty;
-          notifyListeners();
-          return _cards.isNotEmpty;
-        }
-
-        _cards.add(card);
+      final card = await _fetchUniqueKarty(
+        kartyService,
+        localFileService,
+        reviewMode: reviewMode,
+      );
+      if (generation != _generation) return false;
+      if (card == null) {
+        notifyListeners();
+        return false;
       }
 
+      _cards.add(card);
+      _fillFuture = _fillQueue(
+        kartyService,
+        localFileService,
+        reviewMode: reviewMode,
+        generation: generation,
+      );
       return _completeLoad();
     }
 
+    await _fillFuture;
     final nextCards = _cards.skip(1).toList();
     final prefetchedCard = await _consumePrefetchedCard(reviewMode: reviewMode);
     if (prefetchedCard != null &&
@@ -135,6 +145,26 @@ class KartyProvider with ChangeNotifier {
     return _completeLoad();
   }
 
+  /// İlk yüklemenin kalanı: deste üç karta tamamlanır, her kart inince
+  /// ekran sıradaki görselleri önden çözebilsin diye haber verilir.
+  Future<void> _fillQueue(
+    KartyService kartyService,
+    LocalFileService localFileService, {
+    required bool reviewMode,
+    required int generation,
+  }) async {
+    while (_cards.length < 3) {
+      final card = await _fetchUniqueKarty(
+        kartyService,
+        localFileService,
+        reviewMode: reviewMode,
+      );
+      if (generation != _generation || card == null) return;
+      _cards.add(card);
+      notifyListeners();
+    }
+  }
+
   void prefetchNextKarty(BuildContext context, {required bool reviewMode}) {
     if (_prefetchFuture != null && _prefetchReviewMode == reviewMode) {
       return;
@@ -143,20 +173,28 @@ class KartyProvider with ChangeNotifier {
     final kartyService = Provider.of<KartyService>(context, listen: false);
     final localFileService =
         Provider.of<LocalFileService>(context, listen: false);
-    final queuedCards = _cards.skip(1).toList();
+    final fill = _fillFuture;
 
     _prefetchReviewMode = reviewMode;
-    _prefetchFuture = _fetchUniqueKarty(
-      kartyService,
-      localFileService,
-      reviewMode: reviewMode,
-      queuedCards: queuedCards,
-    );
+    _prefetchFuture = () async {
+      await fill;
+      return _fetchUniqueKarty(
+        kartyService,
+        localFileService,
+        reviewMode: reviewMode,
+        queuedCards: _cards.skip(1).toList(),
+      );
+    }();
   }
 
   /// Sıradaki kart inene kadar bekler; hata olursa da döner.
   Future<void> whenPrefetched() async {
     await _prefetchFuture;
+  }
+
+  /// Destenin ilk yüklemesi arkada tamamlanana kadar bekler.
+  Future<void> whenQueueFilled() async {
+    await _fillFuture;
   }
 
   Future<Karty?> _fetchUniqueKarty(
@@ -273,6 +311,7 @@ class KartyProvider with ChangeNotifier {
   void reset() {
     _generation += 1;
     _preparedLoad = null;
+    _fillFuture = null;
     _cards.clear();
     _isLoaded = false;
     _prefetchFuture = null;

@@ -82,6 +82,7 @@ void main() {
     }
 
     await provider.loadKarty(context);
+    await provider.whenQueueFilled();
     // Kuyruk boş → 0; 1 (tekrar) kuyrukta → 1; 2 (yeni) eklenince yine 1.
     expect(server.reviewsSent, [0, 1, 1]);
     expect(provider.cards.map((Karty k) => k.kartyId), [1, 2, 3]);
