@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'dart:io';
-import 'dart:ui' show lerpDouble;
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
@@ -18,8 +18,17 @@ import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/ui/screens/karty_session_summary_screen.dart';
 import 'package:lingualloop/ui/widgets/league_badge_mark.dart';
 import 'package:lingualloop/services/KartyService.dart';
+import 'package:lingualloop/services/GameFeedbackService.dart';
 import 'package:lingualloop/services/PronunciationService.dart';
 import 'package:lingualloop/ui/widgets/SwipableCard.dart';
+import 'package:lingualloop/ui/widgets/karty_answer_feedback_effect.dart';
+import 'package:lingualloop/ui/widgets/karty_boost_edge_meter.dart';
+import 'package:lingualloop/ui/widgets/karty_question_parts.dart';
+import 'package:lingualloop/ui/widgets/karty_question_card.dart';
+import 'package:lingualloop/ui/widgets/hourglass_mark.dart';
+import 'package:lingualloop/ui/widgets/karty_listen_player.dart';
+import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:lingualloop/ui/app_typography.dart';
 import 'package:lingualloop/ui/widgets/karty_top_bar.dart';
 import 'package:lingualloop/ui/widgets/karty_boost_activation_effect.dart';
 import 'package:lingualloop/ui/widgets/karty_review_complete_state.dart';
@@ -30,6 +39,35 @@ import 'package:lingualloop/ui/widgets/karty_answer_actions.dart';
 import 'package:lingualloop/ui/widgets/karty_pause_overlay.dart';
 
 import '../../services/UserService.dart';
+
+/// Ekrandaki sorunun cevap durumu. Karta bağlı tutuluyor: deste ilerlerken
+/// yeni kart, eski kartın seçimiyle çizilmesin.
+class _QuestionAnswer {
+  _QuestionAnswer(this.kartyId, String word)
+      : tiles = kartyShuffledLetters(word, kartyId);
+
+  final int kartyId;
+  final List<String> tiles;
+  int? optionId;
+  String? article;
+
+  /// Harf dizmede yuvalara sırayla konmuş karolar; yanlış harf de konabilir,
+  /// yuvasına dokunulunca geri alınır.
+  final List<int> placed = [];
+  bool lettersFailed = false;
+
+  String get spelled => placed.map((index) => tiles[index]).join();
+
+  /// Kelimeyi veren karo sırası; aynı harften ikisi varsa ilki önce.
+  List<int> solutionFor(String word) {
+    final order = <int>[];
+    for (final letter in word.split('')) {
+      order.add(List.generate(tiles.length, (index) => index).firstWhere(
+          (index) => tiles[index] == letter && !order.contains(index)));
+    }
+    return order;
+  }
+}
 
 class KartyQuizScreen extends StatefulWidget {
   final bool reviewMode;
@@ -50,10 +88,13 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
   static const _boostChargeGoal = 5;
   static const _boostDurationMilliseconds = 20000;
 
-  Offset _position = Offset.zero;
-  double _rotation = 0;
-  bool _regionAccepted = false; // Bölge kontrolü için flag
+  bool _answerLocked = false;
   bool _isDeckAdvancing = false;
+
+  /// Deste kayması yalnız iki tam boy kart arasında okunuyor; soru düzeni
+  /// değişecekse gövde sönüp yenisi beliriyor.
+  bool _fadeBody = false;
+  _QuestionAnswer? _answer;
   bool _isReviewEmpty = false;
   int _boostCharge = 0;
   int _boostRemainingMilliseconds = 0;
@@ -80,9 +121,11 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
   late UserService userService;
   late ProfileLearningStatsProvider profileLearningStatsProvider;
   late PronunciationService pronunciationService;
+  late GameFeedbackService gameFeedback;
 
-  /// Tanışma kartında sesin **bir kez** otomatik çalınmasını sağlar: aynı
-  /// kart için ikinci kez tetiklenmesin diye son çalınan kart tutuluyor.
+  /// Tanışma ve dinleme kartında sesin **bir kez** otomatik çalınmasını
+  /// sağlar: aynı kart için ikinci kez tetiklenmesin diye son çalınan kart
+  /// tutuluyor.
   /// `build` her setState'te koştuğu için bu koruma olmadan ses üst üste
   /// binerdi.
   int? _autoPlayedKartyId;
@@ -130,6 +173,8 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
         Provider.of<ProfileLearningStatsProvider>(context, listen: false);
     pronunciationService =
         Provider.of<PronunciationService>(context, listen: false);
+    gameFeedback = Provider.of<GameFeedbackService>(context, listen: false);
+    unawaited(gameFeedback.preload());
 
     Future.microtask(() async {
       // Bilet sahnesi sürerken hazırlandıysa kartlar zaten iniyor.
@@ -182,7 +227,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
           return;
         }
 
-        duration.value = 4;
+        duration.value = _secondsFor(kartyProvider.cards.first);
         timeBarResetNotifier.value += 1;
 
         return;
@@ -201,7 +246,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
         return;
       }
 
-      print("Karty yüklenirken bir hata oluştu.");
+      debugPrint("Karty yüklenirken bir hata oluştu.");
     });
   }
 
@@ -291,38 +336,54 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
     });
   }
 
-  /// Ekrandaki kartın telaffuzunu çalar.
-  ///
-  /// **Yazım sorusu sırasında çağrılmaz** ve bu bilinçli: kart yanlış
-  /// yazılmış bir kelime gösterirken doğru telaffuzu duyurmak cevabı
-  /// sızdırır. Ses yalnız iki anda duyuluyor — kelimeyle **tanışırken** ve
-  /// cevaptan **sonra**; ikisi de öğrenmenin gerçekleştiği anlar.
+  /// Ekrandaki kartın telaffuzunu çalar: kelimeyle **tanışırken**, dinleme
+  /// sorusunda ve cevaptan **sonra**. Harf dizerken duyurmak cevabı sızdırır.
   void _speakCurrentKarty() {
     final cards = kartyProvider.cards;
     if (cards.isEmpty) return;
     pronunciationService.play(cards.first.audioUrl);
   }
 
-  /// Tanışma kartı ekrana geldiğinde sesi bir kez çalar.
-  ///
-  /// Otomatik çalıyor çünkü ilk temasın **duyulması** gerekiyor; kullanıcı
-  /// butonu keşfetmeyebilir ve kelimeyi yanlış telaffuzla ezberleyebilir.
-  /// Destedeki sıradaki kartların görsellerini önden çözer.
+  void _speakCurrentKartySlowly() {
+    final cards = kartyProvider.cards;
+    if (cards.isEmpty) return;
+    pronunciationService.playSlowly(cards.first.audioUrl);
+  }
+
+  /// Cevap sesi kelimenin üstüne binmesin diye telaffuz biraz gecikir.
+  void _speakAfterChime() {
+    Future.delayed(const Duration(milliseconds: 260), () {
+      if (mounted) _speakCurrentKarty();
+    });
+  }
+
+  /// Destedeki sıradaki kartların ve seçeneklerin görsellerini önden çözer.
   ///
   /// `Image.file` çözümlemeyi ilk çizimde yapıyor; kart değiştiğinde yeni
   /// görsel birkaç kare geç geliyordu. Önbellek yinelenen istekleri kendisi
   /// eliyor, bu yüzden her `build`'de çağrılması güvenli.
   void _precacheUpcomingCards(KartyProvider cardProvider) {
-    for (final card in cardProvider.cards.skip(1)) {
-      precacheImage(FileImage(File(card.kartyUrl)), context);
+    for (final (index, card) in cardProvider.cards.indexed) {
+      if (index > 0) precacheImage(FileImage(File(card.kartyUrl)), context);
+      for (final option in card.options) {
+        precacheImage(FileImage(File(option.imagePath)), context);
+      }
     }
   }
 
-  void _autoPlayIntroductionIfNeeded() {
+  /// Tanışma ve dinleme kartı ekrana geldiğinde sesi bir kez çalar.
+  ///
+  /// Otomatik çalıyor çünkü ilk temasın **duyulması** gerekiyor; kullanıcı
+  /// butonu keşfetmeyebilir ve kelimeyi yanlış telaffuzla ezberleyebilir.
+  void _autoPlayIfNeeded() {
     if (!_deckReady) return;
-    if (!_isIntroducing) return;
     final cards = kartyProvider.cards;
     if (cards.isEmpty) return;
+    final mode = _modeOf(cards.first);
+    if (mode != KartyCardMode.introduce && mode != KartyCardMode.listen) {
+      return;
+    }
+    if (isFinished.value && mode == KartyCardMode.listen) return;
 
     final kartyId = cards.first.kartyId;
     if (_autoPlayedKartyId == kartyId) return;
@@ -335,8 +396,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
   /// Ekrandaki kart bir **tanışma** kartı mı.
   ///
   /// Kararı sunucu veriyor (`KartyPresentationPolicy`); istemci yalnız
-  /// okuyor. Üç davranış buna bağlı ve hepsi bu tek kaynağa bakıyor:
-  /// cevap butonları, kaydırma ve zamanlayıcı.
+  /// okuyor. Cevap düğmeleri ve zamanlayıcı bu tek kaynağa bakıyor.
   bool get _isIntroducing {
     final cards = kartyProvider.cards;
     if (cards.isEmpty) return false;
@@ -346,7 +406,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
   /// Tanışma kartındaki "Anladım". Kelime kaydedilir ve sıradaki karta
   /// geçilir — **soru hemen sorulmaz**: ekranda duran bir kelimeyi sormak
   /// hafızayı değil kısa süreli belleği ölçer. Kelime sonraki turlarda
-  /// yazım sorusu olarak geri gelir.
+  /// soru olarak geri gelir.
   Future<void> _acknowledgeIntroduction(BuildContext context) async {
     final cards = kartyProvider.cards;
     if (cards.isEmpty) return;
@@ -361,11 +421,89 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
     await _finishAnsweredCard(context);
   }
 
-  Future<void> _answerQuestion(BuildContext context, bool pressedRight) async {
+  /// Ses kapalıyken dinleme sorusu sorulamaz; harf dizmeye düşer.
+  KartyCardMode _modeOf(Karty card) =>
+      card.mode == KartyCardMode.listen && pronunciationService.isMuted.value
+          ? KartyCardMode.arrangeLetters
+          : card.mode;
+
+  int _secondsFor(Karty card) => switch (_modeOf(card)) {
+        KartyCardMode.listen => 12,
+        KartyCardMode.arrangeLetters =>
+          math.max(12, 5 + card.correctText.length * 2),
+        _ => 10,
+      };
+
+  _QuestionAnswer _answerFor(Karty card) {
+    final answer = _answer;
+    if (answer != null && answer.kartyId == card.kartyId) return answer;
+    return _answer = _QuestionAnswer(card.kartyId, card.correctText);
+  }
+
+  bool get _questionOpen =>
+      !_answerLocked &&
+      !_isDeckAdvancing &&
+      !_isBoostActivating &&
+      !isFinished.value &&
+      !isPaused.value &&
+      duration.value > 0;
+
+  void _pickOption(Karty card, int optionId) {
+    if (!_questionOpen) return;
+    setState(() => _answerFor(card).optionId = optionId);
+    _submitAnswer(optionId == card.kartyId);
+  }
+
+  void _pickArticle(Karty card, String article) {
+    if (!_questionOpen) return;
+    setState(() => _answerFor(card).article = article);
+    _submitAnswer(article == card.article.trim().toLowerCase());
+  }
+
+  void _tapLetter(Karty card, int index) {
+    if (!_questionOpen) return;
+    final answer = _answerFor(card);
+    final word = card.correctText;
+    if (answer.placed.contains(index) || answer.placed.length >= word.length) {
+      return;
+    }
+
+    // Kelime bütün yuvalar dolunca bir kerede değerlendirilir; o ana kadar
+    // yanlış konmuş harf yuvasına dokunularak geri alınır. Son yuvaya konan
+    // harf havuzda kalan tek harf olduğu için ayrı bir kontrol düğmesi yok.
+    // Yazılış karşılaştırıldığı için aynı harften ikisi birbirinin yerine
+    // geçer.
+    HapticFeedback.selectionClick();
+    final complete = answer.placed.length + 1 == word.length;
+    setState(() {
+      answer.placed.add(index);
+      if (complete) answer.lettersFailed = answer.spelled != word;
+    });
+    if (complete) _submitAnswer(!answer.lettersFailed);
+  }
+
+  void _removeLetter(Karty card, int slot) {
+    if (!_questionOpen) return;
+    final answer = _answerFor(card);
+    if (slot >= answer.placed.length) return;
+    HapticFeedback.selectionClick();
+    setState(() => answer.placed.removeAt(slot));
+  }
+
+  Future<void> _answerQuestion(
+    BuildContext context,
+    bool isCorrectAnswer,
+  ) async {
     isFinished.value = true; // TimeBar'ı durdurduk
     final currentKarty = kartyProvider.cards[0];
-    final isCorrectAnswer = currentKarty.isCorrect && pressedRight ||
-        !currentKarty.isCorrect && !pressedRight;
+
+    // Sonuç dokunduğu anda okunur, ağı beklemez. Telaffuz yanlışta da
+    // duyulur: hatanın düzeltilmesi en çok burada işe yarıyor.
+    final verdict =
+        isCorrectAnswer ? isTrueAnswerBlurActive : isFalseAnswerBlurActive;
+    verdict.value = true;
+    isCorrectAnswer ? gameFeedback.correct() : gameFeedback.wrong();
+    _speakAfterChime();
 
     if (widget.reviewMode) {
       final reviewResult = await kartyService.resolveWrongKartyReview(
@@ -373,6 +511,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
         isCorrectAnswer,
       );
       if (!mounted) return;
+      _prefetchNext();
       unawaited(
         profileLearningStatsProvider.refreshFromService(userService),
       );
@@ -393,10 +532,6 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
           awardedPoints: 0,
           isReviewMode: true,
         );
-        isTrueAnswerBlurActive.value = true;
-        // Geri bildirim anı: doğru kelime duyuluyor. Hatanın düzeltilmesi
-        // en çok burada işe yarıyor.
-        _speakCurrentKarty();
         await Future.delayed(Duration(seconds: 1));
         if (!mounted) return;
 
@@ -414,7 +549,6 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
         duration.value = 0;
       });
 
-      isFalseAnswerBlurActive.value = true;
       await Future.delayed(Duration(milliseconds: 2000));
       if (!mounted) return;
 
@@ -434,12 +568,15 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
       // puanı) çarparken gizli zorluk termostatına dokunmuyor. Tek sayı
       // gönderildiği dönemde boost zorluğu da üçe katlıyordu.
       final awardedPoints = _isBoostActive ? 3 : 1;
+      final minimumFeedbackTime =
+          Future.delayed(const Duration(milliseconds: 850));
       var apiResponse = await userService.updateScoreById(
         1,
         kartyId: currentKarty.kartyId,
         boostActive: _isBoostActive,
       );
       if (!mounted) return;
+      verdict.value = apiResponse.errorCode == null;
       if (apiResponse.errorCode == null) {
         _sessionPoints += awardedPoints;
         _sessionCorrect += 1;
@@ -449,16 +586,10 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
           _recordCorrectBoostAnswer();
           duration.value = 0; // Süreyi tekrar ayarla
         });
+        _prefetchNext();
 
-        // Tek bir geri bildirim zinciri: kartın yeşil kalınlık bandı,
-        // kelimenin yeşile dönüşü ve boost şeridinin dolumu aynı karede
-        // başlar. Sunucudan yenilenmiş lig sayısını beklerken kullanıcıyı
-        // cevapsız bırakmıyoruz.
-        isTrueAnswerBlurActive.value = true;
-        _speakCurrentKarty();
-        final minimumFeedbackTime =
-            Future.delayed(const Duration(milliseconds: 850));
-
+        // Sunucudan yenilenmiş lig sayısını beklerken kullanıcıyı cevapsız
+        // bırakmıyoruz: yeşil bant ve kelime çoktan yanıyor.
         await userService.scoreWithLivesById(context);
         if (!mounted) return;
         profileLearningStatsProvider.prefetchForHome(userService);
@@ -484,9 +615,12 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
     }
 
     // Kupa düştü
+    final minimumFeedbackTime =
+        Future.delayed(const Duration(milliseconds: 1400));
     var apiResponse =
         await userService.updateScoreById(-1, kartyId: currentKarty.kartyId);
     if (!mounted) return;
+    verdict.value = apiResponse.errorCode == null;
     if (apiResponse.errorCode == null) {
       _sessionWrongIds.add(currentKarty.kartyId);
       _countAnswer(currentKarty);
@@ -495,11 +629,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
         _recordWrongBoostAnswer();
         duration.value = 0; // Süreyi tekrar ayarla
       });
-
-      // Yanlış cevap da ağ yenilemesini beklemeden yerel olarak okunur.
-      isFalseAnswerBlurActive.value = true;
-      final minimumFeedbackTime =
-          Future.delayed(const Duration(milliseconds: 1400));
+      _prefetchNext();
 
       await userService.scoreWithLivesById(context);
       if (!mounted) return;
@@ -515,6 +645,13 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
       timeBarResetNotifier.value += 1; // ProgressBar'ı sıfırla
     }
   }
+
+  /// Sıradaki kart sonuç ekrandayken iner. Cevap sayıldıktan sonra istenir:
+  /// sunucu bu cevabı da hesaba katsın.
+  void _prefetchNext() => kartyProvider.prefetchNextKarty(
+        context,
+        reviewMode: widget.reviewMode,
+      );
 
   void _countAnswer(Karty karty) {
     _sessionAnswered += 1;
@@ -557,6 +694,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
     ]).timeout(const Duration(milliseconds: 1500), onTimeout: () => []);
     if (!mounted) return false;
 
+    gameFeedback.complete();
     final choice = await Navigator.of(context).push<KartySummaryChoice>(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 360),
@@ -649,7 +787,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
         return;
       }
 
-      duration.value = 10; // Süreyi tekrar ayarla
+      duration.value = _secondsFor(kartyProvider.cards.first);
 
       await Future.delayed(Duration(milliseconds: 20));
       timeBarResetNotifier.value += 1;
@@ -666,6 +804,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
         _isReviewEmpty = true;
       });
       isFinished.value = true;
+      gameFeedback.complete();
       return;
     }
 
@@ -685,8 +824,9 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
     _resetCard();
     isPaused.value = false;
     isFinished.value = false;
-    duration.value = 10;
+    duration.value = _secondsFor(kartyProvider.cards.first);
     timeBarResetNotifier.value += 1;
+    _autoPlayedKartyId = null;
   }
 
   Future<void> _closeKartyScreen() async {
@@ -703,47 +843,28 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
 
   void _resetCard() {
     setState(() {
-      _position = Offset.zero;
-      _rotation = 0;
-      _regionAccepted = false; // Bölge kontrolünü sıfırla
+      _answer = null;
+      _answerLocked = false;
       _isDeckAdvancing = false;
+      _fadeBody = false;
     });
   }
 
-  bool _isInRegion(Offset position, double screenWidth, bool isLeft) {
-    if (isLeft) {
-      return position.dx < -screenWidth / 2.5; // Sol bölge kontrolü
-    }
-
-    return position.dx > screenWidth / 2.5; // Sağ bölge kontrolü
-  }
-
-  Future<void> _animateCardOut(bool toRight, double screenWidth) async {
-    final startPosition = _position;
-    final startRotation = _rotation;
-    final endPosition = Offset(
-      toRight ? screenWidth * 1.45 : -screenWidth * 1.45,
-      _position.dy,
-    );
-    final endRotation = toRight ? 0.65 : -0.65;
-
-    for (var step = 1; step <= 10; step++) {
-      if (!mounted) return;
-
-      final t = Curves.easeIn.transform(step / 10);
-      setState(() {
-        _position = Offset.lerp(startPosition, endPosition, t)!;
-        _rotation = lerpDouble(startRotation, endRotation, t)!;
-      });
-      await Future.delayed(const Duration(milliseconds: 16));
-    }
-  }
+  /// Tam boy kartlar birbirine kayar; ızgara ve küçük kart düzeni kaymaz.
+  bool _usesFullDeck(Karty card) => switch (_modeOf(card)) {
+        KartyCardMode.introduce || KartyCardMode.pickArticle => true,
+        _ => false,
+      };
 
   Future<void> _advanceDeckVisual() async {
+    // Gövde sönecekse sıradaki kart hazır olsun: ekran boş beklemesin.
+    final fade = !kartyProvider.cards.take(2).every(_usesFullDeck);
+    if (fade) await kartyProvider.whenPrefetched();
     if (!mounted) return;
 
     setState(() {
       _isDeckAdvancing = true;
+      _fadeBody = fade;
     });
 
     await Future.delayed(const Duration(milliseconds: 300));
@@ -763,107 +884,49 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
     _resetCard();
   }
 
-  Future<void> _completeAnswerFlow(
-    double screenWidth,
-    bool pressedRight, {
-    required bool animateSwipeOut,
-  }) async {
-    try {
-      if (animateSwipeOut) {
-        await _animateCardOut(pressedRight, screenWidth);
-      }
+  /// Bütün soru tiplerinin tek cevap girişi.
+  Future<void> _submitAnswer(bool isCorrectAnswer) async {
+    if (_answerLocked) return;
+    duration.value = 0;
+    _answerLocked = true;
 
-      await _answerQuestion(context, pressedRight);
+    try {
+      await _answerQuestion(context, isCorrectAnswer);
       if (await _finishSessionIfDone()) return;
       await _finishAnsweredCard(context);
     } catch (_) {
       if (!mounted) return;
 
+      isTrueAnswerBlurActive.value = false;
+      isFalseAnswerBlurActive.value = false;
       _resetCard();
+      duration.value = _secondsFor(kartyProvider.cards.first);
       isFinished.value = false;
+      timeBarResetNotifier.value += 1;
       AppNotifier.showMessage("Bir hata oluştu. Tekrar deneyin.");
     }
   }
 
-  /// Test kolaylığı: gerçek kartın doğru yönünü normal cevap akışına verir.
+  /// Test kolaylığı: sorunun doğru cevabını normal cevap akışına verir.
   /// Puan ve boost doğrudan artırılmaz; sunucu ve animasyonlar aynen çalışır.
   Future<void> _debugAnswerCorrectly() async {
-    if (!kDebugMode ||
-        isFinished.value ||
-        isPaused.value ||
-        _regionAccepted ||
-        _isDeckAdvancing ||
-        _isIntroducing ||
-        duration.value <= 0 ||
-        kartyProvider.cards.isEmpty) {
-      return;
-    }
-    await _checkRegion(
-      MediaQuery.sizeOf(context).width,
-      kartyProvider,
-      kartyProvider.cards.first.isCorrect,
-      isButton: true,
-    );
-  }
+    if (!kDebugMode || !_questionOpen || _isIntroducing) return;
+    if (kartyProvider.cards.isEmpty) return;
 
-  Future<void> _checkRegion(
-      double screenWidth, KartyProvider cardProvider, bool? pressedRight,
-      {bool isButton = false, bool animateSwipeOut = false}) async {
-    if (!_regionAccepted) {
-      if (isButton && pressedRight != null) {
-        if (pressedRight) {
-          print("Sağ Buttona Basıldı");
-
-          duration.value = 0;
-          _regionAccepted = true; // Bölgeyi kabul et
-
-          await _completeAnswerFlow(
-            screenWidth,
-            true,
-            animateSwipeOut: true,
-          );
-        } else {
-          print("Sol Buttona Basıldı");
-
-          duration.value = 0;
-          _regionAccepted = true; // Bölgeyi kabul et
-
-          await _completeAnswerFlow(
-            screenWidth,
-            false,
-            animateSwipeOut: true,
-          );
-        }
-      }
-
-      if (_isInRegion(_position, screenWidth, false)) {
-        print("Sağ Bölgeye Bırakıldı");
-
-        duration.value = 0;
-        _regionAccepted = true; // Bölgeyi kabul et
-
-        await _completeAnswerFlow(
-          screenWidth,
-          true,
-          animateSwipeOut: animateSwipeOut,
-        );
-      } else if (_isInRegion(_position, screenWidth, true)) {
-        print("Sol Bölgeye Bırakıldı");
-
-        duration.value = 0;
-        _regionAccepted = true; // Bölgeyi kabul et
-
-        await _completeAnswerFlow(
-          screenWidth,
-          false,
-          animateSwipeOut: animateSwipeOut,
-        );
-      }
-    }
+    final card = kartyProvider.cards.first;
+    final answer = _answerFor(card);
+    setState(() {
+      answer.optionId = card.kartyId;
+      answer.article = card.article.trim().toLowerCase();
+      answer.placed
+        ..clear()
+        ..addAll(answer.solutionFor(card.correctText));
+    });
+    await _submitAnswer(true);
   }
 
   void _togglePauseMenu() {
-    if (_isBoostActivating || _isDeckAdvancing || _regionAccepted) return;
+    if (_isBoostActivating || _isDeckAdvancing || _answerLocked) return;
     final opening = !_pauseMenuOpen;
     if (opening) {
       pronunciationService.stop();
@@ -873,12 +936,289 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
     isPaused.value = opening;
   }
 
+  String _promptFor(KartyCardMode mode) => switch (mode) {
+        KartyCardMode.introduce => 'Yeni kelime',
+        KartyCardMode.pickImage => 'Görseli bul',
+        KartyCardMode.pickArticle => 'Artikeli seç',
+        KartyCardMode.arrangeLetters => 'Harfleri diz',
+        KartyCardMode.listen => 'Duyduğunu bul',
+      };
+
+  /// Kartın üstündeki satır: soru cevabı sızdırmayacak biçimde sorulur.
+  Widget? _titleFor(Karty card, KartyCardMode mode, double scale) {
+    final answer = _answerFor(card);
+    Widget word({String? article}) => KartyFeedbackWord(
+          article: article ?? card.article,
+          text: card.correctText,
+          scale: scale,
+          isCorrectActive: isTrueAnswerBlurActive,
+          isWrongActive: isFalseAnswerBlurActive,
+        );
+
+    switch (mode) {
+      case KartyCardMode.introduce:
+      case KartyCardMode.pickImage:
+      case KartyCardMode.listen:
+        return null;
+      case KartyCardMode.pickArticle:
+        return word(
+            article: answer.article == null ? kartyUnknownArticle : null);
+      case KartyCardMode.arrangeLetters:
+        return KartyLetterSlots(
+          scale: scale,
+          article: card.article,
+          word: card.correctText,
+          placed: [for (final index in answer.placed) answer.tiles[index]],
+          state: answer.lettersFailed
+              ? KartyLettersState.failed
+              : answer.placed.length == card.correctText.length
+                  ? KartyLettersState.solved
+                  : KartyLettersState.answering,
+          // Süre dolunca ya da duraklatılınca yuvalar düğme gibi davranmaz.
+          onRemove: _questionOpen ? (slot) => _removeLetter(card, slot) : null,
+        );
+    }
+  }
+
+  /// Görsel seçilen sorular: soru kartı ve altında dört görsel düğmesi.
+  bool _isImageChoice(Karty card) => switch (_modeOf(card)) {
+        KartyCardMode.pickImage || KartyCardMode.listen => true,
+        _ => false,
+      };
+
+  Widget _timedOutFace(double scale) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            HourglassMark(size: 84 * scale),
+            SizedBox(width: 20 * scale),
+            Text(
+              'Süre doldu',
+              style: TextStyle(
+                color: const Color(0xFFE9EEF5),
+                fontFamily: AppTypography.displayFamily,
+                fontSize: 48 * scale,
+                fontWeight: AppTypography.heading,
+              ),
+            ),
+          ]),
+          SizedBox(height: 24 * scale),
+          // Alt yuvada görsel düğmeleri durduğu için yeniden deneme kartta.
+          DepthPressableButton(
+            text: 'TEKRAR DENE',
+            width: 260 * scale,
+            height: 86 * scale,
+            radius: 24 * scale,
+            shadowOffset: 10 * scale,
+            backgroundColor: const Color(0xFF1CB1F5),
+            shadowColor: const Color(0xFF1B84B5),
+            fontSize: 26 * scale,
+            onPressed: _restartCurrentKarty,
+          ),
+        ],
+      );
+
+  Widget _deck(
+    Karty card,
+    KartyCardLayout layout, {
+    required Widget? title,
+    required bool introducing,
+    required bool timedOut,
+  }) =>
+      SwipableCard(
+        karty: card,
+        layout: layout,
+        showInlineRestartAction: false,
+        title: title,
+        onPronounce: introducing && card.audioUrl?.isNotEmpty == true
+            ? _speakCurrentKarty
+            : null,
+        showRestartState: timedOut,
+        isAdvancingDeck: _isDeckAdvancing && !_fadeBody,
+        boostEnabled: !widget.reviewMode && !introducing,
+        boostCharge: _boostCharge,
+        boostChargeGoal: _boostChargeGoal,
+        isBoostReady: _isBoostReady,
+        isBoostActive: _isBoostActive && !timedOut,
+        isBoostActivating: _isBoostActivating,
+        topLeftBoostAnchorKey: _boostTopLeftAnchorKey,
+        bottomRightBoostAnchorKey: _boostBottomRightAnchorKey,
+        boostProgress: boostProgress,
+        onRestart: _restartCurrentKarty,
+        onBoostTap: _activateBoost,
+        isTrueAnswerBlurActive: isTrueAnswerBlurActive,
+        isFalseAnswerBlurActive: isFalseAnswerBlurActive,
+      );
+
+  /// Görsel seçilen sorular: soru yatay kartta, şimşekler onun köşesinde;
+  /// dört görsel kartın altında düğme olur. Artikel ve harf sorularıyla aynı
+  /// kural: kart soruyu taşır, cevaplar altındadır.
+  Widget _imageGrid(
+    Karty card,
+    KartyCardMode mode,
+    KartyCardLayout layout,
+    double scale, {
+    required bool canAnswer,
+    required bool timedOut,
+  }) {
+    final answer = _answerFor(card);
+    final gap = 34 * scale;
+    // Bu soruda alt yuva boş: düğmeler onun yerini de kullanır.
+    final room = layout.titleToCardGap +
+        layout.size.height +
+        2 * layout.layerOffset +
+        171 * scale -
+        KartyQuestionCard.extentFor(scale) -
+        gap;
+    final tileHeight =
+        math.min(322 * scale, (room - 26 * scale - 24 * scale) / 2);
+
+    final Widget question;
+    if (timedOut) {
+      question = _timedOutFace(scale);
+    } else if (mode == KartyCardMode.listen && answer.optionId == null) {
+      question = KartyListenPlayer(
+        scale: scale,
+        onListen: _speakCurrentKarty,
+        onListenSlowly: _speakCurrentKartySlowly,
+      );
+    } else {
+      question = KartyFeedbackWord(
+        article: card.article,
+        text: card.correctText,
+        scale: scale,
+        isCorrectActive: isTrueAnswerBlurActive,
+        isWrongActive: isFalseAnswerBlurActive,
+      );
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        KartyQuestionCard(
+          scale: scale,
+          width: layout.size.width,
+          isCorrectActive: isTrueAnswerBlurActive,
+          isWrongActive: isFalseAnswerBlurActive,
+          dimmed: timedOut,
+          boostMeter: widget.reviewMode
+              ? null
+              : KartyBoostEdgeMeter(
+                  scale: scale,
+                  boltScale: 100 / 127.5,
+                  charge: timedOut ? 0 : _boostCharge,
+                  chargeGoal: _boostChargeGoal,
+                  isReady: _isBoostReady && !timedOut,
+                  isActive: _isBoostActive && !timedOut,
+                  isActivating: _isBoostActivating,
+                  boostProgress: boostProgress,
+                  onTap: _activateBoost,
+                  interactive: !timedOut,
+                  topLeftAnchorKey: timedOut ? null : _boostTopLeftAnchorKey,
+                  bottomRightAnchorKey:
+                      timedOut ? null : _boostBottomRightAnchorKey,
+                ),
+          child: question,
+        ),
+        SizedBox(height: gap),
+        AnimatedOpacity(
+          duration: const Duration(milliseconds: 180),
+          opacity: timedOut ? .42 : 1,
+          child: IgnorePointer(
+            ignoring: timedOut,
+            child: KartyImageOptions(
+              scale: scale,
+              width: layout.size.width,
+              tileHeight: tileHeight,
+              answerId: card.kartyId,
+              pickedId: answer.optionId,
+              enabled: canAnswer,
+              options: [
+                for (final option in card.options)
+                  KartyImageOption(
+                    kartyId: option.kartyId,
+                    image: FileImage(File(option.imagePath)),
+                  ),
+              ],
+              onPick: (optionId) => _pickOption(card, optionId),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _questionBody(
+    Karty card,
+    KartyCardLayout layout,
+    double scale, {
+    required bool introducing,
+    required bool timedOut,
+    required bool canAnswer,
+  }) {
+    final mode = _modeOf(card);
+    if (_isImageChoice(card)) {
+      return _imageGrid(
+        card,
+        mode,
+        layout,
+        scale,
+        canAnswer: canAnswer,
+        timedOut: timedOut,
+      );
+    }
+
+    final title = _titleFor(card, mode, scale);
+    if (mode != KartyCardMode.arrangeLetters) {
+      return _deck(
+        card,
+        layout,
+        title: title,
+        introducing: introducing,
+        timedOut: timedOut,
+      );
+    }
+
+    final answer = _answerFor(card);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _deck(
+          card,
+          KartyCardLayout(
+            size: Size(layout.size.width * .84, layout.size.height * .78),
+            titleToCardGap: layout.titleToCardGap,
+            layerOffset: layout.layerOffset,
+            borderWidth: layout.borderWidth,
+          ),
+          title: title,
+          introducing: false,
+          timedOut: timedOut,
+        ),
+        // Süre dolunca altta TEKRAR DENE çıkıyor; harfler ona binmesin.
+        if (!timedOut &&
+            !answer.lettersFailed &&
+            answer.placed.length < card.correctText.length) ...[
+          SizedBox(height: 50 * scale),
+          KartyLetterTiles(
+            scale: scale,
+            width: 690 * scale,
+            letters: answer.tiles,
+            used: answer.placed.toSet(),
+            enabled: canAnswer,
+            onTap: (index) => _tapLetter(card, index),
+          ),
+        ],
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cardProvider = Provider.of<KartyProvider>(context);
     final screenWidth = MediaQuery.sizeOf(context).width;
     final scale = screenWidth / 750;
-    _autoPlayIntroductionIfNeeded();
+    _autoPlayIfNeeded();
     _precacheUpcomingCards(cardProvider);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -933,17 +1273,19 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
                               finished &&
                               !introducing &&
                               !_isDeckAdvancing &&
-                              !_regionAccepted;
+                              !_answerLocked;
                           final busy = _isDeckAdvancing ||
-                              _regionAccepted ||
+                              _answerLocked ||
                               _isBoostActivating;
-                          final canAnswer = loaded &&
-                              !finished &&
-                              !paused &&
-                              !busy &&
-                              duration.value > 0;
+                          final canAnswer = loaded && _questionOpen;
+                          final card = loaded ? cardProvider.cards.first : null;
+                          final fadeOpacity = _fadeBody ? 0.0 : 1.0;
+                          const fadeDuration = Duration(milliseconds: 200);
                           return KartyPlaySurface(
-                            isIntroducing: introducing,
+                            prompt: card == null || timedOut
+                                ? null
+                                : _promptFor(_modeOf(card)),
+                            promptVisible: !_fadeBody,
                             header: ValueListenableBuilder<bool>(
                               valueListenable: pronunciationService.isMuted,
                               builder: (context, muted, _) =>
@@ -963,8 +1305,11 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
                                   reviewCompletedStack: _reviewCompletedStack,
                                   leaguePointsAnchorKey: _boostLeagueTargetKey,
                                   muted: muted,
-                                  onToggleSound: () =>
-                                      pronunciationService.setMuted(!muted),
+                                  onToggleSound: () {
+                                    pronunciationService.setMuted(!muted);
+                                    // Dinleme sorusu sesle var oluyor.
+                                    setState(() {});
+                                  },
                                   pauseEnabled: !busy,
                                   pauseMenuOpen: _pauseMenuOpen,
                                   speaking: speaking,
@@ -978,81 +1323,57 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
                                     child: CircularProgressIndicator(
                                         color: _progressColor));
                               }
-                              return SwipableCard(
-                                karty: cardProvider.cards.first,
-                                layout: layout,
-                                showInlineRestartAction: false,
-                                // Yazım sorusunda telaffuz doğru cevabı sızdırır.
-                                onPronounce: introducing &&
-                                        cardProvider.cards.first.audioUrl
-                                                ?.isNotEmpty ==
-                                            true
-                                    ? _speakCurrentKarty
-                                    : null,
-                                position: _position,
-                                rotation: _rotation,
-                                showRestartState: timedOut,
-                                isAdvancingDeck: _isDeckAdvancing,
-                                boostEnabled:
-                                    !widget.reviewMode && !introducing,
-                                boostCharge: _boostCharge,
-                                boostChargeGoal: _boostChargeGoal,
-                                isBoostReady: _isBoostReady,
-                                isBoostActive: _isBoostActive && !timedOut,
-                                isBoostActivating: _isBoostActivating,
-                                topLeftBoostAnchorKey: _boostTopLeftAnchorKey,
-                                bottomRightBoostAnchorKey:
-                                    _boostBottomRightAnchorKey,
-                                boostProgress: boostProgress,
-                                onRestart: _restartCurrentKarty,
-                                onBoostTap: _activateBoost,
-                                isTrueAnswerBlurActive: isTrueAnswerBlurActive,
-                                isFalseAnswerBlurActive:
-                                    isFalseAnswerBlurActive,
-                                onPanUpdate: canAnswer && !introducing
-                                    ? (details) => setState(() {
-                                          _position += details.delta;
-                                          _rotation = _position.dx / 300;
-                                        })
-                                    : (_) {},
-                                onPanEnd: (details) async {
-                                  if (introducing) return;
-                                  if (canAnswer) {
-                                    await _checkRegion(
-                                        screenWidth, cardProvider, null,
-                                        animateSwipeOut: true);
-                                  }
-                                  if (!_regionAccepted && mounted) {
-                                    setState(() {
-                                      _position = Offset.zero;
-                                      _rotation = 0;
-                                    });
-                                  }
-                                },
+                              return AnimatedOpacity(
+                                duration: fadeDuration,
+                                opacity: fadeOpacity,
+                                child: _questionBody(
+                                  card!,
+                                  layout,
+                                  scale,
+                                  introducing: introducing,
+                                  timedOut: timedOut,
+                                  canAnswer: canAnswer,
+                                ),
                               );
                             },
-                            actions: !loaded
+                            actions: !loaded || _isImageChoice(card!)
                                 ? const SizedBox.shrink()
-                                : KartyAnswerActions(
-                                    scale: scale,
-                                    isIntroducing: introducing,
-                                    isTimedOut: timedOut,
-                                    enabled: !paused &&
-                                        !busy &&
-                                        (introducing || timedOut || canAnswer),
-                                    onWrong: () => _checkRegion(
-                                        screenWidth, cardProvider, false,
-                                        isButton: true),
-                                    onCorrect: () => _checkRegion(
-                                        screenWidth, cardProvider, true,
-                                        isButton: true),
-                                    onContinue: () {
-                                      if (introducing) {
-                                        _acknowledgeIntroduction(context);
-                                      } else {
-                                        _restartCurrentKarty();
-                                      }
-                                    },
+                                : AnimatedOpacity(
+                                    duration: fadeDuration,
+                                    opacity: fadeOpacity,
+                                    child: KartyAnswerActions(
+                                      scale: scale,
+                                      isIntroducing: introducing,
+                                      isTimedOut: timedOut,
+                                      enabled: !paused &&
+                                          !busy &&
+                                          (introducing ||
+                                              timedOut ||
+                                              canAnswer),
+                                      answers: _modeOf(card) ==
+                                              KartyCardMode.pickArticle
+                                          ? KartyArticleChoices(
+                                              scale: scale,
+                                              enabled: canAnswer,
+                                              revealed:
+                                                  _answerFor(card).article ==
+                                                          null
+                                                      ? null
+                                                      : card.article
+                                                          .trim()
+                                                          .toLowerCase(),
+                                              onPick: (article) =>
+                                                  _pickArticle(card, article),
+                                            )
+                                          : null,
+                                      onContinue: () {
+                                        if (introducing) {
+                                          _acknowledgeIntroduction(context);
+                                        } else {
+                                          _restartCurrentKarty();
+                                        }
+                                      },
+                                    ),
                                   ),
                             // Sadece debug sürümünde; ana cevaplarla aynı ağırlıkta değil.
                             debugAction: kDebugMode &&

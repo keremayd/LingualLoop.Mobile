@@ -15,15 +15,18 @@ import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/services/KartyService.dart';
 import 'package:lingualloop/services/UserService.dart';
+import 'package:lingualloop/services/GameFeedbackService.dart';
 import 'package:lingualloop/services/PronunciationService.dart';
 import 'package:lingualloop/ui/screens/karty_quiz_screen.dart';
 import 'package:lingualloop/ui/widgets/karty_pause_overlay.dart';
+import 'package:lingualloop/ui/widgets/karty_question_parts.dart';
 import 'package:lingualloop/ui/widgets/karty_sound_button.dart';
 import 'package:lingualloop/ui/widgets/karty_top_bar.dart';
 import 'package:lingualloop/ui/widgets/karty_time_bar.dart';
 import 'package:lingualloop/ui/widgets/karty_control_glyphs.dart';
 import 'package:lingualloop/ui/widgets/speaker_mark.dart';
 import 'package:lingualloop/ui/widgets/Buttons/secondary_action_button.dart';
+import 'helpers/silent_game_feedback.dart';
 
 class _Cards extends KartyProvider {
   _Cards(this.mode);
@@ -35,10 +38,8 @@ class _Cards extends KartyProvider {
         Karty(
           kartyId: 1,
           kartyUrl: 'assets/icons/mascot_hello.png',
-          questionText: 'Koffer',
           correctText: 'Koffer',
           article: 'der',
-          isCorrect: true,
           mode: mode,
         )
       ];
@@ -81,7 +82,7 @@ class _PendingUserService extends UserService {
 }
 
 Future<_Audio> _mountQuiz(WidgetTester tester,
-    {KartyCardMode mode = KartyCardMode.spelling}) async {
+    {KartyCardMode mode = KartyCardMode.pickArticle}) async {
   tester.view.physicalSize = const Size(320, 700);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
@@ -95,6 +96,7 @@ Future<_Audio> _mountQuiz(WidgetTester tester,
     Provider(create: (_) => KartyService(Dio())),
     Provider<UserService>(create: (_) => _PendingUserService()),
     Provider<PronunciationService>.value(value: audio),
+    Provider<GameFeedbackService>.value(value: SilentGameFeedback()),
   ], child: const MaterialApp(home: KartyQuizScreen())));
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 100));
@@ -143,7 +145,7 @@ void main() {
     expect(tester.widget<KartyControlMark>(topGlyph).glyph,
         KartyControlGlyph.pause);
     expect(tester.state(find.byType(KartyTimeBar)), same(timerState));
-    await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(seconds: 8));
     await tester.pump(const Duration(milliseconds: 250));
     expect(find.text('Süre doldu'), findsOneWidget);
     expect(find.text('TEKRAR DENE'), findsOneWidget);
@@ -151,11 +153,11 @@ void main() {
     expect(tester.widget<SwipableCard>(find.byType(SwipableCard)).layout!.size,
         cardSize);
     expect(tester.getRect(find.byType(KartyAnswerActions)), actionsRect);
-    expect(find.text('DOĞRU'), findsNothing);
+    expect(find.byType(KartyArticleChoices), findsNothing);
     await tester.tap(find.text('TEKRAR DENE'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 250));
-    expect(find.text('DOĞRU'), findsOneWidget);
+    expect(find.byType(KartyArticleChoices), findsOneWidget);
     expect(tester.getRect(find.byType(SwipableCard)), cardRect);
     expect(tester.getRect(find.byType(KartyAnswerActions)), actionsRect);
     expect(find.text('Süre doldu'), findsNothing);
@@ -166,13 +168,14 @@ void main() {
   testWidgets('Cevap gönderilirken süre doldu ve yeniden başlatma gösterilmez',
       (tester) async {
     await _mountQuiz(tester);
-    await tester.tap(find.text('DOĞRU'));
+    await tester.tap(find.text('der'));
     for (var i = 0; i < 32; i++) {
       await tester.pump(const Duration(milliseconds: 16));
     }
     expect(find.text('Süre doldu'), findsNothing);
     expect(find.text('TEKRAR DENE'), findsNothing);
     expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(seconds: 2));
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
@@ -182,7 +185,7 @@ void main() {
     expect(find.text('ANLADIM'), findsOneWidget);
     expect(find.text('Yeni kelime'), findsOneWidget);
     expect(find.byType(KartyTimeBar), findsNothing);
-    expect(find.text('DOĞRU'), findsNothing);
+    expect(find.byType(KartyArticleChoices), findsNothing);
     await tester.tap(find.bySemanticsLabel('Oyunu duraklat'));
     await tester.pump();
     expect(find.text('Oyundan çık'), findsOneWidget);

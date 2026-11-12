@@ -11,9 +11,21 @@ enum KartyCardMode {
   @JsonValue('Introduce')
   introduce,
 
-  /// Yazım sorusu — kelime doğru ya da bozuk yazılmış olabilir.
-  @JsonValue('Spelling')
-  spelling,
+  /// Kelime yazılı, dört görsel arasından doğrusu bulunur.
+  @JsonValue('PickImage')
+  pickImage,
+
+  /// Görsel ve kelime görünür, artikel sorulur.
+  @JsonValue('PickArticle')
+  pickArticle,
+
+  /// Görselden kelimenin harfleri sırayla dizilir.
+  @JsonValue('ArrangeLetters')
+  arrangeLetters,
+
+  /// Kelime yalnız duyulur, dört görsel arasından doğrusu bulunur.
+  @JsonValue('Listen')
+  listen,
 }
 
 /// Kartın hangi aşamadan geldiği (sunucuda `KartyScheduler`). İstemci oyunda
@@ -33,13 +45,23 @@ enum KartyCardStage {
 }
 
 @JsonSerializable()
+class KartyOptionResponse {
+  final int kartyId;
+  final String kartyUrl;
+
+  KartyOptionResponse(this.kartyId, this.kartyUrl);
+
+  factory KartyOptionResponse.fromJson(Map<String, dynamic> json) =>
+      _$KartyOptionResponseFromJson(json);
+  Map<String, dynamic> toJson() => _$KartyOptionResponseToJson(this);
+}
+
+@JsonSerializable()
 class GetKartyByScoreResponse {
   final int kartyId;
-  final String questionText;
   final String correctText;
   final String article;
   final String kartyUrl;
-  final bool isCorrect;
   final int minScore;
   final int maxScore;
 
@@ -47,27 +69,29 @@ class GetKartyByScoreResponse {
   /// `null` gelir ve telaffuz butonu gösterilmez.
   final String? audioUrl;
 
-  /// Eski sunucu sürümleri bu alanı göndermiyor; o durumda kart yazım
-  /// sorusu olarak davranır — yani bugünkü davranış.
-  @JsonKey(defaultValue: KartyCardMode.spelling, unknownEnumValue: KartyCardMode.spelling)
+  /// Bilinmeyen mod artikel sorusuna düşer: seçenek ya da ses istemeyen tek soru.
+  @JsonKey(defaultValue: KartyCardMode.pickArticle, unknownEnumValue: KartyCardMode.pickArticle)
   final KartyCardMode mode;
 
   /// Eski sunucu sürümleri göndermiyor; o durumda kart tekrar sayılmaz.
   @JsonKey(defaultValue: KartyCardStage.practice, unknownEnumValue: KartyCardStage.practice)
   final KartyCardStage stage;
 
+  /// Görsel seçilen sorularda seçenekler, doğrusu dahil karışık sırayla.
+  @JsonKey(defaultValue: [])
+  final List<KartyOptionResponse> options;
+
   GetKartyByScoreResponse(
     this.kartyId,
-    this.questionText,
     this.correctText,
     this.article,
     this.kartyUrl,
-    this.isCorrect,
     this.minScore,
     this.maxScore, {
     this.audioUrl,
-    this.mode = KartyCardMode.spelling,
+    this.mode = KartyCardMode.pickArticle,
     this.stage = KartyCardStage.practice,
+    this.options = const [],
   });
 
   factory GetKartyByScoreResponse.fromJson(Map<String, dynamic> json) =>

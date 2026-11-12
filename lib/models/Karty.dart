@@ -1,12 +1,18 @@
 import 'package:lingualloop/models/responses/GetKartyByScoreResponse.dart';
 
+/// Görsel seçilen soruda bir seçenek; görsel önbellekteki dosyadır.
+class KartyOption {
+  const KartyOption({required this.kartyId, required this.imagePath});
+
+  final int kartyId;
+  final String imagePath;
+}
+
 class Karty {
   final int kartyId;
   final String kartyUrl;
-  final String questionText;
   final String correctText;
   final String article;
-  final bool isCorrect;
 
   /// Telaffuz sesinin adresi. Ses üretilmemişse `null` — buton gizlenir.
   final String? audioUrl;
@@ -14,22 +20,22 @@ class Karty {
   /// Kartın nasıl sunulacağı — kararı sunucu veriyor
   /// (`KartyPresentationPolicy`), istemci yalnız uyguluyor.
   ///
-  /// Varsayılan `spelling`: eski sunucu sürümü alanı göndermezse kart
-  /// bugünkü gibi yazım sorusu olarak davranır.
   final KartyCardMode mode;
 
   /// Kartın hangi aşamadan geldiği; oyunun tekrar sayısı buradan tutulur.
   final KartyCardStage stage;
 
+  /// Görsel seçilen soruların seçenekleri, doğrusu dahil.
+  final List<KartyOption> options;
+
   Karty({
     required this.kartyId,
     required this.kartyUrl,
-    required this.questionText,
     required this.correctText,
     required this.article,
-    required this.isCorrect,
     this.audioUrl,
-    this.mode = KartyCardMode.spelling,
+    this.mode = KartyCardMode.pickArticle,
     this.stage = KartyCardStage.practice,
+    this.options = const [],
   });
 }

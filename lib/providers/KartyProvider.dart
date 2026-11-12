@@ -154,6 +154,11 @@ class KartyProvider with ChangeNotifier {
     );
   }
 
+  /// Sıradaki kart inene kadar bekler; hata olursa da döner.
+  Future<void> whenPrefetched() async {
+    await _prefetchFuture;
+  }
+
   Future<Karty?> _fetchUniqueKarty(
     KartyService kartyService,
     LocalFileService localFileService, {
@@ -209,17 +214,24 @@ class KartyProvider with ChangeNotifier {
         apiResponse.data!.kartyId,
       );
 
+      // Seçenek görselleri de soru ekrana gelmeden iner.
+      final options = await Future.wait(apiResponse.data!.options.map(
+        (option) async => KartyOption(
+          kartyId: option.kartyId,
+          imagePath: await localFileService.cacheKartyImage(option.kartyUrl, option.kartyId),
+        ),
+      ));
+
       // Cache'teki kaydettiğimiz adres üzerinden ilerletiyoruz
       return Karty(
         kartyId: apiResponse.data!.kartyId,
         kartyUrl: cacheUrl,
-        questionText: apiResponse.data!.questionText,
         correctText: apiResponse.data!.correctText,
         article: apiResponse.data!.article,
-        isCorrect: apiResponse.data!.isCorrect,
         audioUrl: apiResponse.data!.audioUrl,
         mode: apiResponse.data!.mode,
         stage: apiResponse.data!.stage,
+        options: options,
       );
     } catch (_) {
       return null;

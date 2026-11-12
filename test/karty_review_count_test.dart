@@ -32,10 +32,8 @@ class _Server extends Fake implements KartyService {
       data: GetKartyByScoreResponse(
         id,
         'W$id',
-        'W$id',
         'der',
         'u/$id.png',
-        true,
         0,
         0,
         stage: stage,

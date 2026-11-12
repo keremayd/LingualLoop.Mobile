@@ -10,6 +10,7 @@ abstract final class KartyBoostPalette {
   static const goldDepth = Color(0xFFB87E00);
   static const goldLight = Color(0xFFFFF0A3);
   static const white = Color(0xFFE9EEF5);
-  static const empty = Color(0xFF163258);
-  static const emptyDepth = Color(0xFF0B2143);
+  /// Boş şimşek kartın lacivert yüzüne oyulmuş koyu bir yuva; dolum mavi.
+  static const empty = Color(0xFF07182F);
+  static const emptyDepth = Color(0xFF07182F);
 }

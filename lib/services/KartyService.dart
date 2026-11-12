@@ -160,8 +160,8 @@ class KartyService {
     );
   }
 
-  /// Tanışma kartındaki "Anladım" onayı. Bundan sonra o kelime yazım sorusu
-  /// olarak gelmeye başlar.
+  /// Tanışma kartındaki "Anladım" onayı. Bundan sonra o kelime soru olarak
+  /// gelmeye başlar.
   Future<void> recordKartyIntroduction(int kartyId) async {
     final token = await _storage.read(key: 'accessToken');
     final userId = await _storage.read(key: 'userId');

@@ -52,6 +52,9 @@ class _KartyFeedbackWordState extends State<KartyFeedbackWord>
     );
     widget.isCorrectActive.addListener(_handleCorrectState);
     widget.isWrongActive.addListener(_handleWrongState);
+    // Dinleme sorusunda kelime cevapla birlikte belirir: sonucu kaçırmasın.
+    if (widget.isCorrectActive.value) _correctController.forward(from: 0);
+    if (widget.isWrongActive.value) _wrongController.forward(from: 0);
   }
 
   void _handleCorrectState() {
@@ -122,7 +125,7 @@ class _KartyFeedbackWordState extends State<KartyFeedbackWord>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (widget.article.trim().isNotEmpty) ...[
-                  _KartyArticleBadge(
+                  KartyArticleBadge(
                     article: widget.article,
                     scale: widget.scale,
                   ),
@@ -174,8 +177,9 @@ class _KartyFeedbackWordState extends State<KartyFeedbackWord>
 }
 
 /// Approved article pill: 4.6 cqw type, 1.8/2.3 cqw padding, 1 cqw depth.
-class _KartyArticleBadge extends StatelessWidget {
-  const _KartyArticleBadge({
+class KartyArticleBadge extends StatelessWidget {
+  const KartyArticleBadge({
+    super.key,
     required this.article,
     required this.scale,
   });
@@ -185,9 +189,12 @@ class _KartyArticleBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (face, base) = _tonesFor(article);
+    final (face, base) = kartyArticleTones(article);
+    final unknown = article.trim() == kartyUnknownArticle;
 
     return Container(
+      constraints: BoxConstraints(minWidth: unknown ? 88 * scale : 0),
+      alignment: unknown ? Alignment.center : null,
       padding: EdgeInsets.symmetric(
           horizontal: 17.25 * scale, vertical: 13.5 * scale),
       decoration: BoxDecoration(
@@ -197,7 +204,7 @@ class _KartyArticleBadge extends StatelessWidget {
       ),
       child: Text(article.trim(),
           style: TextStyle(
-            color: Colors.white,
+            color: unknown ? const Color(0xFF8FA0B5) : Colors.white,
             fontSize: 34.5 * scale,
             fontWeight: AppTypography.label,
             fontFamily: AppTypography.family,
@@ -205,19 +212,23 @@ class _KartyArticleBadge extends StatelessWidget {
           )),
     );
   }
+}
 
-  /// Yüz ve taban tonları; pusuladaki değerlerin birebir aynısı
-  /// (`article_practice_screen.dart`).
-  (Color, Color) _tonesFor(String article) {
-    return switch (article.trim().toLowerCase()) {
-      'der' => (const Color(0xFF1CB1F5), const Color(0xFF1B84B5)),
-      'die' => (const Color(0xFFF52A2A), const Color(0xFFAA1C1C)),
-      'das' => (const Color(0xFFFFB000), const Color(0xFFC97800)),
-      // Beyaz yüz + beyaz metin okunmaz; bilinmeyen artikel sönük griye
-      // düşüyor.
-      _ => (const Color(0xFF8FA0B5), const Color(0xFF5A6B80)),
-    };
-  }
+/// Artikel sorusunda henüz cevaplanmamış hapın yazısı.
+const kartyUnknownArticle = '?';
+
+/// Yüz ve taban tonları; pusuladaki değerlerin birebir aynısı
+/// (`article_practice_screen.dart`).
+(Color, Color) kartyArticleTones(String article) {
+  return switch (article.trim().toLowerCase()) {
+    'der' => (const Color(0xFF1CB1F5), const Color(0xFF1B84B5)),
+    'die' => (const Color(0xFFF52A2A), const Color(0xFFAA1C1C)),
+    'das' => (const Color(0xFFFFB000), const Color(0xFFC97800)),
+    kartyUnknownArticle => (const Color(0xFF163258), const Color(0xFF0B2143)),
+    // Beyaz yüz + beyaz metin okunmaz; bilinmeyen artikel sönük griye
+    // düşüyor.
+    _ => (const Color(0xFF8FA0B5), const Color(0xFF5A6B80)),
+  };
 }
 
 class KartyCardFeedbackEffect extends StatefulWidget {
@@ -372,8 +383,7 @@ class _KartyCardFeedbackPainter extends CustomPainter {
     // halka ve parçacıklar. Hepsi birden "cezalandırıldın" diyordu.
     //
     // Kalanlar: kısa bir "hayır" jesti, çerçevede hafif kızarma ve kenarda
-    // çok sönük bir kırmızı iz. Bilgilendiren kısım — doğru yazımın
-    // yukarıda belirmesi — zaten ayrı bir katman ve o dokunulmadı.
+    // çok sönük bir kırmızı iz. Doğru cevabı sorunun kendisi gösteriyor.
   }
 
   @override

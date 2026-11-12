@@ -123,10 +123,29 @@ class PronunciationService {
   bool _canPlay(int version) =>
       !_disposed && !isMuted.value && version == _requestVersion;
 
+  /// Dinleme sorusundaki salyangoz düğmesinin hızı.
+  static const slowSpeed = 0.7;
+
+  /// Oynatıcıya en son verilen hız. Normal çalmada oynatıcıya her seferinde
+  /// hız komutu gitmesin diye burada tutuluyor; yalnız değişince söylenir.
+  double _speed = 1;
+
   /// The saved preference is loaded before the first sound. A generation
   /// check after every await invalidates queued speech on mute or navigation,
   /// including a second request for the very same URL.
-  Future<void> play(String? url) async {
+  Future<void> play(String? url) => _play(url, speed: 1);
+
+  /// Aynı kelimeyi yavaş çalar (dinleme sorusundaki salyangoz düğmesi).
+  Future<void> playSlowly(String? url) => _play(url, speed: slowSpeed);
+
+  /// Çalan sesin hıza göre süresi; dinleme kartındaki çubuklar bu sürede
+  /// dolar. Kaynak yüklenmediyse `null`.
+  Duration? get playbackLength {
+    final duration = _player.duration;
+    return duration == null ? null : duration * (1 / _speed);
+  }
+
+  Future<void> _play(String? url, {required double speed}) async {
     if (_disposed || url == null || url.isEmpty) return;
     final version = ++_requestVersion;
     try {
@@ -148,6 +167,11 @@ class PronunciationService {
         await _player.seek(Duration.zero);
       }
       if (!_canPlay(version)) return;
+      if (_speed != speed) {
+        await _player.setSpeed(speed);
+        _speed = speed;
+        if (!_canPlay(version)) return;
+      }
       await _player.play();
     } catch (error) {
       if (version == _requestVersion) _loadedUrl = null;

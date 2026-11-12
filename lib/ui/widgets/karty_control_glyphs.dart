@@ -1,6 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
-/// Uygulamanın kontrol glifleri: onay, ret, duraklat, oynat ve geri.
+/// Uygulamanın kontrol glifleri: onay, ret, duraklat, oynat, geri ve yavaş
+/// çalma (salyangoz).
 ///
 /// Bunlar §2.5'teki "chunky sticker" ikonları **değil**. O reçete üç renkli,
 /// kalınlık bandı olan **illüstrasyon** simgeleri için (alev, kitap, güneş);
@@ -14,7 +17,7 @@ import 'package:flutter/material.dart';
 /// hâller için ikinci bir dosya gerekmez.
 ///
 /// Hepsi 100 birimlik kutuda tanımlıdır (§2.5'in bu kısmı ortak).
-enum KartyControlGlyph { check, cross, pause, play, back }
+enum KartyControlGlyph { check, cross, pause, play, back, slow }
 
 class KartyControlMark extends StatelessWidget {
   const KartyControlMark({
@@ -66,6 +69,8 @@ class _ControlGlyphPainter extends CustomPainter {
           Offset(48 * u, 82 * u),
         ]);
         _stroke(canvas, u, [Offset(18 * u, 50 * u), Offset(84 * u, 50 * u)]);
+      case KartyControlGlyph.slow:
+        _snail(canvas, size, u);
       case KartyControlGlyph.play:
         // Üçgen de yuvarlatılmış: aynı yolu hem doldur hem konturla.
         final path = Path()
@@ -100,6 +105,60 @@ class _ControlGlyphPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round,
     );
+  }
+
+  /// Yavaş çalma: salyangoz. Düğmenin üstüne "YAVAŞ" yazmak kaba bulundu
+  /// (kullanıcı, 11 Kas 2026); kaplumbağa da çizildi ama gerçek boyda sarmal
+  /// kabuk daha net okunuyor. Ayrıntılar boşlukla çizilir, ikinci renk yok.
+  void _snail(Canvas canvas, Size size, double u) {
+    canvas.saveLayer(Offset.zero & size, Paint());
+    final fill = Paint()..color = color;
+    Paint stroke(double width) => Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = width
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final clear = Paint()
+      ..blendMode = BlendMode.clear
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    // Ayak, baş ve göz sapları.
+    final foot = Path()
+      ..addRRect(RRect.fromLTRBR(
+          8 * u, 72 * u, 90 * u, 84 * u, Radius.circular(6 * u)));
+    canvas.drawPath(foot, fill);
+    canvas.drawPath(foot, stroke(6 * u));
+    canvas.drawLine(
+        Offset(74 * u, 78 * u), Offset(84 * u, 60 * u), stroke(16 * u));
+    canvas.drawLine(
+        Offset(82 * u, 56 * u), Offset(77 * u, 38 * u), stroke(6 * u));
+    canvas.drawLine(
+        Offset(88 * u, 56 * u), Offset(94 * u, 39 * u), stroke(6 * u));
+    canvas.drawCircle(Offset(77 * u, 36 * u), 5 * u, fill);
+    canvas.drawCircle(Offset(94 * u, 37 * u), 5 * u, fill);
+
+    // Kabuk; sarmal ve ayakla arası boşluk.
+    const center = Offset(42, 50);
+    canvas.drawCircle(center * u, 28 * u, fill);
+    final spiral = Path();
+    const turns = 1.8;
+    for (var i = 0; i <= 80; i++) {
+      final t = i / 80;
+      final angle = -math.pi / 2 + t * turns * 2 * math.pi;
+      final radius = (3 + 18 * t) * u;
+      final point = center * u +
+          Offset(radius * math.cos(angle), radius * math.sin(angle));
+      i == 0
+          ? spiral.moveTo(point.dx, point.dy)
+          : spiral.lineTo(point.dx, point.dy);
+    }
+    canvas.drawPath(spiral, clear..strokeWidth = 5 * u);
+    canvas.drawArc(Rect.fromCircle(center: center * u, radius: 30 * u),
+        math.pi * .18, math.pi * .64, false, clear..strokeWidth = 4 * u);
+    canvas.restore();
   }
 
   void _bar(Canvas canvas, double u, double left) {

@@ -28,7 +28,9 @@ class KartyTimeBar extends StatefulWidget {
 
 class _KartyTimeBarState extends State<KartyTimeBar> {
   static const _progressColor = Color(0xFF93D334);
-  static const _progressTrackColor = Color(0xFFF4F6FB);
+  // Boş yuva patikadaki boş taşların laciverti; beyaz yuva kartlar
+  // lacivertleşince ekranın tek beyaz şeridi olarak kalıyordu.
+  static const _progressTrackColor = Color(0xFF163258);
 
   double _progress = 0;
   Timer? _timer;

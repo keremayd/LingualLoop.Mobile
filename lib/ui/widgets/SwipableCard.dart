@@ -1,6 +1,7 @@
-import 'learning_card_gradient.dart';
 import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/karty_card_rim.dart';
+import 'package:lingualloop/ui/widgets/app_shape_style.dart';
+import 'package:lingualloop/ui/widgets/karty_card_material.dart';
+import 'package:lingualloop/ui/widgets/surface_gloss.dart';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -22,8 +23,9 @@ class SwipableCard extends StatefulWidget {
   /// Kelimenin telaffuzu. `null` ise buton çizilmiyor — sesi üretilmemiş
   /// kartta ölü kontrol bırakmıyoruz.
   final VoidCallback? onPronounce;
-  final Offset position;
-  final double rotation;
+
+  /// Kelime satırının yerine geçen başlık (artikel boşluğu, harf yuvaları).
+  final Widget? title;
   final bool showRestartState;
   final bool isAdvancingDeck;
   final bool boostEnabled;
@@ -39,8 +41,6 @@ class SwipableCard extends StatefulWidget {
   final VoidCallback onBoostTap;
   final ValueNotifier<bool> isTrueAnswerBlurActive;
   final ValueNotifier<bool> isFalseAnswerBlurActive;
-  final Function(DragUpdateDetails) onPanUpdate;
-  final Function(DragEndDetails) onPanEnd;
 
   SwipableCard({
     Key? key,
@@ -48,8 +48,7 @@ class SwipableCard extends StatefulWidget {
     this.layout,
     this.showInlineRestartAction = true,
     this.onPronounce,
-    required this.position,
-    required this.rotation,
+    this.title,
     required this.showRestartState,
     required this.isAdvancingDeck,
     required this.boostEnabled,
@@ -63,8 +62,6 @@ class SwipableCard extends StatefulWidget {
     required this.boostProgress,
     required this.onRestart,
     required this.onBoostTap,
-    required this.onPanUpdate,
-    required this.onPanEnd,
     required this.isTrueAnswerBlurActive,
     required this.isFalseAnswerBlurActive,
   }) : super(key: key);
@@ -143,7 +140,7 @@ class _SwipableCardState extends State<SwipableCard>
       // Yanlış cevabın **tek** kart hareketi: kısa "hayır" jesti.
       //
       // Çerçeveyi kızartmak da denendi ve kaldırıldı: o, kartın **kendi
-      // malzemesini** değiştiriyor — beyaz çerçeve + gradyan yüz kartın
+      // malzemesini** değiştiriyor — lacivert yüz ve kalınlık bandı kartın
       // kimliği. Yanlış olan kart değil, verilen cevap; geri bildirim
       // kartın **dışındaki** katmana ait (`KartyCardFeedbackEffect`).
       // Üstelik ikisi neredeyse aynı yerde göründüğü için ayırt
@@ -193,11 +190,9 @@ class _SwipableCardState extends State<SwipableCard>
     final titleGap = widget.layout?.titleToCardGap ?? 120 * scale;
     final borderWidth = widget.layout?.borderWidth ?? 28 * scale;
     final borderRadius = BorderRadius.circular(52.5 * scale);
-    final innerBorderRadius = BorderRadius.circular(29.25 * scale);
+    final depth = KartyCardMaterial.depth * scale;
     const deckAnimationDuration = Duration(milliseconds: 280);
-    final innerWidth = cardWidth - 2 * borderWidth;
     final innerHeight = cardHeight - 2 * borderWidth;
-    final cardGradient = learningCardGradient(Size(innerWidth, innerHeight));
     double layerWidth(int level) {
       if (level == 0) {
         return cardWidth;
@@ -206,419 +201,310 @@ class _SwipableCardState extends State<SwipableCard>
       return cardWidth * (1 - .06 * level);
     }
 
-    return GestureDetector(
-      onPanUpdate: widget.onPanUpdate,
-      onPanEnd: widget.onPanEnd,
-      child: SizedBox(
-        width: 750 * scale,
-        height: titleGap + cardHeight + layerOffset * 2,
-        child: Stack(
-          alignment: Alignment.topCenter,
-          clipBehavior: Clip.none,
-          children: [
-            ValueListenableBuilder<bool>(
-              valueListenable: widget.isFalseAnswerBlurActive,
-              builder: (context, isFalseActive, _) {
-                return Positioned(
-                  top: isFalseActive ? -58 * scale : -34 * scale,
-                  child: AnimatedOpacity(
-                    opacity: isFalseActive ? 1 : 0,
-                    duration: const Duration(milliseconds: 400),
-                    curve: Curves.easeOut,
-                    child: AnimatedSlide(
-                      offset:
-                          isFalseActive ? Offset.zero : const Offset(0, 0.7),
-                      duration: const Duration(milliseconds: 400),
-                      curve: Curves.easeOut,
-                      child: _KartyWordTitle(
-                        text: widget.karty.correctText,
-                        scale: scale,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-            Positioned(
-              top: 0,
-              left: 30 * scale,
-              right: 30 * scale,
-              child: KartyFeedbackWord(
-                article: widget.karty.article,
-                text: widget.karty.questionText,
-                scale: scale,
-                isCorrectActive: widget.isTrueAnswerBlurActive,
-                isWrongActive: widget.isFalseAnswerBlurActive,
-                onPronounce: widget.onPronounce,
-              ),
-            ),
-            Positioned(
-              top: titleGap,
-              child: SizedBox(
-                width: cardWidth,
-                height: cardHeight + (layerOffset * 2),
-                child: Stack(
-                  alignment: Alignment.topCenter,
-                  clipBehavior: Clip.none,
-                  children: [
-                    for (var i = 2; i >= 1; i--)
-                      AnimatedPositioned(
-                        duration: deckAnimationDuration,
-                        curve: Curves.easeOutCubic,
-                        top: widget.isAdvancingDeck
-                            ? layerOffset * (i - 1)
-                            : layerOffset * i,
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            AnimatedContainer(
-                              duration: deckAnimationDuration,
-                              curve: Curves.easeOutCubic,
-                              width: widget.isAdvancingDeck
-                                  ? layerWidth(i - 1)
-                                  : layerWidth(i),
-                              height: cardHeight,
-                              decoration: BoxDecoration(
-                                color: i == 2
-                                    ? const Color(0xFFC2C6CD)
-                                    : const Color(0xFFD8DCE4),
-                                borderRadius: borderRadius,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: i == 2
-                                        ? const Color(0xFF8D959E)
-                                        : const Color(0xFF9DA5AF),
-                                    offset: Offset(0, 7.5 * scale),
-                                  )
-                                ],
-                              ),
-                              clipBehavior: Clip.antiAlias,
-                              child: Padding(
-                                padding: EdgeInsets.all(borderWidth),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: cardGradient,
-                                    borderRadius: innerBorderRadius,
-                                    border: Border.all(
-                                      color: const Color(0x25041227),
-                                      width: 3.75 * scale,
-                                    ),
-                                  ),
-                                  clipBehavior: Clip.antiAlias,
-                                ),
-                              ),
-                            ),
-                            // Aynı köşe çifti arka kartta da yaşar. Ön kart
-                            // kayınca bu çift yeni kartla birlikte öne gelir;
-                            // kullanıcının sevdiği stack/continuity buradan
-                            // doğar. i=2'ye kopyalanmaz, aksi hâlde köşeler
-                            // ikon yığınına dönüşür.
-                            if (i == 1 && widget.boostEnabled)
-                              Positioned.fill(
-                                child: IgnorePointer(
-                                  child: _boostEdgeMeter(
-                                    scale: scale,
-                                    interactive: false,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
+    return SizedBox(
+      width: 750 * scale,
+      height: titleGap + cardHeight + layerOffset * 2,
+      child: Stack(
+        alignment: Alignment.topCenter,
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            top: 0,
+            left: 30 * scale,
+            right: 30 * scale,
+            child: widget.title ??
+                KartyFeedbackWord(
+                  article: widget.karty.article,
+                  text: widget.karty.correctText,
+                  scale: scale,
+                  isCorrectActive: widget.isTrueAnswerBlurActive,
+                  isWrongActive: widget.isFalseAnswerBlurActive,
+                  onPronounce: widget.onPronounce,
+                ),
+          ),
+          Positioned(
+            top: titleGap,
+            child: SizedBox(
+              width: cardWidth,
+              height: cardHeight + (layerOffset * 2),
+              child: Stack(
+                alignment: Alignment.topCenter,
+                clipBehavior: Clip.none,
+                children: [
+                  for (var i = 2; i >= 1; i--)
                     AnimatedPositioned(
                       duration: deckAnimationDuration,
                       curve: Curves.easeOutCubic,
-                      top: widget.isAdvancingDeck ? 0 : layerOffset,
-                      left: widget.isAdvancingDeck
-                          ? 0
-                          : (cardWidth - layerWidth(1)) / 2,
-                      width: widget.isAdvancingDeck ? cardWidth : layerWidth(1),
-                      height: cardHeight,
-                      child: KartyCardFeedbackEffect(
-                        scale: scale,
-                        isWrongActive: widget.isFalseAnswerBlurActive,
-                      ),
-                    ),
-                    AnimatedBuilder(
-                      animation: Listenable.merge([
-                        _scaleController,
-                        _shakeController,
-                      ]),
-                      // ## `child` her karede yeniden kurulmaz — renk
-                      // ## bu yüzden hiç animasyon olmuyordu
-                      //
-                      // `AnimatedBuilder`'ın `child` parametresi **bir kez**
-                      // kurulup builder'a olduğu gibi geçiliyor; bu bilinçli
-                      // bir eniyileme. Ama kartın çerçeve rengi
-                      // (`_colorAnimation.value`) o `child`'ın içinde
-                      // okunuyordu, yani değeri **build anında donuyordu**.
-                      // Yanlış cevabın kızarması pratikte hiç görünmüyordu;
-                      // yalnız başka bir sebeple yeniden build olursa
-                      // rastgele beliriyordu.
-                      //
-                      // Çözüm: renge bağlı olan `Container` builder'ın
-                      // **içine** taşındı. Ağır olan iç yığın (`child`) hâlâ
-                      // dışarıda kalıyor, yani eniyileme korunuyor —
-                      // yalnızca dekorasyon her karede yeniden hesaplanıyor.
-                      builder: (context, child) {
-                        return Transform.translate(
-                          offset: widget.position +
-                              Offset(_shakeAnimation.value, 0),
-                          child: Transform.scale(
-                            scale: _scaleAnimation.value,
-                            child: Transform.rotate(
-                              angle: widget.rotation,
-                              child: ValueListenableBuilder<bool>(
-                                valueListenable: widget.isTrueAnswerBlurActive,
-                                builder: (context, isCorrect, _) {
-                                  return Stack(
-                                    clipBehavior: Clip.none,
-                                    children: [
-                                      AnimatedContainer(
-                                        duration:
-                                            const Duration(milliseconds: 180),
-                                        curve: Curves.easeOut,
-                                        width: cardWidth,
-                                        height: cardHeight,
-                                        decoration: BoxDecoration(
-                                          // Doğru cevap kartın malzemesini
-                                          // boyamaz; uygulamadaki butonlar gibi
-                                          // yalnız alt kalınlık bandı yeşile
-                                          // döner. Bu yerel ve tek bakışta
-                                          // anlaşılan onay sinyalidir.
-                                          color: Colors.white,
-                                          borderRadius: borderRadius,
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black
-                                                  .withValues(alpha: .267),
-                                              blurRadius: 22.5 * scale,
-                                              offset: Offset(0, 18.75 * scale),
-                                            ),
-                                            BoxShadow(
-                                              color: isCorrect
-                                                  ? const Color(0xFF628C22)
-                                                  : const Color(0xFFBDC5D0),
-                                              offset: Offset(0, 7.5 * scale),
-                                            ),
-                                          ],
-                                        ),
-                                        clipBehavior: Clip.antiAlias,
-                                        child: CustomPaint(
-                                          painter: KartyCardRimPainter(
-                                              radius: 52.5 * scale),
-                                          child: child,
-                                        ),
-                                      ),
-                                      // Köşe şimşekleri kartın kırpılan yüz
-                                      // katmanının dışında kalır. Böylece
-                                      // hacimli kenarları ve arka karttaki
-                                      // kopyaları kesilmeden stacklenir.
-                                      if (widget.boostEnabled &&
-                                          !widget.showRestartState)
-                                        Positioned.fill(
-                                          child: _boostEdgeMeter(
-                                            scale: scale,
-                                            interactive: true,
-                                          ),
-                                        ),
-                                    ],
-                                  );
-                                },
-                              ),
+                      top: widget.isAdvancingDeck
+                          ? layerOffset * (i - 1)
+                          : layerOffset * i,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          // Sıradaki kartlar ön kartla aynı: her kartın
+                          // açık yüzü öndekinin koyu kalınlığından ayrılır.
+                          AnimatedContainer(
+                            duration: deckAnimationDuration,
+                            curve: Curves.easeOutCubic,
+                            width: widget.isAdvancingDeck
+                                ? layerWidth(i - 1)
+                                : layerWidth(i),
+                            height: cardHeight,
+                            decoration: BoxDecoration(
+                              color: KartyCardMaterial.face,
+                              borderRadius: borderRadius,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: KartyCardMaterial.base,
+                                  offset: Offset(0, depth),
+                                )
+                              ],
                             ),
                           ),
-                        );
-                      },
-                      // Ağır iç yığın: bir kez kuruluyor, her karede
-                      // yeniden çizilmiyor.
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.all(borderWidth),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: cardGradient,
-                                borderRadius: innerBorderRadius,
-                                border: Border.all(
-                                  color: const Color(0x25041227),
-                                  width: 3.75 * scale,
+                          // Aynı köşe çifti arka kartta da yaşar. Ön kart
+                          // kayınca bu çift yeni kartla birlikte öne gelir;
+                          // kullanıcının sevdiği stack/continuity buradan
+                          // doğar. i=2'ye kopyalanmaz, aksi hâlde köşeler
+                          // ikon yığınına dönüşür.
+                          if (i == 1 && widget.boostEnabled)
+                            Positioned.fill(
+                              child: IgnorePointer(
+                                child: _boostEdgeMeter(
+                                  scale: scale,
+                                  interactive: false,
                                 ),
                               ),
-                              clipBehavior: Clip.antiAlias,
-                              child: Stack(
-                                children: [
-                                  // Zaman aşımında kart yüzü karartılır.
-                                  // Ayrı bir katman olarak duruyor çünkü
-                                  // karartma **kart yüzeyine** ait, üstteki
-                                  // bloğa değil; blokla birlikte çizilseydi
-                                  // kartın kenarlarına kadar uzanamazdı.
-                                  Positioned.fill(
-                                    child: IgnorePointer(
-                                      child: AnimatedOpacity(
-                                        duration:
-                                            const Duration(milliseconds: 220),
-                                        opacity:
-                                            widget.showRestartState ? 1 : 0,
-                                        child: const ColoredBox(
-                                          color: Color(0xB8041227),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned.fill(
-                                    top: widget.showRestartState
-                                        ? 0
-                                        : innerHeight * .09,
-                                    bottom: widget.showRestartState
-                                        ? 0
-                                        : innerHeight * .10,
-                                    child: Center(
-                                        child: AnimatedSwitcher(
-                                      duration:
-                                          const Duration(milliseconds: 220),
-                                      switchInCurve: Curves.easeOut,
-                                      switchOutCurve: Curves.easeOut,
-                                      transitionBuilder: (child, animation) {
-                                        return FadeTransition(
-                                          opacity: animation,
-                                          child: ScaleTransition(
-                                            scale: Tween<double>(
-                                              begin: 0.94,
-                                              end: 1,
-                                            ).animate(animation),
-                                            child: child,
-                                          ),
-                                        );
-                                      },
-                                      child: widget.showRestartState
-                                          ? Column(
-                                              key: const ValueKey(
-                                                  'restart-block'),
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                HourglassMark(
-                                                    size: 150 * scale),
-                                                SizedBox(height: 26 * scale),
-                                                Text(
-                                                  'Süre doldu',
-                                                  style: TextStyle(
-                                                    color:
-                                                        const Color(0xFFE9EEF5),
-                                                    fontFamily: AppTypography
-                                                        .displayFamily,
-                                                    fontSize: 52.5 * scale,
-                                                    fontWeight:
-                                                        AppTypography.heading,
-                                                  ),
-                                                ),
-                                                if (widget
-                                                    .showInlineRestartAction) ...[
-                                                  SizedBox(height: 30 * scale),
-                                                  // Yeşil kullanılamaz: bu
-                                                  // ekranda yeşil "doğru
-                                                  // cevap" demek ve zaman
-                                                  // aşımı bir başarı değil.
-                                                  DepthPressableButton(
-                                                    text: 'TEKRAR DENE',
-                                                    width: 260 * scale,
-                                                    height: 86 * scale,
-                                                    radius: 24 * scale,
-                                                    shadowOffset: 10 * scale,
-                                                    backgroundColor:
-                                                        const Color(0xFF1CB1F5),
-                                                    shadowColor:
-                                                        const Color(0xFF1B84B5),
-                                                    fontSize: 26 * scale,
-                                                    fontWeight:
-                                                        AppTypography.action,
-                                                    onPressed: widget.onRestart,
-                                                  ),
-                                                ],
-                                              ],
-                                            )
-                                          : Image.file(
-                                              File(widget.karty.kartyUrl),
-                                              // Anahtar **sabit**: bu
-                                              // switcher'ın işi kart↔kart
-                                              // değil, görsel ↔ "süre
-                                              // doldu" hâli arasında
-                                              // geçiş yapmak.
-                                              //
-                                              // Anahtar karta özel
-                                              // olduğunda her kart
-                                              // değişimi bir geçiş
-                                              // tetikliyor ve eski görsel
-                                              // 220 ms solarak kalıyordu —
-                                              // "yeni karta geçerken eski
-                                              // kartın resmi bir an
-                                              // görünüyor" belirtisi
-                                              // buydu.
-                                              key:
-                                                  const ValueKey('karty-image'),
-                                              fit: BoxFit.contain,
-                                              width: (cardWidth -
-                                                      2 * borderWidth) *
-                                                  .92,
-                                              height: innerHeight * .81,
-                                            ),
-                                    )),
-                                  ),
-                                ],
-                              ),
                             ),
-                          ),
                         ],
                       ),
                     ),
-                  ],
-                ),
+                  AnimatedPositioned(
+                    duration: deckAnimationDuration,
+                    curve: Curves.easeOutCubic,
+                    top: widget.isAdvancingDeck ? 0 : layerOffset,
+                    left: widget.isAdvancingDeck
+                        ? 0
+                        : (cardWidth - layerWidth(1)) / 2,
+                    width: widget.isAdvancingDeck ? cardWidth : layerWidth(1),
+                    height: cardHeight,
+                    child: KartyCardFeedbackEffect(
+                      scale: scale,
+                      isWrongActive: widget.isFalseAnswerBlurActive,
+                    ),
+                  ),
+                  AnimatedBuilder(
+                    animation: Listenable.merge([
+                      _scaleController,
+                      _shakeController,
+                    ]),
+                    // ## `child` her karede yeniden kurulmaz — renk
+                    // ## bu yüzden hiç animasyon olmuyordu
+                    //
+                    // `AnimatedBuilder`'ın `child` parametresi **bir kez**
+                    // kurulup builder'a olduğu gibi geçiliyor; bu bilinçli
+                    // bir eniyileme. Ama kartın çerçeve rengi
+                    // (`_colorAnimation.value`) o `child`'ın içinde
+                    // okunuyordu, yani değeri **build anında donuyordu**.
+                    // Yanlış cevabın kızarması pratikte hiç görünmüyordu;
+                    // yalnız başka bir sebeple yeniden build olursa
+                    // rastgele beliriyordu.
+                    //
+                    // Çözüm: renge bağlı olan `Container` builder'ın
+                    // **içine** taşındı. Ağır olan iç yığın (`child`) hâlâ
+                    // dışarıda kalıyor, yani eniyileme korunuyor —
+                    // yalnızca dekorasyon her karede yeniden hesaplanıyor.
+                    builder: (context, child) {
+                      return Transform.translate(
+                        offset: Offset(_shakeAnimation.value, 0),
+                        child: Transform.scale(
+                          scale: _scaleAnimation.value,
+                          child: ValueListenableBuilder<bool>(
+                            valueListenable: widget.isTrueAnswerBlurActive,
+                            builder: (context, isCorrect, _) {
+                              return Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  AnimatedContainer(
+                                    duration: const Duration(milliseconds: 180),
+                                    curve: Curves.easeOut,
+                                    width: cardWidth,
+                                    height: cardHeight,
+                                    decoration: BoxDecoration(
+                                      // Doğru cevap kartın malzemesini
+                                      // boyamaz; uygulamadaki butonlar gibi
+                                      // yalnız alt kalınlık bandı yeşile
+                                      // döner. Bu yerel ve tek bakışta
+                                      // anlaşılan onay sinyalidir.
+                                      color: KartyCardMaterial.face,
+                                      borderRadius: borderRadius,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: isCorrect
+                                              ? KartyCardMaterial.correctBase
+                                              : KartyCardMaterial.base,
+                                          offset: Offset(0, depth),
+                                        ),
+                                      ],
+                                    ),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: CustomPaint(
+                                      painter: TopRimPainter(
+                                        color: KartyCardMaterial.rim,
+                                        radius: 52.5 * scale,
+                                        strokeWidth:
+                                            AppShapeStyle.outline(3 * scale),
+                                      ),
+                                      child: child,
+                                    ),
+                                  ),
+                                  // Köşe şimşekleri kartın kırpılan yüz
+                                  // katmanının dışında kalır. Böylece
+                                  // hacimli kenarları ve arka karttaki
+                                  // kopyaları kesilmeden stacklenir.
+                                  if (widget.boostEnabled &&
+                                      !widget.showRestartState)
+                                    Positioned.fill(
+                                      child: _boostEdgeMeter(
+                                        scale: scale,
+                                        interactive: true,
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                    // Ağır iç yığın: bir kez kuruluyor, her karede
+                    // yeniden çizilmiyor.
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // Zaman aşımında kart yüzü karartılır.
+                        // Ayrı bir katman olarak duruyor çünkü
+                        // karartma **kart yüzeyine** ait, üstteki
+                        // bloğa değil; blokla birlikte çizilseydi
+                        // kartın kenarlarına kadar uzanamazdı.
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: AnimatedOpacity(
+                              duration: const Duration(milliseconds: 220),
+                              opacity: widget.showRestartState ? 1 : 0,
+                              child: const ColoredBox(
+                                color: Color(0xB8041227),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.all(borderWidth),
+                          child: Stack(
+                            children: [
+                              Positioned.fill(
+                                top: widget.showRestartState
+                                    ? 0
+                                    : innerHeight * .09,
+                                bottom: widget.showRestartState
+                                    ? 0
+                                    : innerHeight * .10,
+                                child: Center(
+                                    child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 220),
+                                  switchInCurve: Curves.easeOut,
+                                  switchOutCurve: Curves.easeOut,
+                                  transitionBuilder: (child, animation) {
+                                    return FadeTransition(
+                                      opacity: animation,
+                                      child: ScaleTransition(
+                                        scale: Tween<double>(
+                                          begin: 0.94,
+                                          end: 1,
+                                        ).animate(animation),
+                                        child: child,
+                                      ),
+                                    );
+                                  },
+                                  child: widget.showRestartState
+                                      ? Column(
+                                          key: const ValueKey('restart-block'),
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            HourglassMark(size: 150 * scale),
+                                            SizedBox(height: 26 * scale),
+                                            Text(
+                                              'Süre doldu',
+                                              style: TextStyle(
+                                                color: const Color(0xFFE9EEF5),
+                                                fontFamily:
+                                                    AppTypography.displayFamily,
+                                                fontSize: 52.5 * scale,
+                                                fontWeight:
+                                                    AppTypography.heading,
+                                              ),
+                                            ),
+                                            if (widget
+                                                .showInlineRestartAction) ...[
+                                              SizedBox(height: 30 * scale),
+                                              // Yeşil kullanılamaz: bu
+                                              // ekranda yeşil "doğru
+                                              // cevap" demek ve zaman
+                                              // aşımı bir başarı değil.
+                                              DepthPressableButton(
+                                                text: 'TEKRAR DENE',
+                                                width: 260 * scale,
+                                                height: 86 * scale,
+                                                radius: 24 * scale,
+                                                shadowOffset: 10 * scale,
+                                                backgroundColor:
+                                                    const Color(0xFF1CB1F5),
+                                                shadowColor:
+                                                    const Color(0xFF1B84B5),
+                                                fontSize: 26 * scale,
+                                                fontWeight:
+                                                    AppTypography.action,
+                                                onPressed: widget.onRestart,
+                                              ),
+                                            ],
+                                          ],
+                                        )
+                                      : Image.file(
+                                          File(widget.karty.kartyUrl),
+                                          // Anahtar **sabit**: bu
+                                          // switcher'ın işi kart↔kart
+                                          // değil, görsel ↔ "süre
+                                          // doldu" hâli arasında
+                                          // geçiş yapmak.
+                                          //
+                                          // Anahtar karta özel
+                                          // olduğunda her kart
+                                          // değişimi bir geçiş
+                                          // tetikliyor ve eski görsel
+                                          // 220 ms solarak kalıyordu —
+                                          // "yeni karta geçerken eski
+                                          // kartın resmi bir an
+                                          // görünüyor" belirtisi
+                                          // buydu.
+                                          key: const ValueKey('karty-image'),
+                                          fit: BoxFit.contain,
+                                          width: (cardWidth - 2 * borderWidth) *
+                                              .92,
+                                          height: innerHeight * .81,
+                                        ),
+                                )),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Yanlış cevaptan sonra beliren **doğru yazım** ifşası.
-///
-/// Artikel hapı **bilerek yok**: bu ekranda yanlış olan şey artikel değil,
-/// kelimenin yazımı. Hap burada da dursaydı kullanıcı hatasını ararken
-/// gözünü önce artikele götürürdü — ifşanın tek işi doğru yazımı
-/// göstermek. Hap, sorunun kendisiyle birlikte yukarıda zaten duruyor
-/// (`KartyFeedbackWord`).
-class _KartyWordTitle extends StatelessWidget {
-  const _KartyWordTitle({
-    required this.text,
-    required this.scale,
-  });
-
-  final String text;
-  final double scale;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          text,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 54 * scale,
-            fontWeight: AppTypography.word,
-            fontFamily: AppTypography.family,
-            height: 1,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

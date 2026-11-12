@@ -143,6 +143,23 @@ void main() {
     await audio.dispose();
   });
 
+  test('Yavaş çalma hızı düşürür, sonraki normal çalma geri alır', () async {
+    final player = _Player();
+    final audio = service(player);
+    await audio.play('word.mp3');
+    expect(player.speeds, isEmpty, reason: 'normal çalma hız komutu vermez');
+
+    await audio.playSlowly('word.mp3');
+    expect(player.speeds, [PronunciationService.slowSpeed]);
+    expect(audio.playbackLength,
+        const Duration(seconds: 1) * (1 / PronunciationService.slowSpeed));
+
+    await audio.play('word.mp3');
+    expect(player.speeds, [PronunciationService.slowSpeed, 1]);
+    expect(audio.playbackLength, const Duration(seconds: 1));
+    await audio.dispose();
+  });
+
   test('Sessizde sıraya giren ses açma dokunuşuyla başlamaz', () async {
     final player = _Player();
     final audio = service(player);
@@ -170,6 +187,13 @@ class _Player extends Fake implements AudioPlayer {
   int stops = 0;
   int pauses = 0;
   int seeks = 0;
+  final speeds = <double>[];
+
+  @override
+  Duration? get duration => const Duration(seconds: 1);
+
+  @override
+  Future<void> setSpeed(double speed) async => speeds.add(speed);
 
   @override
   bool get playing => _playing;

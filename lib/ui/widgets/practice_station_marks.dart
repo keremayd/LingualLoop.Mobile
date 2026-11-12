@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:lingualloop/ui/widgets/learning_card_gradient.dart';
 import 'package:lingualloop/ui/widgets/quest_icons.dart';
 
 /// Karty Yolu'nun yan duraklarının simgeleri: Artikel Pusulası ve Rövanş.
@@ -246,13 +247,6 @@ class _RevengeCardPainter extends CustomPainter {
   static const _rimLight = Color(0xFFFFFFFF);
   static const _rim = Color(0xFFF6EDE4);
   static const _rimDepth = Color(0xFFBCAB9E);
-  // Karty kartının yüzü (`learningCardGradient`).
-  static const _face = [
-    Color(0xFF68D73D),
-    Color(0xFF56BEEA),
-    Color(0xFFA647F0),
-    Color(0xFFFDC041),
-  ];
   static const _red = (Color(0xFFFF7A5C), Color(0xFFF52A2A), Color(0xFF9A1414));
   static const _green = (Color(0xFF93D334), Color(0xFF93D334), Color(0xFF628C22));
 
@@ -282,12 +276,7 @@ class _RevengeCardPainter extends CustomPainter {
         Rect.fromCenter(center: Offset.zero, width: 40 * u, height: 56 * u);
     canvas.drawRRect(
       RRect.fromRectAndRadius(faceRect, Radius.circular(6 * u)),
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: _face,
-        ).createShader(faceRect),
+      Paint()..shader = learningCardGradient.createShader(faceRect),
     );
     canvas.restore();
 

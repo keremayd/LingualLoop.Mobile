@@ -15,6 +15,7 @@ import 'package:lingualloop/ui/widgets/karty_league_score.dart';
 import 'package:lingualloop/ui/widgets/karty_play_surface.dart';
 import 'package:lingualloop/ui/widgets/karty_answer_actions.dart';
 import 'package:lingualloop/ui/widgets/karty_pause_overlay.dart';
+import 'package:lingualloop/ui/widgets/karty_question_parts.dart';
 import 'package:lingualloop/ui/widgets/karty_sound_button.dart';
 import 'package:lingualloop/ui/widgets/karty_time_bar.dart';
 import 'package:lingualloop/ui/widgets/karty_boost_activation_effect.dart';
@@ -65,7 +66,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 600));
       expect(find.text('×3'), findsNothing);
       expect(find.text('TEKRAR DENE'), findsOneWidget);
-      expect(find.text('DOĞRU'), findsNothing);
+      expect(find.byType(KartyArticleChoices), findsNothing);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
     });
@@ -363,7 +364,7 @@ class _ScreenState extends State<_Screen> {
                 data: MediaQuery.of(context).copyWith(
                     padding: const EdgeInsets.only(top: 62, bottom: 34)),
                 child: KartyPlaySurface(
-                  isIntroducing: widget.introducing,
+                  prompt: widget.introducing ? 'Yeni kelime' : null,
                   header: KartyTopBar(
                     scale: s,
                     duration: duration,
@@ -387,12 +388,8 @@ class _ScreenState extends State<_Screen> {
                     karty: Karty(
                         kartyId: 7,
                         kartyUrl: _imagePath,
-                        questionText: 'Koffer',
                         correctText: 'Koffer',
-                        article: 'der',
-                        isCorrect: true),
-                    position: Offset.zero,
-                    rotation: 0,
+                        article: 'der'),
                     showRestartState: widget.timeout,
                     isAdvancingDeck: false,
                     boostEnabled: !widget.introducing,
@@ -406,8 +403,6 @@ class _ScreenState extends State<_Screen> {
                     boostProgress: progress,
                     onRestart: () {},
                     onBoostTap: () {},
-                    onPanUpdate: (_) {},
-                    onPanEnd: (_) {},
                     isTrueAnswerBlurActive: correct,
                     isFalseAnswerBlurActive: wrong,
                   ),
@@ -415,8 +410,7 @@ class _ScreenState extends State<_Screen> {
                     scale: s,
                     isIntroducing: widget.introducing,
                     isTimedOut: widget.timeout,
-                    onWrong: () {},
-                    onCorrect: () {},
+                    answers: KartyArticleChoices(scale: s, onPick: (_) {}),
                     onContinue: () {},
                   ),
                   debugAction: widget.introducing || widget.timeout

@@ -26,7 +26,8 @@ class KartyPlaySurface extends StatelessWidget {
     required this.header,
     required this.cardBuilder,
     required this.actions,
-    this.isIntroducing = false,
+    this.prompt,
+    this.promptVisible = true,
     this.debugAction,
     this.reserveDebugSpace = kDebugMode,
     this.overlays = const [],
@@ -35,7 +36,12 @@ class KartyPlaySurface extends StatelessWidget {
   final Widget header;
   final Widget Function(KartyCardLayout layout) cardBuilder;
   final Widget actions;
-  final bool isIntroducing;
+
+  /// Kelimenin üstündeki kısa yönerge ("Yeni kelime", "Görseli bul"…).
+  final String? prompt;
+
+  /// Soru düzeni değişirken yönerge gövdeyle birlikte söner.
+  final bool promptVisible;
   final Widget? debugAction;
 
   /// Stable for the whole session: hiding the debug action must not resize
@@ -77,19 +83,23 @@ class KartyPlaySurface extends StatelessWidget {
             borderWidth: 23.25 * scale,
           );
           return Stack(clipBehavior: Clip.none, children: [
-            if (isIntroducing)
+            if (prompt != null)
               Positioned(
-                key: const ValueKey('karty-introduction-label'),
+                key: const ValueKey('karty-prompt-label'),
                 top: cardTop - 42 * scale,
                 left: 0,
                 right: 0,
-                child: Text('Yeni kelime',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        color: const Color(0xFF8FA0B5),
-                        fontFamily: AppTypography.family,
-                        fontSize: 26 * scale,
-                        fontWeight: AppTypography.caption)),
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: promptVisible ? 1 : 0,
+                  child: Text(prompt!,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: const Color(0xFF8FA0B5),
+                          fontFamily: AppTypography.family,
+                          fontSize: 26 * scale,
+                          fontWeight: AppTypography.caption)),
+                ),
               ),
             Positioned(
                 key: const ValueKey('karty-card-slot'),

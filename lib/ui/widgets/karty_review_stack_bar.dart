@@ -12,7 +12,8 @@ class KartyReviewStackBar extends StatelessWidget {
   });
 
   static const _fillColor = Color(0xFF93D334);
-  static const _trackColor = Color(0xFFF4F6FB);
+  // Süre çubuğuyla aynı yuva (patikadaki boş taşların laciverti).
+  static const _trackColor = Color(0xFF163258);
 
   final double width;
   final double height;
@@ -79,23 +80,54 @@ class KartyReviewStackBar extends StatelessWidget {
             ),
           ),
           if (segmentCount > 1)
-            ...List.generate(segmentCount - 1, (index) {
-              final left = width * ((index + 1) / segmentCount);
-              return Positioned(
-                left: left - 1,
-                top: height * 0.18,
-                bottom: height * 0.18,
-                child: Container(
-                  width: 2,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.72),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(
+                  painter: _SegmentDividerPainter(count: segmentCount),
                 ),
-              );
-            }),
+              ),
+            ),
         ],
       ),
     );
   }
+}
+
+/// Bölme çizgileri dolgunun yuvarlak ucuyla aynı biçimde: ")". Her yay,
+/// dolgu o sınırda bitseydi oluşacak uçla aynı merkezde; dolgu bir sınırda
+/// durduğunda yay ucun içinde onu tekrarlar ve bölüm tamamlanmış okunur.
+/// Düz çizgi ucun hemen içinde "sınırı henüz geçmedi" gibi duruyordu.
+class _SegmentDividerPainter extends CustomPainter {
+  const _SegmentDividerPainter({required this.count});
+
+  final int count;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final height = size.height;
+    // Eski düz çizginin üst ve alt payı.
+    final inset = height * 0.18;
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.72)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+    for (var index = 1; index < count; index++) {
+      final boundary = size.width * index / count;
+      canvas.drawArc(
+        Rect.fromCircle(
+          center: Offset(boundary - height / 2, height / 2),
+          radius: height / 2 - inset,
+        ),
+        -math.pi / 2,
+        math.pi,
+        false,
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SegmentDividerPainter oldDelegate) =>
+      oldDelegate.count != count;
 }

@@ -24,11 +24,16 @@ class KartyBoostEdgeMeter extends StatefulWidget {
     required this.onTap,
     this.isActivating = false,
     this.interactive = true,
+    this.boltScale = 1,
     this.topLeftAnchorKey,
     this.bottomRightAnchorKey,
   });
 
   final double scale;
+
+  /// Şimşeklerin ve köşe paylarının büyük karta göre oranı; yatay soru
+  /// kartında daha küçükler.
+  final double boltScale;
   final int charge;
   final int chargeGoal;
   final bool isReady;
@@ -95,6 +100,7 @@ class _KartyBoostEdgeMeterState extends State<KartyBoostEdgeMeter>
     return ValueListenableBuilder<double>(
       valueListenable: widget.boostProgress,
       builder: (context, remaining, child) {
+        final unit = widget.scale * widget.boltScale;
         final fill = widget.isActive
             ? remaining.clamp(0.0, 1.0)
             : widget.isReady || widget.isActivating
@@ -107,7 +113,7 @@ class _KartyBoostEdgeMeterState extends State<KartyBoostEdgeMeter>
           animation: _popController,
           builder: (context, child) {
             final bolt = _KartyLiquidBolt(
-              scale: widget.scale,
+              scale: unit,
               fill: fill,
               isEnergized: widget.isReady || widget.isActive,
               popScale: _popScale(),
@@ -124,23 +130,25 @@ class _KartyBoostEdgeMeterState extends State<KartyBoostEdgeMeter>
                     clipBehavior: Clip.none,
                     children: [
                       Positioned(
-                        left: 40 * widget.scale,
-                        top: 38 * widget.scale,
-                        child: SizedBox(
-                          key: widget.topLeftAnchorKey,
-                          child: bolt,
+                        left: 40 * unit,
+                        top: 38 * unit,
+                        // Sol üstteki yalnız gösterge: altındakine dokunulur.
+                        child: IgnorePointer(
+                          child: SizedBox(
+                            key: widget.topLeftAnchorKey,
+                            child: bolt,
+                          ),
                         ),
                       ),
                       Positioned(
                         // Dokunma alanı büyür; şimşeğin merkezi ve efekt
                         // bağlantısı dolumun bütün durumlarında sabit kalır.
-                        right: (40 - (142.5 - 127.5 * 0.74) / 2) * widget.scale,
-                        bottom:
-                            (38 - (142.5 - 127.5 * 1.055) / 2) * widget.scale,
+                        right: (40 - (142.5 - 127.5 * 0.74) / 2) * unit,
+                        bottom: (38 - (142.5 - 127.5 * 1.055) / 2) * unit,
                         child: KartyBoostButtonAffordance(
-                          scale: widget.scale,
-                          width: 142.5 * widget.scale,
-                          height: 142.5 * widget.scale,
+                          scale: unit,
+                          width: 142.5 * unit,
+                          height: 142.5 * unit,
                           isReady: widget.isReady &&
                               widget.interactive &&
                               !widget.isActivating,
@@ -148,7 +156,7 @@ class _KartyBoostEdgeMeterState extends State<KartyBoostEdgeMeter>
                           onTap: widget.onTap,
                           base: Center(
                             child: KartyBoostBoltMark(
-                              height: 127.5 * widget.scale,
+                              height: 127.5 * unit,
                               face: KartyBoostPalette.blueDepth,
                               depth: KartyBoostPalette.blueDepth,
                               highlight: 0,

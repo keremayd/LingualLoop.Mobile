@@ -102,8 +102,6 @@ void main() {
           child: KartyAnswerActions(
               scale: s,
               isIntroducing: true,
-              onWrong: () {},
-              onCorrect: () {},
               onContinue: () {})),
       Positioned(
           top: 100 * s,
