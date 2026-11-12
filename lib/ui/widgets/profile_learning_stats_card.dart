@@ -217,6 +217,60 @@ class ProfileGoalsCard extends StatelessWidget {
 ///
 /// Eskiden bunlar iki ayrı düzende çiziliyordu (üstteki üçlü dikey, alttaki
 /// ikili yatay) ve aynı ekranda iki istatistik dili doğuyordu.
+/// Profil kartlarının yüzeyi, içi boş: veri ilk kez inerken kartlar yerinde
+/// durur, içerik yerine iskelet blokları taşır (profil ekranının iskeleti).
+class ProfileSkeletonSurface extends StatelessWidget {
+  const ProfileSkeletonSurface({
+    super.key,
+    required this.child,
+    this.radius = 24,
+    this.depth = 6,
+  });
+
+  final Widget child;
+
+  /// Tasarım biriminde; seri kartı 28 / 7, diğerleri 24 / 6.
+  final double radius;
+  final double depth;
+
+  static const _backgroundColor = Color(0xFF041227);
+  static const _borderColor = Color(0xFF0B2143);
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = MediaQuery.sizeOf(context).width / 750;
+    final cornerRadius = AppShapeStyle.cardRadius(radius * scale);
+    return Container(
+      decoration: BoxDecoration(
+        color: _backgroundColor,
+        borderRadius: BorderRadius.circular(cornerRadius),
+        boxShadow: [
+          BoxShadow(
+            color: _borderColor,
+            offset: Offset(0, AppShapeStyle.cardDepth(depth * scale)),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          child,
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(
+                painter: _NoTopBorderPainter(
+                  color: _borderColor,
+                  strokeWidth: AppShapeStyle.outline(2 * scale),
+                  radius: cornerRadius,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class ProfileTotalsRow extends StatelessWidget {
   const ProfileTotalsRow({
     super.key,

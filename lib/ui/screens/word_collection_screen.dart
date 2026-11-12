@@ -5,6 +5,7 @@ import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/ui/app_typography.dart';
 import 'package:lingualloop/ui/widgets/Buttons/auth_back_button.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:lingualloop/ui/widgets/loading_skeleton.dart';
 import 'package:lingualloop/ui/widgets/word_collection_tile.dart';
 import 'package:provider/provider.dart';
 
@@ -230,7 +231,14 @@ class _WordCollectionScreenState extends State<WordCollectionScreen> {
                   )),
               SizedBox(height: 16 * s),
               if (_loading)
-                const Center(child: CircularProgressIndicator(color: _blue))
+                SkeletonReveal(
+                  child: Column(children: [
+                    for (var i = 0; i < 4; i++) ...[
+                      WordCollectionTileSkeleton(scale: s),
+                      SizedBox(height: 23 * s),
+                    ],
+                  ]),
+                )
               else if (_error != null)
                 _message(_error!, s, retry: () => _load(_category))
               else if (_items.isEmpty)
@@ -247,7 +255,7 @@ class _WordCollectionScreenState extends State<WordCollectionScreen> {
                   SizedBox(height: 23 * s),
                 ],
               if (_loadingMore)
-                const Center(child: CircularProgressIndicator(color: _blue)),
+                SkeletonReveal(child: WordCollectionTileSkeleton(scale: s)),
             ],
           ),
         ),

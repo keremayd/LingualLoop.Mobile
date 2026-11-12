@@ -4,6 +4,7 @@ import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/ui/app_typography.dart';
 import 'package:lingualloop/ui/widgets/ProfileCard.dart';
+import 'package:lingualloop/ui/widgets/loading_skeleton.dart';
 import 'package:lingualloop/ui/widgets/profile_learning_stats_card.dart';
 import 'package:provider/provider.dart';
 
@@ -60,10 +61,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const ColoredBox(
-        color: Color(0xFF041227),
-        child: Center(child: CircularProgressIndicator()),
-      );
+      return const _ProfileSkeleton();
     }
 
     final scale = MediaQuery.sizeOf(context).width / 750;
@@ -159,6 +157,141 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 );
               },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Profil verisi ilk kez inerken: kimlik kartı (kullanıcı zaten belli) ve
+/// diğer kartların yeri, içleri boş. Veriyi ana ekran yüklediği için
+/// çoğunlukla hiç görünmez.
+class _ProfileSkeleton extends StatelessWidget {
+  const _ProfileSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final s = MediaQuery.sizeOf(context).width / 750;
+
+    Widget goalRow() => Padding(
+          padding: EdgeInsets.fromLTRB(24 * s, 22 * s, 24 * s, 22 * s),
+          child: Row(
+            children: [
+              SkeletonBlock(width: 52 * s, height: 52 * s, radius: 14 * s),
+              SizedBox(width: 20 * s),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonBlock(
+                        width: 220 * s, height: 26 * s, radius: 8 * s),
+                    SizedBox(height: 16 * s),
+                    SkeletonBlock(height: 14 * s, radius: 7 * s),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+
+    Widget total() => Column(
+          children: [
+            SkeletonBlock(width: 52 * s, height: 52 * s, radius: 14 * s),
+            SizedBox(height: 14 * s),
+            SkeletonBlock(width: 70 * s, height: 34 * s, radius: 9 * s),
+            SizedBox(height: 10 * s),
+            SkeletonBlock(width: 90 * s, height: 18 * s, radius: 6 * s),
+          ],
+        );
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF041227),
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(38 * s, 40 * s, 40 * s, 52 * s),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const ProfileCard(color: Color(0xFF0C2244)),
+            SizedBox(height: 34 * s),
+            SkeletonReveal(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ProfileSectionTitle(text: 'SIRADAKİ HEDEFLERİN', scale: s),
+                  SizedBox(height: 15 * s),
+                  ProfileSkeletonSurface(
+                    child: Column(children: [goalRow(), goalRow()]),
+                  ),
+                  SizedBox(height: 34 * s),
+                  ProfileSectionTitle(text: 'BUGÜN', scale: s),
+                  SizedBox(height: 15 * s),
+                  ProfileSkeletonSurface(
+                    radius: 28,
+                    depth: 7,
+                    child: Padding(
+                      padding:
+                          EdgeInsets.fromLTRB(32 * s, 30 * s, 32 * s, 30 * s),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              SkeletonBlock(
+                                  width: 60 * s,
+                                  height: 64 * s,
+                                  radius: 18 * s),
+                              SizedBox(width: 18 * s),
+                              SkeletonBlock(
+                                  width: 240 * s,
+                                  height: 40 * s,
+                                  radius: 10 * s),
+                              const Spacer(),
+                              SkeletonBlock(
+                                  width: 190 * s,
+                                  height: 64 * s,
+                                  radius: 20 * s),
+                            ],
+                          ),
+                          SizedBox(height: 34 * s),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              for (var i = 0; i < 7; i++)
+                                Column(
+                                  children: [
+                                    SkeletonBlock(
+                                        width: 44 * s,
+                                        height: 20 * s,
+                                        radius: 6 * s),
+                                    SizedBox(height: 14 * s),
+                                    SkeletonBlock(
+                                        width: 52 * s,
+                                        height: 52 * s,
+                                        radius: 26 * s),
+                                  ],
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 34 * s),
+                  ProfileSectionTitle(text: 'TOPLAM', scale: s),
+                  SizedBox(height: 15 * s),
+                  ProfileSkeletonSurface(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 28 * s),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [total(), total(), total(), total()],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

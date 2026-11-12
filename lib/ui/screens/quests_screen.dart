@@ -14,6 +14,7 @@ import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:lingualloop/ui/widgets/countdown_pill.dart';
 import 'package:lingualloop/ui/widgets/hop_motion.dart';
+import 'package:lingualloop/ui/widgets/loading_skeleton.dart';
 import 'package:lingualloop/ui/widgets/quest_icons.dart';
 import 'package:lingualloop/ui/widgets/quest_reward_celebration.dart';
 import 'package:lingualloop/ui/widgets/ticket_with_count.dart';
@@ -347,9 +348,7 @@ class _QuestsScreenState extends State<QuestsScreen>
                   final scale = constraints.maxWidth / 670;
 
                   if (provider.status == QuestsStatus.loading) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: _accentColor),
-                    );
+                    return _QuestsSkeleton(scale: scale);
                   }
 
                   if (provider.status == QuestsStatus.error) {
@@ -1635,6 +1634,132 @@ class _ErrorState extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Görevler ilk kez inerken: başlık kartı ve beş görev kartı, içleri boş.
+/// Veri ana ekranla birlikte indiği için çoğunlukla hiç görünmez.
+class _QuestsSkeleton extends StatelessWidget {
+  const _QuestsSkeleton({required this.scale});
+
+  final double scale;
+
+  /// Görev başlıklarının kabaca boyları: hepsi aynı olsa liste çizgili
+  /// kâğıt gibi duruyor.
+  static const _titleWidths = [250.0, 300.0, 300.0, 390.0, 230.0];
+
+  @override
+  Widget build(BuildContext context) {
+    final s = scale;
+    return SkeletonReveal(
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
+        padding: EdgeInsets.fromLTRB(34 * s, 36 * s, 34 * s, 54 * s),
+        children: [
+          _QuestSurface(
+            scale: s,
+            radius: 34 * s,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(36 * s, 34 * s, 30 * s, 32 * s),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SkeletonBlock(
+                                width: 300 * s, height: 36 * s, radius: 10 * s),
+                            SizedBox(height: 18 * s),
+                            SkeletonBlock(
+                                width: 220 * s, height: 52 * s, radius: 16 * s),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: 14 * s),
+                      SkeletonBlock(
+                          width: 100 * s, height: 72 * s, radius: 16 * s),
+                      SizedBox(width: 12 * s),
+                      SkeletonBlock(
+                          width: 64 * s, height: 40 * s, radius: 10 * s),
+                    ],
+                  ),
+                  SizedBox(height: 25 * s),
+                  Row(
+                    children: [
+                      for (var i = 0; i < 5; i++) ...[
+                        if (i > 0) SizedBox(width: 9 * s),
+                        Expanded(
+                          child: SkeletonBlock(
+                              height: 15 * s, radius: 7.5 * s),
+                        ),
+                      ],
+                    ],
+                  ),
+                  SizedBox(height: 15 * s),
+                  SkeletonBlock(width: 380 * s, height: 22 * s, radius: 7 * s),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(height: 34 * s),
+          for (final (index, titleWidth) in _titleWidths.indexed) ...[
+            if (index > 0) SizedBox(height: 22 * s),
+            _QuestSurface(
+              scale: s,
+              radius: 28 * s,
+              child: Container(
+                height: _QuestCard._faceHeight * s,
+                padding: EdgeInsets.symmetric(horizontal: 25 * s),
+                child: Row(
+                  children: [
+                    SkeletonBlock(
+                        width: 87 * s, height: 87 * s, radius: 24 * s),
+                    SizedBox(width: 25 * s),
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SkeletonBlock(
+                              width: titleWidth * s,
+                              height: 25 * s,
+                              radius: 8 * s),
+                          SizedBox(height: 13 * s),
+                          SizedBox(
+                            height: _QuestCard._endCapSize * s,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: SkeletonBlock(
+                                    height: 25 * s,
+                                    radius: 12.5 * s,
+                                    color: _QuestsScreenState._trackColor,
+                                  ),
+                                ),
+                                SizedBox(width: 8 * s),
+                                SkeletonBlock(
+                                    width: 62 * s,
+                                    height: 44 * s,
+                                    radius: 10 * s),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

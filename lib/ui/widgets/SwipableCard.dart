@@ -509,6 +509,79 @@ class _SwipableCardState extends State<SwipableCard>
   }
 }
 
+/// Kartlar inerken destenin kendisi, kartın yüzü boş (oyunun iskeleti).
+/// Geometri [SwipableCard]'ın destesiyle aynı: ön kart ve daralan iki kart.
+class KartyDeckSkeleton extends StatelessWidget {
+  const KartyDeckSkeleton({super.key, required this.layout});
+
+  final KartyCardLayout layout;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = MediaQuery.of(context).size.width / 750;
+    final cardWidth = layout.size.width;
+    final cardHeight = layout.size.height;
+    final layerOffset = layout.layerOffset;
+    final radius = 52.5 * scale;
+    final decoration = BoxDecoration(
+      color: KartyCardMaterial.face,
+      borderRadius: BorderRadius.circular(radius),
+      boxShadow: [
+        BoxShadow(
+          color: KartyCardMaterial.base,
+          offset: Offset(0, KartyCardMaterial.depth * scale),
+        ),
+      ],
+    );
+
+    return SizedBox(
+      width: 750 * scale,
+      height: layout.titleToCardGap + cardHeight + layerOffset * 2,
+      child: Stack(
+        alignment: Alignment.topCenter,
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            top: layout.titleToCardGap,
+            child: SizedBox(
+              width: cardWidth,
+              height: cardHeight + layerOffset * 2,
+              child: Stack(
+                alignment: Alignment.topCenter,
+                clipBehavior: Clip.none,
+                children: [
+                  for (var i = 2; i >= 1; i--)
+                    Positioned(
+                      top: layerOffset * i,
+                      child: Container(
+                        width: cardWidth * (1 - .06 * i),
+                        height: cardHeight,
+                        decoration: decoration,
+                      ),
+                    ),
+                  Container(
+                    width: cardWidth,
+                    height: cardHeight,
+                    decoration: decoration,
+                    clipBehavior: Clip.antiAlias,
+                    child: CustomPaint(
+                      painter: TopRimPainter(
+                        color: KartyCardMaterial.rim,
+                        radius: radius,
+                        strokeWidth: AppShapeStyle.outline(3 * scale),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // Eski sıvı şimşek, yeni tek-parça boost şeridi doğrulandıktan sonra
 // tamamen silinecek geri dönüş referansıdır; üretim ağacında kullanılmaz.
 // ignore: unused_element

@@ -13,6 +13,7 @@ import 'package:lingualloop/ui/widgets/article_practice_card.dart';
 import 'package:lingualloop/ui/widgets/article_practice_locked_state.dart';
 import 'package:lingualloop/ui/widgets/article_target.dart';
 import 'package:lingualloop/ui/widgets/karty_control_glyphs.dart';
+import 'package:lingualloop/ui/widgets/loading_skeleton.dart';
 import 'package:provider/provider.dart';
 
 class ArticlePracticeScreen extends StatefulWidget {
@@ -229,8 +230,26 @@ class _ArticlePracticeScreenState extends State<ArticlePracticeScreen>
               child: Consumer<ArticlePracticeProvider>(
                 builder: (context, provider, child) {
                   if (provider.status == ArticlePracticeStatus.loading) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: _success),
+                    // Çıkış hemen görünür: beklerken de oyundan çıkılabilsin.
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Positioned(
+                          left: 40 * scale,
+                          top: 42 * scale,
+                          child: _ExitButton(
+                            scale: scale,
+                            onClose: () => Navigator.pop(context),
+                          ),
+                        ),
+                        Positioned(
+                          left: 95 * scale,
+                          top: _deckTop * scale,
+                          child: SkeletonReveal(
+                            child: ArticlePracticeDeckSkeleton(scale: scale),
+                          ),
+                        ),
+                      ],
                     );
                   }
                   if (provider.status == ArticlePracticeStatus.complete) {
@@ -269,9 +288,12 @@ class _ArticlePracticeScreenState extends State<ArticlePracticeScreen>
     );
   }
 
+  /// Destenin tepesi, tasarım biriminde; yükleme iskeleti de buraya oturur.
+  static const _deckTop = 240.0;
+
   Widget _buildGame(ArticlePracticeProvider provider, double scale) {
     final task = provider.task!;
-    const deckTop = 240.0;
+    const deckTop = _deckTop;
     final canSelect = provider.canInteract && !_motionController.isAnimating;
     return Stack(
       clipBehavior: Clip.none,

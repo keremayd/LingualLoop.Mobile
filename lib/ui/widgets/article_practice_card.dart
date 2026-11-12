@@ -147,6 +147,30 @@ class ArticlePracticeDeckBackdrop extends StatelessWidget {
   }
 }
 
+/// Görev inerken destenin kendisi, ön kartın yüzü boş (oyunun iskeleti).
+class ArticlePracticeDeckSkeleton extends StatelessWidget {
+  const ArticlePracticeDeckSkeleton({super.key, required this.scale});
+
+  final double scale;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 560 * scale,
+      height: 986 * scale,
+      child: Stack(
+        alignment: Alignment.topCenter,
+        clipBehavior: Clip.none,
+        children: [
+          _DeckLayer(scale: scale, width: 465, top: 122),
+          _DeckLayer(scale: scale, width: 503, top: 61),
+          _DeckLayer(scale: scale, width: 560, top: 0),
+        ],
+      ),
+    );
+  }
+}
+
 class _DeckLayer extends StatelessWidget {
   const _DeckLayer({
     required this.scale,

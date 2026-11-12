@@ -4,6 +4,7 @@ import 'package:lingualloop/models/responses/word_collection_response.dart';
 import 'package:lingualloop/services/PronunciationService.dart';
 import 'package:lingualloop/ui/app_typography.dart';
 import 'package:lingualloop/ui/widgets/karty_sound_button.dart';
+import 'package:lingualloop/ui/widgets/loading_skeleton.dart';
 
 class WordCollectionTile extends StatelessWidget {
   const WordCollectionTile({
@@ -43,47 +44,17 @@ class WordCollectionTile extends StatelessWidget {
                         : ('Çalışıldı', const Color(0xFF8FA0B5));
     return Container(
       height: 224 * scale,
-      decoration: BoxDecoration(
-        color: const Color(0xFF041227),
-        borderRadius: BorderRadius.circular(30 * scale),
-        border: Border.all(color: const Color(0xFF0B2143), width: 1.1 * scale),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0B2143),
-            offset: Offset(0, 7 * scale),
-          )
-        ],
-      ),
+      decoration: _tileDecoration(scale),
       child: Padding(
         padding: EdgeInsets.all(17 * scale),
         child: Row(children: [
-          Container(
-            width: 180 * scale,
-            height: 180 * scale,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(23 * scale),
-              border: Border.all(
-                color: const Color(0xFF163258),
-                width: 5 * scale,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF0B2143),
-                  offset: Offset(0, 4 * scale),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(18 * scale),
-              child: ColoredBox(
-                color: const Color(0xFF0C2244),
-                child: item.kartyUrl.isEmpty
-                    ? const SizedBox.expand()
-                    : Image.network(item.kartyUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const SizedBox.expand()),
-              ),
-            ),
+          _imageFrame(
+            scale,
+            item.kartyUrl.isEmpty
+                ? const SizedBox.expand()
+                : Image.network(item.kartyUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const SizedBox.expand()),
           ),
           SizedBox(width: 20 * scale),
           Expanded(
@@ -164,3 +135,81 @@ class WordCollectionTile extends StatelessWidget {
     );
   }
 }
+
+/// Kelimeler inerken satırın kendisi, içi boş: görsel çerçevesi, artikel ve
+/// kelimenin yeri, durum satırı.
+class WordCollectionTileSkeleton extends StatelessWidget {
+  const WordCollectionTileSkeleton({super.key, required this.scale});
+
+  final double scale;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = scale;
+    return Container(
+      height: 224 * s,
+      decoration: _tileDecoration(s),
+      child: Padding(
+        padding: EdgeInsets.all(17 * s),
+        child: Row(children: [
+          _imageFrame(s, const SizedBox.expand()),
+          SizedBox(width: 20 * s),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(children: [
+                  SkeletonBlock(width: 56 * s, height: 32 * s, radius: 11 * s),
+                  SizedBox(width: 9 * s),
+                  SkeletonBlock(width: 190 * s, height: 37 * s, radius: 10 * s),
+                ]),
+                SizedBox(height: 18 * s),
+                SkeletonBlock(width: 150 * s, height: 22 * s, radius: 7 * s),
+              ],
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+}
+
+/// Satırın yüzeyi: zemin renginde yüz, ince kontur ve alt dudak.
+BoxDecoration _tileDecoration(double scale) => BoxDecoration(
+      color: const Color(0xFF041227),
+      borderRadius: BorderRadius.circular(30 * scale),
+      border: Border.all(color: const Color(0xFF0B2143), width: 1.1 * scale),
+      boxShadow: [
+        BoxShadow(
+          color: const Color(0xFF0B2143),
+          offset: Offset(0, 7 * scale),
+        )
+      ],
+    );
+
+/// Kelime görselinin çerçevesi; görsel yokken içi lacivert kalır.
+Widget _imageFrame(double scale, Widget image) => Container(
+      width: 180 * scale,
+      height: 180 * scale,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(23 * scale),
+        border: Border.all(
+          color: const Color(0xFF163258),
+          width: 5 * scale,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0B2143),
+            offset: Offset(0, 4 * scale),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18 * scale),
+        child: ColoredBox(
+          color: const Color(0xFF0C2244),
+          child: image,
+        ),
+      ),
+    );

@@ -20,9 +20,12 @@ import 'package:lingualloop/ui/flows/league_promotion_flow.dart';
 import 'package:lingualloop/ui/flows/ticketed_game_flow.dart';
 import 'package:lingualloop/ui/screens/karty_path_screen.dart';
 import 'package:lingualloop/ui/screens/karty_unit_unlock_screen.dart';
+import 'package:lingualloop/ui/widgets/Buttons/app_button_style.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:lingualloop/ui/widgets/NavbarWidget.dart';
 import 'package:lingualloop/ui/widgets/home_top_bar.dart';
+import 'package:lingualloop/ui/widgets/karty_unit_header.dart';
+import 'package:lingualloop/ui/widgets/loading_skeleton.dart';
 import 'package:lingualloop/ui/widgets/practice_station_marks.dart';
 import 'package:lingualloop/ui/widgets/streak_sheet.dart';
 import 'package:lingualloop/ui/widgets/ticket_spend_scene.dart';
@@ -597,38 +600,154 @@ class _HomePlaceholder extends StatelessWidget {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final scale = constraints.maxWidth / 750;
+          if (loading) return _HomeSkeleton(scale: scale);
           return Center(
-            child: loading
-                ? const CircularProgressIndicator(color: _accent)
-                : Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Karty Yolu yüklenemedi.',
-                        style: TextStyle(
-                          color: _muted,
-                          fontSize: 28 * scale,
-                          fontWeight: AppTypography.body,
-                          fontFamily: AppTypography.family,
-                        ),
-                      ),
-                      SizedBox(height: 32 * scale),
-                      DepthPressableButton(
-                        text: 'TEKRAR DENE',
-                        width: 420 * scale,
-                        height: 96 * scale,
-                        radius: 26 * scale,
-                        shadowOffset: 10 * scale,
-                        backgroundColor: _accent,
-                        shadowColor: _accentDepth,
-                        fontSize: 28 * scale,
-                        onPressed: onRetry,
-                      ),
-                    ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Karty Yolu yüklenemedi.',
+                  style: TextStyle(
+                    color: _muted,
+                    fontSize: 28 * scale,
+                    fontWeight: AppTypography.body,
+                    fontFamily: AppTypography.family,
                   ),
+                ),
+                SizedBox(height: 32 * scale),
+                DepthPressableButton(
+                  text: 'TEKRAR DENE',
+                  width: 420 * scale,
+                  height: 96 * scale,
+                  radius: 26 * scale,
+                  shadowOffset: 10 * scale,
+                  backgroundColor: _accent,
+                  shadowColor: _accentDepth,
+                  fontSize: 28 * scale,
+                  onPressed: onRetry,
+                ),
+              ],
+            ),
           );
         },
       ),
+    );
+  }
+}
+
+/// Soğuk açılışta ana ekranın kendisi, içi boş: üst şeridin dört sayacı,
+/// ünite kartı ve patikanın ilk düğümleri ([KartyPathScreen] yerleşimiyle).
+class _HomeSkeleton extends StatelessWidget {
+  const _HomeSkeleton({required this.scale});
+
+  final double scale;
+
+  static const _face = Color(0xFF0C2244);
+  static const _base = Color(0xFF07182F);
+
+  /// İlk üç düğümün merkezi, tasarım biriminde: ünite başlığının altında,
+  /// adım aralığıyla ve yolun kıvrımında (`_PathLayout`).
+  static const _nodes = [Offset(360, 412), Offset(515, 596), Offset(390, 780)];
+  static const _nodeWidth = 132.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = scale;
+    final nodeTotal = _nodeWidth * s * 89.625 / 84.75;
+    final node = AppButtonStyle.resolve(
+      width: _nodeWidth * s,
+      totalHeight: nodeTotal,
+      legacyRadius: _nodeWidth * s * 0.29,
+      legacyDepth: nodeTotal * 0.14,
+      icon: true,
+    );
+    final headerDepth = AppButtonStyle.tileDepth(8 * s);
+
+    Widget counter() => Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SkeletonBlock(width: 62 * s, height: 62 * s, radius: 18 * s),
+            SizedBox(width: 10 * s),
+            SkeletonBlock(width: 40 * s, height: 34 * s, radius: 9 * s),
+          ],
+        );
+
+    return SkeletonReveal(
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(40 * s, 18 * s, 40 * s, 12 * s),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [counter(), counter(), counter(), counter()],
+              ),
+            ),
+            Expanded(
+              child: Stack(
+                clipBehavior: Clip.hardEdge,
+                children: [
+                  Positioned(
+                    left: 40 * s,
+                    right: 40 * s,
+                    top: 12 * s,
+                    height: KartyUnitHeader.height * s,
+                    child: _layered(
+                      faceHeight: KartyUnitHeader.height * s - headerDepth,
+                      depth: headerDepth,
+                      radius: KartyUnitHeader.cornerRadius(s),
+                    ),
+                  ),
+                  for (final center in _nodes)
+                    Positioned(
+                      left: (center.dx - _nodeWidth / 2) * s,
+                      top: center.dy * s - node.faceHeight / 2,
+                      width: _nodeWidth * s,
+                      height: nodeTotal,
+                      child: _layered(
+                        faceHeight: node.faceHeight,
+                        depth: node.depth,
+                        radius: node.radius,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Patikanın karosu gibi: yüz ve altındaki kalınlık bandı.
+  Widget _layered({
+    required double faceHeight,
+    required double depth,
+    required double radius,
+  }) {
+    final corner = BorderRadius.circular(radius);
+    return Stack(
+      children: [
+        Positioned(
+          left: 0,
+          right: 0,
+          top: depth,
+          height: faceHeight,
+          child: DecoratedBox(
+            decoration: BoxDecoration(color: _base, borderRadius: corner),
+          ),
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          top: 0,
+          height: faceHeight,
+          child: DecoratedBox(
+            decoration: BoxDecoration(color: _face, borderRadius: corner),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -35,6 +35,7 @@ import 'package:lingualloop/ui/widgets/karty_review_complete_state.dart';
 import 'package:lingualloop/ui/widgets/karty_success_celebration.dart';
 import 'package:provider/provider.dart';
 import 'package:lingualloop/ui/widgets/karty_play_surface.dart';
+import 'package:lingualloop/ui/widgets/loading_skeleton.dart';
 import 'package:lingualloop/ui/widgets/karty_answer_actions.dart';
 import 'package:lingualloop/ui/widgets/karty_pause_overlay.dart';
 
@@ -83,7 +84,6 @@ class KartyQuizScreen extends StatefulWidget {
 
 class _KartyQuizScreenState extends State<KartyQuizScreen> {
   static const _backgroundColor = Color(0xFF041227);
-  static const _progressColor = Color(0xFF93D334);
 
   static const _boostChargeGoal = 5;
   static const _boostDurationMilliseconds = 20000;
@@ -1319,9 +1319,9 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
                             ),
                             cardBuilder: (layout) {
                               if (!loaded) {
-                                return const Center(
-                                    child: CircularProgressIndicator(
-                                        color: _progressColor));
+                                return SkeletonReveal(
+                                  child: KartyDeckSkeleton(layout: layout),
+                                );
                               }
                               return AnimatedOpacity(
                                 duration: fadeDuration,
