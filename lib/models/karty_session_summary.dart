@@ -9,6 +9,7 @@ class KartySessionSummary {
   const KartySessionSummary({
     required this.unit,
     this.deck,
+    this.practice = false,
     required this.words,
     required this.newCount,
     required this.reviewCount,
@@ -23,11 +24,15 @@ class KartySessionSummary {
   /// Oturumun ilerlettiği ünite; sayıları oturum sonundaki hâliyle.
   final KartyUnit unit;
 
-  /// Oynanan deste; yalnız tekrar oyununda null.
+  /// Oynanan deste; yalnız tekrar oyununda ve pratikte null.
   final int? deck;
 
+  /// Pratik turu: vakti gelmiş tekrar yokken ya da özetten sonra oynanan
+  /// on soru. Puan kazandırır, kelime pekiştirmez.
+  final bool practice;
+
   /// Karolarda gösterilen kelimeler: destenin kelimeleri; yalnız tekrar
-  /// oyununda tekrar edilenler.
+  /// oyununda ve pratikte cevaplananlar.
   final List<KartyWord> words;
   final int newCount;
   final int reviewCount;

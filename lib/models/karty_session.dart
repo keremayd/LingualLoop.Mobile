@@ -18,7 +18,7 @@ class KartySessionArgs {
   final int? deck;
 
   /// Oyun başında vadesi gelmiş tekrar. Deste yokken bu da sıfırsa oyun
-  /// baştan pratiktir ve bitiş sorulmaz.
+  /// baştan pratiktir: bitişi sunucu değil tur uzunluğu belirler.
   final int reviewCount;
 
   /// Bitişi sorulacak bir işi var mı.

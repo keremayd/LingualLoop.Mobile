@@ -158,11 +158,23 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
   int _sessionAnswered = 0;
   final Set<int> _sessionWrongIds = {};
 
-  /// Cevaplanan kelimeler; yalnız tekrar oyununun özetinde karolar bunlar.
+  /// Cevaplanan kelimeler; yalnız tekrar oyununun ve pratiğin özetinde
+  /// karolar bunlar.
   final Map<int, KartyWord> _sessionWords = {};
 
-  /// Özetten sonra PRATİK YAP: aynı oturum sürer, bitiş bir daha sorulmaz.
+  /// Pratik: vakti gelmiş tekrar yokken oyun baştan pratiktir, özetten
+  /// sonra PRATİK YAP da pratiğe geçer. Bitişi sunucu değil tur uzunluğu
+  /// belirler.
   late bool _practicing = !(widget.session?.hasWork ?? false);
+
+  /// Pratik turu bu kadar cevapla biter, "Pratik tamam!" açılır. Turun sonu
+  /// yokken on dakika oynayan kullanıcı "bunun sonu yok mu?" diye sordu
+  /// (12 Kas 2026); Duolingo'da da pratik belli sayıda soruyla biter.
+  static const _practiceRound = 10;
+
+  /// Ünitenin bilinen son hâli: deste özetinden sonraki pratik turu
+  /// özetinde de çubuk güncel çizilsin.
+  KartyUnit? _unitNow;
 
   @override
   void initState() {
@@ -666,12 +678,18 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
   }
 
   /// Karty Yolu oyununda destenin bitip bitmediğini sunucuya sorar
-  /// (`karty/session`); bittiyse özeti gösterir. Özetten patikaya
+  /// (`karty/session`); bittiyse özeti gösterir. Pratikte sunucuya
+  /// sorulmaz: tur [_practiceRound] cevapla biter. Özetten patikaya
   /// dönülürse oyun kapanır ve `true` döner; PRATİK YAP'ta aynı oturum
-  /// sürer. Ağ hatası oyunu durdurmaz: bitiş bir sonraki cevapta sorulur.
+  /// pratik turuyla sürer. Ağ hatası oyunu durdurmaz: bitiş bir sonraki
+  /// cevapta sorulur.
   Future<bool> _finishSessionIfDone() async {
     final session = widget.session;
-    if (session == null || widget.reviewMode || _practicing) return false;
+    if (session == null || widget.reviewMode) return false;
+    if (_practicing) {
+      if (_sessionAnswered < _practiceRound) return false;
+      return _presentSummary(_buildPracticeSummary(session));
+    }
 
     KartySessionStatusResponse? status;
     try {
@@ -685,8 +703,12 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
       status = null;
     }
     if (!mounted || status == null || !status.complete) return false;
+    return _presentSummary(_buildSummary(session, status));
+  }
 
-    final summary = _buildSummary(session, status);
+  /// Özeti açar; DEVAM ET'te oyun kapanır (`true`), PRATİK YAP ya da BİR TUR
+  /// DAHA'da yeni bir pratik turu başlar.
+  Future<bool> _presentSummary(KartySessionSummary summary) async {
     await Future.wait([
       for (final word in summary.words.take(8))
         precacheImage(word.image, context, onError: (_, __) {}),
@@ -711,10 +733,20 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
     if (!mounted) return true;
     if (choice == KartySummaryChoice.practice) {
       _practicing = true;
+      _startPracticeRound();
       return false;
     }
     await _closeKartyScreen();
     return true;
+  }
+
+  /// Yeni pratik turu: özetteki sayılar yalnız bu turu anlatsın.
+  void _startPracticeRound() {
+    _sessionPoints = 0;
+    _sessionCorrect = 0;
+    _sessionAnswered = 0;
+    _sessionWrongIds.clear();
+    _sessionWords.clear();
   }
 
   KartySessionSummary _buildSummary(
@@ -722,16 +754,17 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
     KartySessionStatusResponse status,
   ) {
     final before = session.unit;
+    final unit = _unitNow = KartyUnit(
+      number: before.number,
+      title: before.title,
+      state: before.state,
+      wordCount: status.unitWordCount,
+      consolidatedCount: status.unitConsolidated,
+      unlockGoal: before.unlockGoal,
+      emblem: before.emblem,
+    );
     return KartySessionSummary(
-      unit: KartyUnit(
-        number: before.number,
-        title: before.title,
-        state: before.state,
-        wordCount: status.unitWordCount,
-        consolidatedCount: status.unitConsolidated,
-        unlockGoal: before.unlockGoal,
-        emblem: before.emblem,
-      ),
+      unit: unit,
       deck: session.deck,
       words: session.deck != null
           ? [
@@ -747,6 +780,25 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
       newCount: session.deck != null ? status.deckSize : 0,
       reviewCount: kartyProvider.reviewsAnswered,
       consolidatedBefore: before.consolidatedCount,
+      points: _sessionPoints,
+      correct: _sessionCorrect,
+      answered: _sessionAnswered,
+      revenge: _sessionWrongIds.length,
+      league: _leagueNote(),
+    );
+  }
+
+  /// Pratik turunun özeti. Pratik kutu ilerletmez: ünite çubuğu turda
+  /// kıpırdamaz, bilinen son hâliyle çizilir.
+  KartySessionSummary _buildPracticeSummary(KartySessionArgs session) {
+    final unit = _unitNow ?? session.unit;
+    return KartySessionSummary(
+      unit: unit,
+      practice: true,
+      words: _sessionWords.values.toList(),
+      newCount: 0,
+      reviewCount: 0,
+      consolidatedBefore: unit.consolidatedCount,
       points: _sessionPoints,
       correct: _sessionCorrect,
       answered: _sessionAnswered,

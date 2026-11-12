@@ -28,7 +28,8 @@ enum KartySummaryChoice { path, practice }
 /// burada aynı karolarda renge dönerek açılır.
 ///
 /// Giriş ~2.2 sn; ekrana dokunmak son hâle atlatır. DEVAM ET patikaya
-/// döner, PRATİK YAP aynı oturumu yeni bilet istemeden sürdürür.
+/// döner, PRATİK YAP aynı oturumu yeni bilet istemeden on soruluk bir
+/// pratik turuyla sürdürür; tur bitince "Pratik tamam!" ve BİR TUR DAHA.
 class KartySessionSummaryScreen extends StatefulWidget {
   const KartySessionSummaryScreen({super.key, required this.summary});
 
@@ -158,9 +159,11 @@ class KartySessionSummaryScene extends StatelessWidget {
                               child: FittedBox(
                                 fit: BoxFit.scaleDown,
                                 child: Text(
-                                  summary.deck != null
-                                      ? 'Deste ${summary.deck} tamam!'
-                                      : 'Tekrar tamam!',
+                                  summary.practice
+                                      ? 'Pratik tamam!'
+                                      : summary.deck != null
+                                          ? 'Deste ${summary.deck} tamam!'
+                                          : 'Tekrar tamam!',
                                   maxLines: 1,
                                   style: TextStyle(
                                     color: Colors.white,
@@ -268,7 +271,8 @@ class KartySessionSummaryScene extends StatelessWidget {
                         ignoring: !ready,
                         child: SecondaryActionButton(
                           key: const Key('karty-summary-practice'),
-                          text: 'PRATİK YAP',
+                          text:
+                              summary.practice ? 'BİR TUR DAHA' : 'PRATİK YAP',
                           scale: s,
                           width: 670 * s,
                           onPressed: onPractice ?? () {},
@@ -289,6 +293,12 @@ class KartySessionSummaryScene extends StatelessWidget {
   /// pekişmez (kutu ancak ertesi gün ilerler); ilk günlerde çubuk
   /// kıpırdamadığında neden kıpırdamadığı burada söylenir.
   static String _subtitle(KartySessionSummary summary) {
+    // Pratik kutuyu ilerletmiyor: on dakika pratik yapıp ünitenin neden
+    // ilerlemediğini sormak zorunda kalınmasın (kullanıcı, 12 Kas 2026).
+    if (summary.practice) {
+      return '${summary.words.length} kelimeyle pratik yaptın.\n'
+          'Kelimeler tekrar vakti gelince pekişir.';
+    }
     final learned = summary.deck != null
         ? '${summary.newCount} kelimeyle tanıştın'
         : '${summary.reviewCount} kelimeyi tekrar ettin';

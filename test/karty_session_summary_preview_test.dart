@@ -13,8 +13,8 @@ import 'helpers/preview_fonts.dart';
 ///
 ///   flutter test --update-goldens test/karty_session_summary_preview_test.dart
 ///
-/// İki pano: giriş animasyonundan altı kare ve üç durumun tam boy son hâli
-/// (sıradan deste, ilk deste, yalnız tekrar).
+/// İki pano: giriş animasyonundan altı kare ve dört durumun tam boy son hâli
+/// (sıradan deste, ilk deste, yalnız tekrar, pratik).
 void main() {
   setUpAll(loadPreviewFonts);
 
@@ -113,6 +113,28 @@ void main() {
       word('tasche', 'Tasche', 'die'),
       word('wolke', 'Wolke', 'die'),
       word('insel', 'Insel', 'die'),
+    ],
+  );
+
+  // Pratik: vakti gelmiş tekrar yok; on soruluk tur, yedi farklı kelime.
+  final practiceRound = KartySessionSummary(
+    unit: unit(3),
+    practice: true,
+    consolidatedBefore: 3,
+    newCount: 0,
+    reviewCount: 0,
+    points: 8,
+    correct: 8,
+    answered: 10,
+    revenge: 2,
+    words: [
+      word('apfel', 'Apfel', 'der'),
+      word('banane', 'Banane', 'die'),
+      word('brot', 'Brot', 'das'),
+      word('katze', 'Katze', 'die'),
+      word('lampe', 'Lampe', 'die'),
+      word('stuhl', 'Stuhl', 'der'),
+      word('wolke', 'Wolke', 'die'),
     ],
   );
 
@@ -231,7 +253,7 @@ void main() {
     );
   });
 
-  testWidgets('oturum özeti — üç durum', (tester) async {
+  testWidgets('oturum özeti — dört durum', (tester) async {
     Widget scene(KartySessionSummary summary) => phone(
           KartySessionSummaryScene(
             summary: summary,
@@ -243,7 +265,7 @@ void main() {
 
     await render(
       tester,
-      const Size(40 + 3 * 430 + 2 * 40 + 40, 34 + 84 + 932 + 40),
+      const Size(40 + 4 * 430 + 3 * 40 + 40, 34 + 84 + 932 + 40),
       board([
         (
           'Sıradan deste',
@@ -255,6 +277,11 @@ void main() {
           'Yalnız tekrar',
           'Desteler bitti; 8\'den fazlası "+N"',
           scene(reviewDay)
+        ),
+        (
+          'Pratik',
+          'On soruluk tur; çubuk kıpırdamaz',
+          scene(practiceRound)
         ),
       ]),
       'goldens/karty_session_summary.png',
