@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import 'package:lingualloop/models/ApiResponse.dart';
 import 'package:lingualloop/models/Requests/SignUpRequest.dart';
 import 'package:lingualloop/models/responses/AuthenticateResponse.dart';
 import 'package:lingualloop/models/responses/RefreshTokenResponse.dart';
+import 'package:lingualloop/services/DailyReminders.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:lingualloop/providers/UserProvider.dart';
 import 'package:lingualloop/services/FileService.dart';
@@ -27,6 +29,50 @@ class AuthService {
   AuthService(this._dio);
 
   Dio get dio => _dio;
+
+  static const _sessionUserKey = 'sessionUser';
+
+  /// Uygulama açılırken kayıtlı oturumu okur; yoksa `null`.
+  ///
+  /// İlk ekrandan önce çağrılır ki giriş yapmış kullanıcı karşılama ekranını
+  /// hiç görmesin. Token'ın süresine burada bakılmaz: dolmuşsa ilk istekte
+  /// `TokenInterceptor` yeniler, oturum bitmişse girişe gönderir.
+  static Future<User?> restoreSession({
+    FlutterSecureStorage storage = const FlutterSecureStorage(),
+    LocalFileService? files,
+  }) async {
+    try {
+      final saved = await storage.read(key: _sessionUserKey);
+      final refreshToken = await storage.read(key: 'refreshToken');
+      if (saved == null || refreshToken == null) return null;
+
+      final user = User.fromJson(jsonDecode(saved) as Map<String, dynamic>);
+      // Fotoğrafın tam yolu saklanamaz: iOS uygulama klasörünü güncellemede
+      // taşıyor. Yol her açılışta yeniden kurulur.
+      user.profilePhotoUrl = await (files ?? LocalFileService())
+          .cachedProfilePhotoPath(user.userId);
+      return user;
+    } catch (_) {
+      // Okunamayan kayıt yalnız yeniden girişe yol açar, açılışı engellemez.
+      return null;
+    }
+  }
+
+  Future<void> _saveSession(AuthenticateResponse session, User user) async {
+    await _storage.write(key: 'userId', value: session.userId);
+    await _storage.write(key: 'accessToken', value: session.accessToken);
+    await _storage.write(key: 'refreshToken', value: session.refreshToken);
+    await _storage.write(
+        key: _sessionUserKey, value: jsonEncode(user.toJson()));
+  }
+
+  /// Sonraki açılış karşılama ekranından başlasın diye oturumu siler.
+  Future<void> clearSession() async {
+    await DailyReminders.cancel();
+    for (final key in ['userId', 'accessToken', 'refreshToken', _sessionUserKey]) {
+      await _storage.delete(key: key);
+    }
+  }
 
   Future<ApiResponse<AuthenticateResponse>> signIn(String email, String password, BuildContext context) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
@@ -57,23 +103,20 @@ class AuthService {
       // Fotoğraf bileşeni bu durumda varsayılan görselini gösterir.
     }
 
-    // Update UserProvider
-    userProvider.setUser(
-      User(
-        userId: apiResponse.data!.userId,
-        firstName: apiResponse.data!.firstName,
-        lastName: apiResponse.data!.lastName,
-        displayName: apiResponse.data!.displayName,
-        profilePhotoUrl: cachedPhotoPath,
-        userNickname: apiResponse.data!.userNickname,
-        userName: apiResponse.data!.userName,
-        userRank: apiResponse.data!.userRank
-      ),
+    final user = User(
+      userId: apiResponse.data!.userId,
+      firstName: apiResponse.data!.firstName,
+      lastName: apiResponse.data!.lastName,
+      displayName: apiResponse.data!.displayName,
+      profilePhotoUrl: cachedPhotoPath,
+      userNickname: apiResponse.data!.userNickname,
+      userName: apiResponse.data!.userName,
+      userRank: apiResponse.data!.userRank
     );
 
-    await _storage.write(key: 'userId', value: apiResponse.data?.userId);
-    await _storage.write(key: 'accessToken', value: apiResponse.data?.accessToken);
-    await _storage.write(key: 'refreshToken', value: apiResponse.data?.refreshToken);
+    // Update UserProvider
+    userProvider.setUser(user);
+    await _saveSession(apiResponse.data!, user);
 
     return apiResponse;
   }
@@ -83,6 +126,7 @@ class AuthService {
 
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginScreen()),);
 
+    await clearSession();
     await Future.delayed(const Duration(milliseconds: 100));
 
     userProvider.clearUser();
@@ -138,22 +182,19 @@ class AuthService {
         // Google oturumu da yalnız profil fotoğrafı için başarısız sayılmaz.
       }
 
-      userProvider.setUser(
-        User(
-          userId: apiResponse.data!.userId,
-          firstName: apiResponse.data!.firstName,
-          lastName: apiResponse.data!.lastName,
-          displayName: apiResponse.data!.displayName,
-          profilePhotoUrl: cachedPhotoPath,
-          userNickname: apiResponse.data!.userNickname,
-          userName: apiResponse.data!.userName,
-          userRank: apiResponse.data!.userRank
-        ),
+      final user = User(
+        userId: apiResponse.data!.userId,
+        firstName: apiResponse.data!.firstName,
+        lastName: apiResponse.data!.lastName,
+        displayName: apiResponse.data!.displayName,
+        profilePhotoUrl: cachedPhotoPath,
+        userNickname: apiResponse.data!.userNickname,
+        userName: apiResponse.data!.userName,
+        userRank: apiResponse.data!.userRank
       );
 
-      await _storage.write(key: 'userId', value: apiResponse.data?.userId);
-      await _storage.write(key: 'accessToken', value: apiResponse.data?.accessToken);
-      await _storage.write(key: 'refreshToken', value: apiResponse.data?.refreshToken);
+      userProvider.setUser(user);
+      await _saveSession(apiResponse.data!, user);
 
       return apiResponse;
     } else {

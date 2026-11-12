@@ -5,10 +5,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
-import '../models/User.dart';
 import '../providers/UserProvider.dart';
 
 class LocalFileService {
+  /// Önbellekteki profil fotoğrafının yolu; henüz inmemişse `null`.
+  Future<String?> cachedProfilePhotoPath(String userId) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final filePath = '${directory.path}/$userId-profile.jpg';
+    return await File(filePath).exists() ? filePath : null;
+  }
+
   Future<String> cacheProfilePhoto(String imageUrl, String userId) async {
     final directory = await getApplicationDocumentsDirectory();
     final filePath = '${directory.path}/$userId-profile.jpg';
@@ -27,7 +33,8 @@ class LocalFileService {
     return filePath;
   }
 
-  Future<void> updateCachedProfilePhoto(String imageUrl, String userId, BuildContext context) async {
+  Future<void> updateCachedProfilePhoto(
+      String imageUrl, String userId, BuildContext context) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final directory = await getApplicationDocumentsDirectory();
     final filePath = '${directory.path}/$userId-profile.jpg';

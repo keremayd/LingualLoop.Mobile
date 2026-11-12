@@ -7,9 +7,18 @@ import 'main.dart';
 class TokenInterceptor extends Interceptor {
   final AuthService authService;
   final _storage = const FlutterSecureStorage();
-  Dio _dio = Dio();
+  final Dio _dio;
 
-  TokenInterceptor(this.authService);
+  TokenInterceptor(this.authService, {Dio? retryClient})
+      : _dio = retryClient ?? Dio();
+
+  /// Oturum sunucuda bitti: sonraki açılış ana ekrandan başlamasın diye
+  /// kayıtlar da silinir.
+  Future<void> _endSession() async {
+    await authService.clearSession();
+    navigatorKey.currentState
+        ?.pushNamedAndRemoveUntil('/signin', (route) => false);
+  }
 
   @override
   void onError(DioError err, ErrorInterceptorHandler handler) async {
@@ -30,10 +39,16 @@ class TokenInterceptor extends Interceptor {
     }
 
     if (err.response?.statusCode == 401) {
-      var response = await authService.refreshToken();
-      if (!response) {
-        navigatorKey.currentState
-            ?.pushNamedAndRemoveUntil('/signin', (route) => false);
+      final bool refreshed;
+      try {
+        refreshed = await authService.refreshToken();
+      } catch (_) {
+        // Sunucuya ulaşılamadı: oturum bitmiş değil, kapatılmaz.
+        return handler.next(err);
+      }
+      if (!refreshed) {
+        await _endSession();
+        return handler.next(err);
       }
 
       // Hatalı isteği tekrar gönderiyoruz
@@ -58,10 +73,15 @@ class TokenInterceptor extends Interceptor {
         );
 
         handler.resolve(result); // Hatalı isteği başarıyla sonuçlandırıyoruz
-      } catch (e) {
-        // Yeniden deneyemediğinde, token refresh başarısızsa login sayfasına yönlendir
-        navigatorKey.currentState
-            ?.pushNamedAndRemoveUntil('/signin', (route) => false);
+      } on DioError catch (retryError) {
+        // Yalnız yeni token da reddedildiyse oturum bitmiştir. Başka hata
+        // (ağ, 4xx) kullanıcıyı girişe atmamalı.
+        if (retryError.response?.statusCode == 401) await _endSession();
+        final response = retryError.response;
+        if (response != null && response.statusCode != 401) {
+          return handler.resolve(response);
+        }
+        return handler.next(retryError);
       }
       return;
     }

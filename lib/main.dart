@@ -65,6 +65,7 @@ Future<void> main() async {
       await rootBundle.loadString('assets/fonts/Baloo2-LICENSE.txt'),
     );
   });
+  final savedUser = await AuthService.restoreSession();
   await DailyReminders.init();
   runApp(
     MultiProvider(
@@ -132,7 +133,11 @@ Future<void> main() async {
           ),
         ),
         ChangeNotifierProvider<UserProvider>(
-          create: (_) => UserProvider(),
+          create: (_) {
+            final provider = UserProvider();
+            if (savedUser != null) provider.setUser(savedUser);
+            return provider;
+          },
         ),
         ChangeNotifierProvider<ScoreWithLivesProvider>(
           create: (_) {
@@ -171,19 +176,23 @@ Future<void> main() async {
           create: (context) => KartyPathProvider(context.read<KartyService>()),
         ),
       ],
-      child: MyApp(),
+      child: MyApp(initialRoute: savedUser == null ? '/welcome' : '/home'),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key, required this.initialRoute});
+
+  final String initialRoute;
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: navigatorKey,
       navigatorObservers: [routeObserver],
       title: 'Lingual Loop',
-      initialRoute: '/welcome',
+      initialRoute: initialRoute,
       routes: {
         '/signin': (context) => LoginScreen(),
         '/home': (context) => NavbarWidget(),
