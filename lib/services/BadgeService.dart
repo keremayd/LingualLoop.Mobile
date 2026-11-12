@@ -13,16 +13,9 @@ class BadgeService {
   BadgeService(this._dio);
 
   Future<ApiResponse<List<GetBadgesByIdResponse>>> getBadgesById() async {
-    final token = await _storage.read(key: 'accessToken');
     final userId = await _storage.read(key: 'userId');
 
-    final response = await _dio.get('badges/$userId',
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ),
-    );
+    final response = await _dio.get('badges/$userId');
 
     var apiResponse = ApiResponse<List<GetBadgesByIdResponse>>.fromJson(
       response.data,

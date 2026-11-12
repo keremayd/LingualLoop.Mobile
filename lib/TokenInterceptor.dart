@@ -20,6 +20,24 @@ class TokenInterceptor extends Interceptor {
         ?.pushNamedAndRemoveUntil('/signin', (route) => false);
   }
 
+  /// Oturum anahtarı her isteğe buradan eklenir. Eskiden her servis kendisi
+  /// ekliyordu; eklemeyenlerin (Görevler, Artikel, Kelimelerim) isteği önce
+  /// 401 alıyor, oturum yenilenip istek tekrar gidiyordu: bir yerine üç istek.
+  /// Giriş, kayıt ve yenileme anahtarsız çalışır.
+  @override
+  void onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
+    if (!options.path.startsWith('authentication/')) {
+      final accessToken = await _storage.read(key: 'accessToken');
+      if (accessToken != null) {
+        options.headers['Authorization'] = 'Bearer $accessToken';
+      }
+    }
+    handler.next(options);
+  }
+
   @override
   void onError(DioError err, ErrorInterceptorHandler handler) async {
     // Yanlış giriş bilgileri için dönen 401, süresi dolmuş oturum değildir.
@@ -39,12 +57,20 @@ class TokenInterceptor extends Interceptor {
     }
 
     if (err.response?.statusCode == 401) {
+      // Bu istek yoldayken anahtarı başka bir istek yenilediyse ikinci kez
+      // yenilenmez; istek yeni anahtarla tekrar gider.
+      final current = await _storage.read(key: 'accessToken');
+      final sent = err.requestOptions.headers['Authorization'];
       final bool refreshed;
-      try {
-        refreshed = await authService.refreshToken();
-      } catch (_) {
-        // Sunucuya ulaşılamadı: oturum bitmiş değil, kapatılmaz.
-        return handler.next(err);
+      if (current != null && sent != null && sent != 'Bearer $current') {
+        refreshed = true;
+      } else {
+        try {
+          refreshed = await authService.refreshToken();
+        } catch (_) {
+          // Sunucuya ulaşılamadı: oturum bitmiş değil, kapatılmaz.
+          return handler.next(err);
+        }
       }
       if (!refreshed) {
         await _endSession();

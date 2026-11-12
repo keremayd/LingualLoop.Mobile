@@ -22,7 +22,6 @@ class KartyService {
     int? deck,
     int? reviews,
   }) async {
-    final token = await _storage.read(key: 'accessToken');
     final userId = await _storage.read(key: 'userId');
 
     final response = await _dio.get(
@@ -32,11 +31,6 @@ class KartyService {
         if (deck != null) 'deck': deck,
         if (reviews != null) 'reviews': reviews,
       },
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ),
     );
 
     var apiResponse = ApiResponse<GetKartyByScoreResponse>.fromJson(
@@ -50,17 +44,9 @@ class KartyService {
 
   /// Karty Yolu: üniteler ve desteleri.
   Future<ApiResponse<KartyPathResponse>> path() async {
-    final token = await _storage.read(key: 'accessToken');
     final userId = await _storage.read(key: 'userId');
 
-    final response = await _dio.get(
-      'karty/path/$userId',
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ),
-    );
+    final response = await _dio.get('karty/path/$userId');
 
     return ApiResponse<KartyPathResponse>.fromJson(
       response.data,
@@ -76,7 +62,6 @@ class KartyService {
     int? deck,
     int reviews = 0,
   }) async {
-    final token = await _storage.read(key: 'accessToken');
     final userId = await _storage.read(key: 'userId');
 
     final response = await _dio.get(
@@ -86,11 +71,6 @@ class KartyService {
         if (deck != null) 'deck': deck,
         'reviews': reviews,
       },
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ),
     );
 
     return ApiResponse<KartySessionStatusResponse>.fromJson(
@@ -102,17 +82,9 @@ class KartyService {
 
   /// Ünite açılış kutlaması görüldü; patika onu bir daha göstermez.
   Future<ApiResponse<Object?>> acknowledgeUnitUnlock() async {
-    final token = await _storage.read(key: 'accessToken');
     final userId = await _storage.read(key: 'userId');
 
-    final response = await _dio.post(
-      'karty/path/$userId/unlock/acknowledge',
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ),
-    );
+    final response = await _dio.post('karty/path/$userId/unlock/acknowledge');
 
     return ApiResponse<Object?>.fromJson(
       response.data,
@@ -121,17 +93,9 @@ class KartyService {
   }
 
   Future<ApiResponse<GetKartyByScoreResponse>> randomWrong() async {
-    final token = await _storage.read(key: 'accessToken');
     final userId = await _storage.read(key: 'userId');
 
-    final response = await _dio.get(
-      'karty/wrong/random/$userId',
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ),
-    );
+    final response = await _dio.get('karty/wrong/random/$userId');
 
     var apiResponse = ApiResponse<GetKartyByScoreResponse>.fromJson(
       response.data,
@@ -143,7 +107,6 @@ class KartyService {
   }
 
   Future<void> recordWrongKarty(int kartyId) async {
-    final token = await _storage.read(key: 'accessToken');
     final userId = await _storage.read(key: 'userId');
 
     await _dio.post(
@@ -152,18 +115,12 @@ class KartyService {
         'userId': userId,
         'kartyId': kartyId,
       },
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ),
     );
   }
 
   /// Tanışma kartındaki "Anladım" onayı. Bundan sonra o kelime soru olarak
   /// gelmeye başlar.
   Future<void> recordKartyIntroduction(int kartyId) async {
-    final token = await _storage.read(key: 'accessToken');
     final userId = await _storage.read(key: 'userId');
 
     await _dio.post(
@@ -172,11 +129,6 @@ class KartyService {
         'userId': userId,
         'kartyId': kartyId,
       },
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ),
     );
   }
 
@@ -184,7 +136,6 @@ class KartyService {
     int kartyId,
     bool isMastered,
   ) async {
-    final token = await _storage.read(key: 'accessToken');
     final userId = await _storage.read(key: 'userId');
 
     final response = await _dio.post(
@@ -194,11 +145,6 @@ class KartyService {
         'kartyId': kartyId,
         'isMastered': isMastered,
       },
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ),
     );
 
     final apiResponse = ApiResponse<ResolveWrongKartyReviewResponse>.fromJson(

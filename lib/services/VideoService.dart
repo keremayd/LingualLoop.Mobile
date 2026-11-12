@@ -13,16 +13,9 @@ class VideoService {
   VideoService(this._dio);
 
   Future<ApiResponse<List<GetSavedVideosByIdResponse>>> savedVideos() async {
-    final token = await _storage.read(key: 'accessToken');
     final userId = await _storage.read(key: 'userId');
 
-    final response = await _dio.get('videos/saved/$userId',
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ),
-    );
+    final response = await _dio.get('videos/saved/$userId');
 
     var apiResponse = ApiResponse<List<GetSavedVideosByIdResponse>>.fromJson(
       response.data,
@@ -35,16 +28,9 @@ class VideoService {
   }
 
   Future<ApiResponse<GetQuestionByScoreResponse>> random() async {
-    final token = await _storage.read(key: 'accessToken');
     final userId = await _storage.read(key: 'userId');
 
-    final response = await _dio.get('videos/random/$userId',
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ),
-    );
+    final response = await _dio.get('videos/random/$userId');
 
     var apiResponse = ApiResponse<GetQuestionByScoreResponse>.fromJson(
       response.data,

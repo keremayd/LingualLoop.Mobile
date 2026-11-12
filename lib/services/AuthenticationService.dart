@@ -239,7 +239,15 @@ class AuthService {
     return true;
   }
 
-  Future<bool> refreshToken() async {
+  /// Süren yenileme. Anahtarın süresi dolunca aynı anda giden istekler
+  /// birlikte reddedilir; her biri kendi yenilemesini başlatıyordu (soğuk
+  /// açılışta iki ayrı ~1,9 sn'lik yenileme). Artık hepsi bunu bekler.
+  Future<bool>? _refreshing;
+
+  Future<bool> refreshToken() =>
+      _refreshing ??= _refreshToken().whenComplete(() => _refreshing = null);
+
+  Future<bool> _refreshToken() async {
     final refreshToken = await _storage.read(key: 'refreshToken');
     final accessToken = await _storage.read(key: 'accessToken');
     final response = await _dio.post('authentication/refresh', data: {
