@@ -115,7 +115,10 @@ class _QuestsScreenState extends State<QuestsScreen>
       });
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<QuestsProvider>().load();
+      // Sekmeler her geçişte yeniden kurulur: görevler eldeyse ekran
+      // beklemeden gelir, arkada tazelenir (ana ekran ve Ligler gibi).
+      final quests = context.read<QuestsProvider>();
+      quests.load(silent: quests.data != null);
     });
     _countdownTimer = Timer.periodic(const Duration(minutes: 1), (_) {
       if (mounted) setState(() {});

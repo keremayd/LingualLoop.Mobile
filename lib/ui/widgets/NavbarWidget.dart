@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
 import 'package:lingualloop/services/UserService.dart';
@@ -136,16 +134,8 @@ class _NavbarWidgetState extends State<NavbarWidget>
       _selectedIndex = index;
     });
 
-    // Not: Ligler sekmesi (index 2) kendi verisini LeagueScreen.initState +
-    // didPopNext + lifecycle üzerinden tazeliyor; burada ikinci bir istek
-    // atmak çift fetch'e yol açıyordu.
-
-    if (index == 3) {
-      unawaited(
-        Provider.of<ProfileLearningStatsProvider>(context, listen: false)
-            .refreshSilently(context),
-      );
-    }
+    // Not: sekmeler kendi verisini kendisi tazeliyor (Ligler, Görevler,
+    // Profil); burada ikinci bir istek atmak çift fetch'e yol açıyordu.
   }
 
   @override

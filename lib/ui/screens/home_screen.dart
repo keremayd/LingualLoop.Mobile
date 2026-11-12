@@ -10,6 +10,7 @@ import 'package:lingualloop/providers/ArticlePracticeProvider.dart';
 import 'package:lingualloop/providers/KartyPathProvider.dart';
 import 'package:lingualloop/providers/KartyProvider.dart';
 import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
+import 'package:lingualloop/providers/QuestsProvider.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/services/KartyService.dart';
 import 'package:lingualloop/services/DailyReminders.dart';
@@ -112,6 +113,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final path = context.read<KartyPathProvider>();
     final stats = context.read<ProfileLearningStatsProvider>();
     final userService = context.read<UserService>();
+    // Görevler sekmesi ilk girişte de beklemesin; ana ekranı bekletmez.
+    final quests = context.read<QuestsProvider>();
+    if (quests.data == null) unawaited(quests.load(silent: true));
     try {
       await Future.wait([
         path.load(silent: path.data != null),
@@ -129,6 +133,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Future<void> _refresh() async {
     final userService = context.read<UserService>();
     final stats = context.read<ProfileLearningStatsProvider>();
+    // Oyun görev ilerlemesini değiştirir, gece yarısı görevler yenilenir.
+    // Beklenmez: dönüşteki pencereleri geciktirmesin.
+    unawaited(context.read<QuestsProvider>().load(silent: true));
     try {
       await Future.wait([
         context.read<KartyPathProvider>().load(silent: true),

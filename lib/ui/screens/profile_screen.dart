@@ -17,7 +17,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   late ProfileLearningStatsProvider profileLearningStatsProvider;
 
-  bool isLoading = true;
+  late bool isLoading;
 
   void _openWordCollection() {
     Navigator.of(context).pushNamed('/wordcollection');
@@ -29,6 +29,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     profileLearningStatsProvider =
         Provider.of<ProfileLearningStatsProvider>(context, listen: false);
     final userService = Provider.of<UserService>(context, listen: false);
+    // Sekmeler her geçişte yeniden kurulur. Bu verinin ikisini de ana ekran
+    // yüklüyor: eldeyse ekran beklemeden gelir, arkada tazelenir.
+    isLoading = context.read<ScoreWithLivesProvider>().scoreWithLives == null ||
+        profileLearningStatsProvider.stats == null;
 
     Future.microtask(() async {
       try {
@@ -41,11 +45,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         // Streak kaydı profil ekranının açılmasını engellemesin.
       }
       if (!mounted) return;
-      await userService.scoreWithLivesById(context);
-      if (!mounted) return;
-      await profileLearningStatsProvider.load(context);
+      await Future.wait([
+        userService.scoreWithLivesById(context),
+        profileLearningStatsProvider.refreshSilently(context),
+      ]);
 
-      if (!mounted) return;
+      if (!mounted || !isLoading) return;
       setState(() {
         isLoading = false;
       });

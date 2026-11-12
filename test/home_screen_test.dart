@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lingualloop/models/ApiResponse.dart';
 import 'package:lingualloop/models/karty_session.dart';
 import 'package:lingualloop/models/responses/DailyActivityResponse.dart';
+import 'package:lingualloop/models/responses/DailyQuestsResponse.dart';
 import 'package:lingualloop/models/responses/KartyPathResponse.dart';
 import 'package:lingualloop/models/responses/ProfileLearningStatsResponse.dart';
 import 'package:lingualloop/models/responses/ScoreWithLivesResponse.dart';
@@ -13,9 +14,11 @@ import 'package:lingualloop/providers/ArticlePracticeProvider.dart';
 import 'package:lingualloop/providers/KartyPathProvider.dart';
 import 'package:lingualloop/providers/KartyProvider.dart';
 import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
+import 'package:lingualloop/providers/QuestsProvider.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/services/ArticlePracticeService.dart';
 import 'package:lingualloop/services/KartyService.dart';
+import 'package:lingualloop/services/QuestService.dart';
 import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/ui/screens/home_screen.dart';
 import 'package:lingualloop/ui/screens/karty_path_screen.dart';
@@ -187,11 +190,28 @@ class _Karty extends Fake implements KartyService {
       ApiResponse(data: response);
 }
 
+/// Görevler verisinin kaç kez istendiğini sayar.
+class _QuestService extends Fake implements QuestService {
+  int loads = 0;
+
+  @override
+  Future<ApiResponse<DailyQuestsResponse>> getDailyQuests() async {
+    loads += 1;
+    return ApiResponse(
+      data: DailyQuestsResponse(
+        dayKey: 20261112,
+        resetAtUtc: DateTime.utc(2026, 11, 12, 21),
+      ),
+    );
+  }
+}
+
 class _Home {
   _Home(this.user, this.karty);
 
   final _User user;
   final _Karty karty;
+  final quests = _QuestService();
   String? openedRoute;
   Object? openedArguments;
   final cards = _Cards();
@@ -253,6 +273,7 @@ Future<_Home> _pump(
       ChangeNotifierProvider<ArticlePracticeProvider>.value(
         value: home.articles,
       ),
+      ChangeNotifierProvider(create: (_) => QuestsProvider(home.quests)),
     ],
     child: MaterialApp(
       routes: {
@@ -491,6 +512,18 @@ void main() {
     home.user.stats = _stats(reviews: 0);
     await _closeGame(tester);
     expect(find.text('Hatan yok'), findsOneWidget);
+  });
+
+  testWidgets('görevler ana ekranla iner, oyundan dönüşte tazelenir',
+      (tester) async {
+    final home = await _pump(tester);
+    // Görevler sekmesi ilk girişte de beklemesin.
+    expect(home.quests.loads, 1);
+
+    await tester.tap(find.byType(RevengeCardMark));
+    await _settle(tester);
+    await _closeGame(tester);
+    expect(home.quests.loads, 2);
   });
 
   testWidgets('aleve dokununca seri penceresi açılır', (tester) async {
