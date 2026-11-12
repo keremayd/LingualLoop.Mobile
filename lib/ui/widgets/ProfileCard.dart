@@ -6,7 +6,10 @@ import 'dart:ui' as ui;
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:lingualloop/services/AuthenticationService.dart';
+import 'package:lingualloop/services/UserService.dart';
+import 'package:lingualloop/ui/screens/legal_document_screen.dart';
 import 'package:lingualloop/ui/widgets/ProfilePhoto.dart';
+import 'package:lingualloop/ui/widgets/settings_sheet.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/UserProvider.dart';
@@ -70,7 +73,7 @@ class ProfileCard extends StatelessWidget {
                     top: 30 * scale,
                     right: 38 * scale,
                     child: GestureDetector(
-                      onTap: () => AuthService(Dio()).signOut(context),
+                      onTap: () => _openSettings(context),
                       child: _SettingsButton(scale: scale),
                     ),
                   ),
@@ -137,6 +140,29 @@ class ProfileCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Çark ayarlar penceresini açar; pencere kapanınca seçilen eylem burada
+  /// yürür (çıkış ve silme sayfayı değiştiriyor).
+  Future<void> _openSettings(BuildContext context) async {
+    final action = await showSettingsSheet(context);
+    if (action == null || !context.mounted) return;
+    switch (action) {
+      case SettingsAction.terms:
+        await LegalDocumentScreen.open(context, LegalDocument.terms);
+      case SettingsAction.privacy:
+        await LegalDocumentScreen.open(context, LegalDocument.privacy);
+      case SettingsAction.signOut:
+        await AuthService(Dio()).signOut(context);
+      case SettingsAction.deleteAccount:
+        final deleted = await confirmAccountDeletion(
+          context,
+          delete: context.read<UserService>().deleteAccount,
+        );
+        if (deleted && context.mounted) {
+          await AuthService(Dio()).endDeletedAccount(context);
+        }
+    }
   }
 }
 

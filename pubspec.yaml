@@ -26,6 +26,7 @@ dependencies:
   timezone: ^0.10.1
   sign_in_with_apple: ^8.2.0
   crypto: ^3.0.8
+  package_info_plus: ^9.0.1
 
 dev_dependencies:
   build_runner: ^2.3.3
@@ -51,6 +52,8 @@ flutter:
           weight: 800
   assets:
     - assets/sounds/
+    # Kullanım koşulları ve gizlilik politikası (ayarlar penceresi)
+    - assets/legal/
     - assets/fonts/Rubik-LICENSE.txt
     - assets/fonts/Baloo2-LICENSE.txt
     # Icons

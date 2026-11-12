@@ -145,6 +145,23 @@ class UserService {
     );
   }
 
+  /// Hesabı ve bütün verisini sunucuda kalıcı olarak siler. Silindiyse
+  /// `true`, sunucu reddettiyse `false`; bağlantı yoksa hata fırlatır.
+  Future<bool> deleteAccount() async {
+    final userId = await _storage.read(key: 'userId');
+    if (userId == null || userId.isEmpty) {
+      throw StateError('Kullanıcı oturumu bulunamadı.');
+    }
+    final response = await _dio.delete('users/$userId/account');
+    // 403, 404 ve 500 de yanıt olarak döner (TokenInterceptor); gövde boş
+    // olabilir.
+    final body = response.data;
+    final data = body is Map<String, dynamic> ? body['data'] : null;
+    return response.statusCode == 200 &&
+        data is Map<String, dynamic> &&
+        data['deleted'] == true;
+  }
+
   /// [point] cevabın **yönü**: doğruda `1`, yanlışta `-1`. Boost çarpanı
   /// buraya karıştırılmaz — bir dönem doğru cevap boost açıkken `3` olarak
   /// gönderiliyordu ve sunucu o sayıyı gizli zorluk termostatına da

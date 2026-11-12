@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:lingualloop/services/PronunciationService.dart';
 
@@ -19,17 +20,56 @@ enum _GameSound {
 ///
 /// Ses, oyundaki hoparlör düğmesine uyar: kullanıcıya telaffuzdan ayrı ikinci
 /// bir ses ayarı gösterilmez. Titreşim ona bağlı değil, sessiz oynayan da
-/// cevabı elinde hisseder.
+/// cevabı elinde hisseder; ayarlar penceresinden ayrıca kapatılır.
 ///
 /// Her ses kendi oynatıcısında: telaffuz ve art arda gelen efektler birbirini
 /// kesmez.
 class GameFeedbackService {
-  GameFeedbackService(this._pronunciation, {AudioPlayer Function()? createPlayer})
-      : _createPlayer = createPlayer ?? AudioPlayer.new;
+  GameFeedbackService(
+    this._pronunciation, {
+    AudioPlayer Function()? createPlayer,
+    FlutterSecureStorage? storage,
+  })  : _createPlayer = createPlayer ?? AudioPlayer.new,
+        _storage = storage ?? const FlutterSecureStorage() {
+    unawaited(_restoreVibration());
+  }
+
+  static const vibrationPreferenceKey = 'game_vibration_enabled';
 
   final PronunciationService _pronunciation;
   final AudioPlayer Function() _createPlayer;
+  final FlutterSecureStorage _storage;
   final Map<_GameSound, Future<AudioPlayer>> _players = {};
+
+  /// Varsayılan açık. Kayıtlı tercih okunmadan kullanıcı değiştirdiyse onun
+  /// seçimi kalır.
+  final ValueNotifier<bool> vibrationEnabled = ValueNotifier(true);
+  bool _vibrationChosen = false;
+
+  Future<void> _restoreVibration() async {
+    try {
+      final stored = await _storage.read(key: vibrationPreferenceKey);
+      if (stored != null && !_vibrationChosen) {
+        vibrationEnabled.value = stored == 'true';
+      }
+    } catch (error) {
+      if (kDebugMode) debugPrint('Titreşim tercihi okunamadı: $error');
+    }
+  }
+
+  Future<void> setVibrationEnabled(bool enabled) async {
+    _vibrationChosen = true;
+    vibrationEnabled.value = enabled;
+    try {
+      await _storage.write(key: vibrationPreferenceKey, value: '$enabled');
+    } catch (error) {
+      if (kDebugMode) debugPrint('Titreşim tercihi kaydedilemedi: $error');
+    }
+  }
+
+  void _vibrate(Future<void> Function() impact) {
+    if (vibrationEnabled.value) unawaited(impact());
+  }
 
   Future<AudioPlayer> _playerFor(_GameSound sound) {
     return _players[sound] ??= () async {
@@ -64,22 +104,23 @@ class GameFeedbackService {
   }
 
   void correct() {
-    HapticFeedback.lightImpact();
+    _vibrate(HapticFeedback.lightImpact);
     unawaited(_play(_GameSound.correct));
   }
 
   void wrong() {
-    HapticFeedback.heavyImpact();
+    _vibrate(HapticFeedback.heavyImpact);
     unawaited(_play(_GameSound.wrong));
   }
 
   /// Deste ya da Rövanş bitti.
   void complete() {
-    HapticFeedback.mediumImpact();
+    _vibrate(HapticFeedback.mediumImpact);
     unawaited(_play(_GameSound.complete));
   }
 
   Future<void> dispose() async {
+    vibrationEnabled.dispose();
     final players = await Future.wait(_players.values);
     await Future.wait(players.map((player) => player.dispose()));
   }

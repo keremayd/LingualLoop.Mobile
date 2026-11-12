@@ -162,6 +162,23 @@ class AuthService {
 
     AppNotifier.showMessage("Başarıyla çıkış yapıldı. Tekrar görüşmek üzere...", color: Colors.green);
   }
+
+  /// Hesap sunucuda silindikten sonra: uygulama baştan (hoş geldin ekranı)
+  /// açılır, cihazdaki oturum ve kullanıcı temizlenir. Sıra [signOut] ile
+  /// aynı: önce sayfa değişir, sonra kullanıcı boşalır; açık profil boş
+  /// kullanıcıyla yeniden çizilmesin.
+  Future<void> endDeletedAccount(BuildContext context) async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+    Navigator.of(context).pushNamedAndRemoveUntil('/welcome', (_) => false);
+
+    await clearSession();
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    userProvider.clearUser();
+
+    AppNotifier.showMessage("Hesabın silindi.", color: Colors.green);
+  }
   
   Future<ApiResponse<AuthenticateResponse>> signInWithGoogle(BuildContext context) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
