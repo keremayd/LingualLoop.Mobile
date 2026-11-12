@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'
     show LicenseRegistry, LicenseEntryWithLineBreaks;
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart' show SystemUiOverlayStyle, rootBundle;
 import 'package:lingualloop/providers/BadgeProvider.dart';
 import 'package:lingualloop/providers/ArticlePracticeProvider.dart';
 import 'package:lingualloop/providers/KartyPathProvider.dart';
@@ -215,6 +215,13 @@ class MyApp extends StatelessWidget {
         '/welcome': (context) => WelcomeScreen(),
         '/signup': (context) => SignUpScreen(),
       },
+      // Bütün ekranlar koyu lacivert: durum çubuğu (saat, pil) her yerde
+      // beyaz. Bunu yalnız oyun ve kutlama ekranları söylüyordu; sekmeler ve
+      // giriş ekranları açılışta lacivert üstünde siyah, okunmaz kalıyordu.
+      builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light,
+        child: child!,
+      ),
       theme: ThemeData(
         scaffoldBackgroundColor: Color(0xFFF9FBFF),
         fontFamily: AppTypography.family,
