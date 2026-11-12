@@ -732,7 +732,7 @@ class _KartyPathBody extends StatelessWidget {
     final geo = _NodeGeometry(_PathLayout.gateWidth);
     final left = gate.center.dx - _PathLayout.gateWidth / 2;
     final top = gate.center.dy - geo.total / 2;
-    final labelLeft = gate.center.dx + gate.radius + 40;
+    final labelLeft = gate.center.dx + gate.halfWidth + 40;
 
     // Gelişte: önceki ünitenin kapısı zıplayarak onaya döner; açılan
     // ünitenin kendi kapısı fitil halkasına varana kadar kilitli görünür.
@@ -832,19 +832,55 @@ class _GateSpot {
   const _GateSpot({
     required this.unit,
     required this.center,
-    required this.radius,
+    required this.offset,
   });
 
   final KartyUnit unit;
   final Offset center;
 
-  /// Halkanın yarıçapı; ünitenin kelime sayısından
-  /// ([_PathLayout.ringRadiusFor]).
-  final double radius;
+  /// Halkanın kapı düğümünden uzaklığı; ünitenin kelime sayısından
+  /// ([_PathLayout.ringOffsetFor]).
+  final double offset;
+
+  static const _geo = _NodeGeometry(_PathLayout.gateWidth);
+
+  static double halfHeightFor(double offset) => _geo.total / 2 + offset;
+
+  double get halfWidth => _PathLayout.gateWidth / 2 + offset;
+  double get halfHeight => halfHeightFor(offset);
 
   /// Yolun halkaya girdiği ve çıktığı yükseklik.
-  double get top => center.dy - radius;
-  double get bottom => center.dy + radius;
+  double get top => center.dy - halfHeight;
+  double get bottom => center.dy + halfHeight;
+
+  /// Halkanın çizgisi, ekran ölçeğinde: düğümle eş merkezli yuvarlatılmış
+  /// dikdörtgen, tepe ortasından saat yönünde.
+  Path ring(double s) => _clockwiseFromTop(
+        Rect.fromCenter(
+          center: center * s,
+          width: 2 * halfWidth * s,
+          height: 2 * halfHeight * s,
+        ),
+        (_geo.radius + offset) * s,
+      );
+}
+
+/// Yuvarlatılmış dikdörtgen çizgi, tepe ortasından saat yönünde. Düğümü
+/// saran halkalar (kelime halkası, pekiştirme halkası) düğümün biçimini
+/// böyle izler.
+Path _clockwiseFromTop(Rect rect, double radius) {
+  final r = Radius.circular(radius);
+  return Path()
+    ..moveTo(rect.center.dx, rect.top)
+    ..lineTo(rect.right - radius, rect.top)
+    ..arcToPoint(Offset(rect.right, rect.top + radius), radius: r)
+    ..lineTo(rect.right, rect.bottom - radius)
+    ..arcToPoint(Offset(rect.right - radius, rect.bottom), radius: r)
+    ..lineTo(rect.left + radius, rect.bottom)
+    ..arcToPoint(Offset(rect.left, rect.bottom - radius), radius: r)
+    ..lineTo(rect.left, rect.top + radius)
+    ..arcToPoint(Offset(rect.left + radius, rect.top), radius: r)
+    ..close();
 }
 
 class _HeaderSpot {
@@ -911,18 +947,26 @@ class _PathLayout {
   static const gateWidth = 150.0;
 
   /// Pekiştirme halkası kapıyı sarar: yol tepeden halkaya girer, kapıyı
-  /// dolaşır ve alttan çıkar. Her taş ünitenin bir kelimesi. Halka 16
-  /// kelimede düğümün köşelerine ~17 birim kalır; kelime çoğaldıkça taş
-  /// aralığı yoldakine yakın kalacak kadar büyür, 132'yi geçmez — ötesinde
-  /// taşlar orantılı küçülür (bkz. `_PathPainter._paintRing`). Bir tur halka 160
-  /// birimdi ve noktalardan oluşuyordu; kapıdan uzak, yoldan kopuk ve
-  /// kapıyla ilgisiz okunuyordu (kullanıcı geri bildirimi, 5 Kas 2026).
-  static const ringRadiusMin = 118.0;
-  static const ringRadiusMax = 132.0;
+  /// dolaşır ve alttan çıkar. Her taş ünitenin bir kelimesi. Halka düğümün
+  /// biçimini izler: eş merkezli yuvarlatılmış dikdörtgen (12 Kas 2026,
+  /// kullanıcı; daire, düğmenin biçimiyle uyuşmuyordu). 16 kelimeye kadar
+  /// düğümün dışından 30 birim geçer, taşlar düğüme ~20 birim kalır; kelime
+  /// çoğaldıkça taş aralığı yoldakine yakın kalacak kadar açılır, 44'ü
+  /// geçmez — ötesinde taşlar orantılı küçülür (bkz. `_PathPainter._paintRing`).
+  /// Bir tur halka 160 birimlik noktalardı; kapıdan uzak, yoldan kopuk
+  /// okunuyordu (5 Kas 2026).
+  static const ringOffsetMin = 30.0;
+  static const ringOffsetMax = 44.0;
   static const ringSpacing = 46.0;
 
-  static double ringRadiusFor(int words) =>
-      (words * ringSpacing / (2 * math.pi)).clamp(ringRadiusMin, ringRadiusMax);
+  static double ringOffsetFor(int words) {
+    const geo = _NodeGeometry(gateWidth);
+    // Düğümün çizgisinin boyu; dışa doğru her birimde 2π uzar.
+    final outline =
+        2 * (gateWidth + geo.total) - (8 - 2 * math.pi) * geo.radius;
+    return ((words * ringSpacing - outline) / (2 * math.pi))
+        .clamp(ringOffsetMin, ringOffsetMax);
+  }
 
   /// Yan duraklar: şu anki düğümün merkezinden bu kadar sağda ve solda;
   /// arada iki taşlık yan yol kalır. Düğümün etiketi altına iner, altındaki
@@ -999,12 +1043,15 @@ class _PathLayout {
         previousCurrent = current;
       }
 
-      final radius = ringRadiusFor(unit.wordCount);
+      final offset = ringOffsetFor(unit.wordCount);
       final gateCenter = Offset(
         centerX - 60,
-        y + 176 + radius + (previousCurrent ? 40 + _captionRoom : 0),
+        y +
+            176 +
+            _GateSpot.halfHeightFor(offset) +
+            (previousCurrent ? 40 + _captionRoom : 0),
       );
-      final gate = _GateSpot(unit: unit, center: gateCenter, radius: radius);
+      final gate = _GateSpot(unit: unit, center: gateCenter, offset: offset);
       gates.add(gate);
       final ringTop = Offset(gateCenter.dx, gate.top);
       final ringBottom = Offset(gateCenter.dx, gate.bottom);
@@ -1338,11 +1385,12 @@ class _PathPainter extends CustomPainter {
     final s = scale;
     final unit = gate.unit;
     final n = math.max(1, unit.wordCount);
-    final step = 2 * math.pi / n;
+    final metric = gate.ring(s).computeMetrics().first;
+    final spacing = metric.length / n;
     // Halka büyüyemeyince taş yoldakinin oranlarıyla küçülür: boy aralığın
     // %65'i, en boyun %70'i, kalınlık bandı enle birlikte. 16 kelimede taş
     // yoldakiyle aynı.
-    final length = math.min(_stoneLength, gate.radius * step * 0.65);
+    final length = math.min(_stoneLength, spacing / s * 0.65);
     final width = length * _stoneWidth / _stoneLength;
     final band = _stoneDepth * width / _stoneWidth;
     final stone = RRect.fromRectAndRadius(
@@ -1358,17 +1406,20 @@ class _PathPainter extends CustomPainter {
         : i < unit.consolidatedCount
             ? _TrailStyle.done
             : _TrailStyle.ahead;
+    final places = [
+      for (var i = 0; i < n; i++)
+        metric.getTangentForOffset((i + 0.5) * spacing),
+    ];
     for (final pass in [0, 1]) {
-      for (var i = 0; i < n; i++) {
-        final angle = -math.pi / 2 + (i + 0.5) * step;
+      for (final (i, place) in places.indexed) {
+        if (place == null) continue;
         final (face, depth) = _colors(style(i));
         canvas.save();
         canvas.translate(
-          (gate.center.dx + math.cos(angle) * gate.radius) * s,
-          (gate.center.dy + math.sin(angle) * gate.radius) * s +
-              (pass == 0 ? band * s : 0),
+          place.position.dx,
+          place.position.dy + (pass == 0 ? band * s : 0),
         );
-        canvas.rotate(angle + math.pi / 2);
+        canvas.rotate(math.atan2(place.vector.dy, place.vector.dx));
         canvas.drawRRect(stone, Paint()..color = pass == 0 ? depth : face);
         canvas.restore();
       }
@@ -1384,12 +1435,14 @@ class _PathPainter extends CustomPainter {
     final unit = gate.unit;
     final n = math.max(1, unit.wordCount);
     final needed = (unit.unlockGoal * n).ceil().clamp(1, n);
-    final angle = -math.pi / 2 + needed * 2 * math.pi / n;
-    final c = gate.center * s;
-    final dir = Offset(math.cos(angle), math.sin(angle));
-    final r = gate.radius * s;
-    final inner = c + dir * (r - 20 * s);
-    final outer = c + dir * (r + 20 * s);
+    final metric = gate.ring(s).computeMetrics().first;
+    final place = metric.getTangentForOffset(metric.length * needed / n);
+    if (place == null) return;
+    // Çizgi saat yönünde döndüğü için dışarısı gidiş yönünün solu.
+    final dir = Offset(place.vector.dy, -place.vector.dx);
+    final p = place.position;
+    final inner = p - dir * (20 * s);
+    final outer = p + dir * (20 * s);
     for (final (shift, color) in [
       (Offset(0, 4 * s), _C.rimBottom),
       (Offset.zero, Colors.white),
@@ -1415,7 +1468,7 @@ class _PathPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    final anchor = c + dir * (r + 48 * s);
+    final anchor = p + dir * (48 * s);
     label.paint(canvas, anchor - Offset(label.width / 2, label.height / 2));
   }
 
@@ -1435,18 +1488,7 @@ class _PathPainter extends CustomPainter {
     );
     // Yol tepe ortasından başlayıp saat yönünde döner: ilk parça destenin
     // ilk kelimesi.
-    final r = Radius.circular((geo.radius + gap) * s);
-    final ring = Path()
-      ..moveTo(rect.center.dx, rect.top)
-      ..lineTo(rect.right - r.x, rect.top)
-      ..arcToPoint(Offset(rect.right, rect.top + r.x), radius: r)
-      ..lineTo(rect.right, rect.bottom - r.x)
-      ..arcToPoint(Offset(rect.right - r.x, rect.bottom), radius: r)
-      ..lineTo(rect.left + r.x, rect.bottom)
-      ..arcToPoint(Offset(rect.left, rect.bottom - r.x), radius: r)
-      ..lineTo(rect.left, rect.top + r.x)
-      ..arcToPoint(Offset(rect.left + r.x, rect.top), radius: r)
-      ..close();
+    final ring = _clockwiseFromTop(rect, (geo.radius + gap) * s);
     final metric = ring.computeMetrics().first;
     final n = math.max(1, step.newGoal);
     final length = metric.length / n;
@@ -1482,7 +1524,7 @@ class _PathPainter extends CustomPainter {
     }
     for (final gate in layout.gates) {
       final d = u - gate.center;
-      if (d.dx.abs() < 440 && d.dy.abs() < gate.radius + 40) {
+      if (d.dx.abs() < 440 && d.dy.abs() < gate.halfHeight + 40) {
         return true;
       }
     }
