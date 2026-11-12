@@ -12,6 +12,7 @@ import 'package:lingualloop/providers/KartyProvider.dart';
 import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/services/KartyService.dart';
+import 'package:lingualloop/services/DailyReminders.dart';
 import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/ui/app_typography.dart';
 import 'package:lingualloop/ui/flows/league_promotion_flow.dart';
@@ -255,6 +256,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     await _showPendingLeaguePromotion();
     if (!mounted) return;
     await _maybeShowUnlock();
+    if (firstGameToday && playedNow) await DailyReminders.askPermissionOnce();
   }
 
   /// Giriş bedeli olan oyun: bilet harcandıysa açılır. Bilet yetmezse

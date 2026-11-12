@@ -17,6 +17,7 @@ import 'package:lingualloop/providers/UserProvider.dart';
 import 'package:lingualloop/providers/VideoProvider.dart';
 import 'package:lingualloop/services/BadgeService.dart';
 import 'package:lingualloop/services/ArticlePracticeService.dart';
+import 'package:lingualloop/services/DailyReminders.dart';
 import 'package:lingualloop/services/FileService.dart';
 import 'package:lingualloop/services/KartyService.dart';
 import 'package:lingualloop/services/PronunciationService.dart';
@@ -52,7 +53,7 @@ String get apiBaseUrl {
   return 'http://localhost:5214/ll-api/';
 }
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   LicenseRegistry.addLicense(() async* {
     yield LicenseEntryWithLineBreaks(
@@ -64,6 +65,7 @@ void main() {
       await rootBundle.loadString('assets/fonts/Baloo2-LICENSE.txt'),
     );
   });
+  await DailyReminders.init();
   runApp(
     MultiProvider(
       providers: [
@@ -133,7 +135,18 @@ void main() {
           create: (_) => UserProvider(),
         ),
         ChangeNotifierProvider<ScoreWithLivesProvider>(
-          create: (_) => ScoreWithLivesProvider(),
+          create: (_) {
+            final provider = ScoreWithLivesProvider();
+            provider.addListener(() {
+              final data = provider.scoreWithLives;
+              if (data == null) return;
+              DailyReminders.sync(
+                playedToday: data.playedToday,
+                streak: data.streak,
+              );
+            });
+            return provider;
+          },
         ),
         ChangeNotifierProvider<KartyProvider>(
           create: (_) => KartyProvider(),
