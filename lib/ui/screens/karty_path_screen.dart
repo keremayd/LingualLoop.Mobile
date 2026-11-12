@@ -13,6 +13,7 @@ import 'package:lingualloop/ui/widgets/karty_unit_header.dart';
 import 'package:lingualloop/ui/widgets/ticket_spend_scene.dart';
 import 'package:lingualloop/ui/widgets/karty_unit_marks.dart';
 import 'package:lingualloop/ui/widgets/quest_icons.dart';
+import 'package:lingualloop/ui/widgets/surface_gloss.dart';
 
 /// Ana ekranın içeriği: Karty Yolu (bkz. `docs/KARTY_PATIKA.md` §8, §11).
 ///
@@ -1744,7 +1745,7 @@ class _NodeTile extends StatelessWidget {
             children: [
               Positioned.fill(
                 child: CustomPaint(
-                  painter: _FaceGlossPainter(radius: geo.radius * s),
+                  painter: FaceGlossPainter(radius: geo.radius * s),
                 ),
               ),
               child,
@@ -1754,54 +1755,6 @@ class _NodeTile extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Karo yüzünün üst kenarında ince cam parlaması ve sol üstte küçük
-/// parlama — seri kartının üst kenar parlamasıyla aynı aile, bulanıklık yok.
-class _FaceGlossPainter extends CustomPainter {
-  const _FaceGlossPainter({required this.radius});
-
-  final double radius;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    final stroke = size.width * 0.03;
-    canvas.save();
-    canvas.clipRect(Rect.fromLTWH(0, 0, size.width, size.height * 0.5));
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect.deflate(stroke * 1.2),
-          Radius.circular(math.max(0, radius - stroke * 1.2))),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = stroke
-        ..shader = ui.Gradient.linear(
-          rect.topCenter,
-          Offset(rect.center.dx, size.height * 0.5),
-          [
-            Colors.white.withValues(alpha: 0.34),
-            Colors.white.withValues(alpha: 0),
-          ],
-        ),
-    );
-    canvas.restore();
-    final u = size.width / 100;
-    canvas.save();
-    canvas.translate(22 * u, 19 * u);
-    canvas.rotate(-0.5);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset.zero, width: 16 * u, height: 6.5 * u),
-        Radius.circular(3.25 * u),
-      ),
-      Paint()..color = Colors.white.withValues(alpha: 0.38),
-    );
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant _FaceGlossPainter oldDelegate) =>
-      oldDelegate.radius != radius;
 }
 
 enum _IconTone { lit, muted, locked }

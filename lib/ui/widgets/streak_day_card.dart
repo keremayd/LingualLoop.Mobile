@@ -3,6 +3,7 @@ import 'package:lingualloop/ui/widgets/app_shape_style.dart';
 import 'package:flutter/material.dart';
 import 'package:lingualloop/ui/widgets/quest_icons.dart';
 import 'package:lingualloop/ui/widgets/streak_week_strip.dart';
+import 'package:lingualloop/ui/widgets/surface_gloss.dart';
 
 /// Güne özel seri kartı — referans tasarımın uygulaması.
 ///
@@ -208,7 +209,7 @@ class StreakDayCard extends StatelessWidget {
               Positioned.fill(
                 child: IgnorePointer(
                   child: CustomPaint(
-                    painter: _TopRimPainter(
+                    painter: TopRimPainter(
                       color: _rimColor,
                       radius: AppShapeStyle.cardRadius(40 * scale),
                       strokeWidth: AppShapeStyle.outline(3 * scale),
@@ -373,54 +374,6 @@ class StreakDayCard extends StatelessWidget {
           ),
         ),
       );
-}
-
-/// Kartın **üst** kenarındaki cam parlaması.
-///
-/// Yuvarlatılmış dikdörtgen konturu, dikey bir gradyanla boyanmış fırçayla
-/// çizilir: tepede `color`, kartın üçte birinde şeffaf. Böylece parlama üst
-/// kenarda ve üst köşelerde görünüp yanlara doğru **kaybolur** — düz bir
-/// çerçeve gibi kesilmez. §2.3'teki `_NoTopBorderPainter`'ın tersi.
-///
-/// Referansta ölçüldü: sol ve alt kenarlarda yüzden farklı bir ton yok,
-/// üstte 3 birimlik `#40527E` bandı var. Işık yukarıdan geliyor; dört kenarı
-/// çevreleyen bir çerçeve referansı taklit etmez, başka bir şey yapar.
-class _TopRimPainter extends CustomPainter {
-  const _TopRimPainter({
-    required this.color,
-    required this.radius,
-    required this.strokeWidth,
-  });
-
-  final Color color;
-  final double radius;
-  final double strokeWidth;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        rect.deflate(strokeWidth / 2),
-        Radius.circular(radius),
-      ),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [color, color.withValues(alpha: 0)],
-          stops: const [0, 0.34],
-        ).createShader(rect),
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _TopRimPainter old) =>
-      old.color != color ||
-      old.radius != radius ||
-      old.strokeWidth != strokeWidth;
 }
 
 /// Referanstaki şerit: üstte gün adları, altta daireler.
