@@ -675,11 +675,17 @@ class _Ticket extends StatelessWidget {
     final height = width / _aspect;
     final depth = width * 0.036;
 
-    Widget image() => Image.asset(
+    // Kalınlık bandı ve parıltı ekran dışı katman (ShaderMask) olmadan,
+    // resmin rengi boyanarak çizilir. Katmanlı hâli sahnenin başında ve
+    // parıltının girdiği karede çizimi 40–80 ms takıltıyordu: katman ilk
+    // açıldığında yüzeyi ve boyama hattı kuruluyordu.
+    Widget image({Color? color}) => Image.asset(
           'assets/icons/ticket.png',
           width: width,
           height: height,
           fit: BoxFit.fill,
+          color: color,
+          colorBlendMode: BlendMode.srcIn,
         );
     Widget cut(Widget child) => part == _Part.whole
         ? child
@@ -687,22 +693,16 @@ class _Ticket extends StatelessWidget {
 
     var face = image();
     if (sheen > 0 && sheen < 1) {
-      // Keskin kenarlı parıltı; bulanık gradyan yok (§2.2).
-      final x = -0.3 + 1.6 * sheen;
-      face = ShaderMask(
-        blendMode: BlendMode.srcATop,
-        shaderCallback: (bounds) => LinearGradient(
-          begin: const Alignment(-1, -0.6),
-          end: const Alignment(1, 0.6),
-          stops: [x - 0.1, x - 0.1, x + 0.1, x + 0.1],
-          colors: const [
-            Color(0x00FFFFFF),
-            Color(0x8CFFFFFF),
-            Color(0x8CFFFFFF),
-            Color(0x00FFFFFF),
-          ],
-        ).createShader(bounds),
-        child: face,
+      // Keskin kenarlı parıltı; bulanık gradyan yok (§2.2). Biletin beyaz
+      // silüeti çapraz bir şeride kırpılır.
+      face = Stack(
+        children: [
+          face,
+          ClipPath(
+            clipper: _SheenBand(-0.3 + 1.6 * sheen),
+            child: image(color: const Color(0x8CFFFFFF)),
+          ),
+        ],
       );
     }
 
@@ -714,18 +714,7 @@ class _Ticket extends StatelessWidget {
         height: height + depth,
         child: Stack(
           children: [
-            Positioned(
-              top: depth,
-              child: cut(
-                ShaderMask(
-                  blendMode: BlendMode.srcIn,
-                  shaderCallback: (bounds) => const LinearGradient(
-                    colors: [_depth, _depth],
-                  ).createShader(bounds),
-                  child: image(),
-                ),
-              ),
-            ),
+            Positioned(top: depth, child: cut(image(color: _depth))),
             Positioned(top: 0, child: cut(face)),
             if (part != _Part.whole || perforation > 0)
               Positioned(
@@ -779,6 +768,36 @@ class _TearClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(covariant _TearClipper oldClipper) =>
       oldClipper.part != part;
+}
+
+/// Parıltının şeridi: sol kenarın %20'sinden sağ kenarın %80'ine inen eksene
+/// dik, eksenin onda ikisi genişliğinde; eksenin dışına taşmaz.
+class _SheenBand extends CustomClipper<Path> {
+  const _SheenBand(this.at);
+
+  /// Şeridin ortası, eksen boyunca (0–1; dışı biletin dışı).
+  final double at;
+
+  @override
+  Path getClip(Size size) {
+    final from = size.height * 0.2;
+    final axis = Offset(size.width, size.height * 0.6);
+    final start = math.max(at - 0.1, 0.0);
+    final end = math.min(at + 0.1, 1.0);
+    if (start >= end) return Path();
+    final normal = Offset(-axis.dy, axis.dx) / axis.distance * size.longestSide;
+    final a = Offset(0, from) + axis * start;
+    final b = Offset(0, from) + axis * end;
+    return Path()
+      ..moveTo((a - normal).dx, (a - normal).dy)
+      ..lineTo((a + normal).dx, (a + normal).dy)
+      ..lineTo((b + normal).dx, (b + normal).dy)
+      ..lineTo((b - normal).dx, (b - normal).dy)
+      ..close();
+  }
+
+  @override
+  bool shouldReclip(covariant _SheenBand oldClipper) => oldClipper.at != at;
 }
 
 class _TearEdgePainter extends CustomPainter {
