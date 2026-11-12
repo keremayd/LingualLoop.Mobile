@@ -10,6 +10,8 @@ import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/ui/screens/article_practice_screen.dart';
 import 'package:lingualloop/ui/widgets/article_target.dart';
 import 'package:provider/provider.dart';
+import 'package:lingualloop/services/GameFeedbackService.dart';
+import 'helpers/silent_game_feedback.dart';
 
 class _Service extends Fake implements ArticlePracticeService {}
 
@@ -88,6 +90,7 @@ Future<_Practice> _pumpPractice(WidgetTester tester) async {
       providers: [
         ChangeNotifierProvider<ArticlePracticeProvider>.value(value: practice),
         Provider<UserService>(create: (_) => _User()),
+        Provider<GameFeedbackService>.value(value: SilentGameFeedback()),
         ChangeNotifierProvider<ProfileLearningStatsProvider>(
           create: (_) => _Stats(),
         ),

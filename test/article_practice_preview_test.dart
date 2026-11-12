@@ -9,6 +9,8 @@ import 'package:lingualloop/ui/app_typography.dart';
 import 'package:lingualloop/ui/screens/article_practice_screen.dart';
 import 'package:lingualloop/ui/widgets/article_practice_card.dart';
 import 'helpers/preview_fonts.dart';
+import 'package:lingualloop/services/GameFeedbackService.dart';
+import 'helpers/silent_game_feedback.dart';
 
 const _capture = bool.fromEnvironment('ARTICLE_CAPTURE');
 const _image = String.fromEnvironment('ARTICLE_PREVIEW_IMAGE',
@@ -51,9 +53,12 @@ void main() {
                 tester.element(find.byType(SizedBox).first))
             .timeout(const Duration(seconds: 10));
       });
-      await tester.pumpWidget(ChangeNotifierProvider<ArticlePracticeProvider>(
-        create: (_) => _Practice(),
-        child: MaterialApp(
+      await tester.pumpWidget(MultiProvider(providers: [
+        ChangeNotifierProvider<ArticlePracticeProvider>(
+          create: (_) => _Practice(),
+        ),
+        Provider<GameFeedbackService>.value(value: SilentGameFeedback()),
+      ], child: MaterialApp(
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
             fontFamily: AppTypography.family,

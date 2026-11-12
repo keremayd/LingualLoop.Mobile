@@ -48,6 +48,7 @@ flutter:
         - asset: assets/fonts/Baloo2-ExtraBold.ttf
           weight: 800
   assets:
+    - assets/sounds/
     - assets/fonts/Rubik-LICENSE.txt
     - assets/fonts/Baloo2-LICENSE.txt
     # Icons

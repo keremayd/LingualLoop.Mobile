@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lingualloop/providers/ArticlePracticeProvider.dart';
 import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
+import 'package:lingualloop/services/GameFeedbackService.dart';
 import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:lingualloop/ui/widgets/article_practice_card.dart';
@@ -48,6 +49,7 @@ class _ArticlePracticeScreenState extends State<ArticlePracticeScreen>
     super.initState();
     _motionController = AnimationController(vsync: this);
     Future.microtask(context.read<ArticlePracticeProvider>().startGame);
+    unawaited(context.read<GameFeedbackService>().preload());
   }
 
   @override
@@ -121,6 +123,7 @@ class _ArticlePracticeScreenState extends State<ArticlePracticeScreen>
     final result = await provider.answer(selectedArticle);
     if (!mounted) return;
     if (result?.isCorrect == true) {
+      context.read<GameFeedbackService>().correct();
       final preparedNext = provider.prepareNext();
       setState(() {
         _receivingArticle = selectedArticle;
@@ -143,6 +146,7 @@ class _ArticlePracticeScreenState extends State<ArticlePracticeScreen>
     }
 
     if (result?.isAccepted == true) {
+      context.read<GameFeedbackService>().wrong();
       setState(() {
         _hoveredArticle = null;
       });

@@ -95,7 +95,7 @@ class PronunciationService {
   /// kategori `playback`.
   Future<void>? _sessionSetup;
 
-  Future<void> _ensureSession() {
+  Future<void> ensureAudioSession() {
     return _sessionSetup ??= () async {
       if (_configureSession != null) {
         await _configureSession();
@@ -132,7 +132,7 @@ class PronunciationService {
     try {
       await ready;
       if (!_canPlay(version)) return;
-      await _ensureSession();
+      await ensureAudioSession();
       if (!_canPlay(version)) return;
       if (_loadedUrl != url) {
         await _player.stop();

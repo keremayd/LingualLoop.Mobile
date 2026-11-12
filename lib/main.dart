@@ -19,6 +19,7 @@ import 'package:lingualloop/services/BadgeService.dart';
 import 'package:lingualloop/services/ArticlePracticeService.dart';
 import 'package:lingualloop/services/DailyReminders.dart';
 import 'package:lingualloop/services/FileService.dart';
+import 'package:lingualloop/services/GameFeedbackService.dart';
 import 'package:lingualloop/services/KartyService.dart';
 import 'package:lingualloop/services/PronunciationService.dart';
 import 'package:lingualloop/services/QuestService.dart';
@@ -101,6 +102,11 @@ Future<void> main() async {
         // kurulsaydı sesler çakışır ve bellekte oynatıcı birikirdi.
         Provider<PronunciationService>(
           create: (_) => PronunciationService(),
+          dispose: (_, service) => service.dispose(),
+        ),
+        Provider<GameFeedbackService>(
+          create: (context) =>
+              GameFeedbackService(context.read<PronunciationService>()),
           dispose: (_, service) => service.dispose(),
         ),
         Provider<KartyService>(
