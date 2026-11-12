@@ -885,6 +885,9 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
   Future<void> _closeKartyScreen() async {
     _successCelebrationKey.currentState?.stop();
     _boostActivationKey.currentState?.stop();
+    // Menü kapanan dairenin içinde kalmasın: bulanık arka planı daire
+    // küçüldükçe her karede yeni boyda yeniden çiziliyor, kapanış takılıyordu.
+    if (_pauseMenuOpen) setState(() => _pauseMenuOpen = false);
     if (isPaused.value) {
       isPaused.value = false;
       await Future.delayed(const Duration(milliseconds: 16));

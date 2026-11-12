@@ -81,8 +81,32 @@ class _PendingUserService extends UserService {
       pending.future;
 }
 
+/// Oyun ekranını bir rotanın üstünde açar: kapanış gerçekten bir rota kapatsın.
+class _Launcher extends StatefulWidget {
+  const _Launcher();
+
+  @override
+  State<_Launcher> createState() => _LauncherState();
+}
+
+class _LauncherState extends State<_Launcher> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const KartyQuizScreen()),
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.expand();
+}
+
 Future<_Audio> _mountQuiz(WidgetTester tester,
-    {KartyCardMode mode = KartyCardMode.pickArticle}) async {
+    {KartyCardMode mode = KartyCardMode.pickArticle,
+    bool overHome = false}) async {
   tester.view.physicalSize = const Size(320, 700);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
@@ -97,9 +121,12 @@ Future<_Audio> _mountQuiz(WidgetTester tester,
     Provider<UserService>(create: (_) => _PendingUserService()),
     Provider<PronunciationService>.value(value: audio),
     Provider<GameFeedbackService>.value(value: SilentGameFeedback()),
-  ], child: const MaterialApp(home: KartyQuizScreen())));
+  ], child: MaterialApp(
+        home: overHome ? const _Launcher() : const KartyQuizScreen(),
+      )));
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 100));
+  if (overHome) await tester.pump(const Duration(milliseconds: 500));
   return audio;
 }
 
@@ -193,6 +220,28 @@ void main() {
     await tester.pump();
     expect(find.byType(KartyPauseOverlay), findsNothing);
     expect(find.text('ANLADIM'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('Oyundan çıkarken menü kapanan geçişin içinde kalmaz',
+      (tester) async {
+    await _mountQuiz(tester, overHome: true);
+    await tester.tap(find.bySemanticsLabel('Oyunu duraklat'));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byType(KartyPauseOverlay), findsOneWidget);
+
+    await tester.tap(find.text('Oyundan çık'));
+    await tester.pump();
+    // Menünün bulanık arka planı küçülen dairenin içinde her karede yeni
+    // boyda çiziliyordu, kapanış takılıyordu (12 Kas 2026): menü önce kalkar.
+    expect(find.byType(KartyPauseOverlay), findsNothing);
+    expect(find.byType(KartyQuizScreen), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 20));
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+    expect(find.byType(KartyQuizScreen), findsNothing);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });

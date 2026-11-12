@@ -240,6 +240,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final builder =
         context.findAncestorWidgetOfExactType<MaterialApp>()?.routes?[route];
     if (portal == null || builder == null) {
+      // Daire açılmayacak: bilet sahnesi kaplanmayı beklemesin.
+      portal?.opening.value = 1;
       return Navigator.pushNamed(context, route, arguments: arguments);
     }
     return Navigator.of(context).push<Object?>(
@@ -302,6 +304,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
     playback?.removeWhenCovered();
     await _openGame(route, arguments: arguments, portal: playback?.portal);
+    // Oyun daire ekranı kaplamadan kapandıysa sahne de kalksın.
+    playback?.cancel();
   }
 
   /// Şu anki adımın oyunu: hangi ünitenin hangi destesi (yoksa yalnız

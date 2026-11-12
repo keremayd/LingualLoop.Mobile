@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show clampDouble;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lingualloop/ui/widgets/karty_unit_marks.dart';
@@ -92,11 +93,18 @@ class TicketTargetState extends State<TicketTarget> {
 
 /// Oyunun açılacağı yer: düğümün merkezi ve dairenin başlangıç yarıçapı.
 class GamePortal {
-  const GamePortal({required this.center, required this.startRadius});
+  GamePortal({required this.center, required this.startRadius});
 
   final Offset center;
   final double startRadius;
+
+  /// Dairenin açıklığı, eğrisiyle (0–1). Bilet sahnesinin karartması bununla
+  /// açılır: kendi saatiyle açılsaydı daire beklediğinde karartma ondan önce
+  /// kalkardı.
+  final ValueNotifier<double> opening = ValueNotifier(0);
 }
+
+const _portalCurve = Curves.easeInOutCubic;
 
 /// Oyun, biletin girdiği düğümün içinden genişleyen bir daireyle açılır;
 /// kapanırken aynı noktaya geri döner.
@@ -105,7 +113,8 @@ class GamePortalRoute<T> extends PageRouteBuilder<T> {
     required RouteSettings super.settings,
     required WidgetBuilder builder,
     required GamePortal portal,
-  }) : super(
+  })  : _portal = portal,
+        super(
           transitionDuration: Duration(
             milliseconds: _Beat.portalLength.round(),
           ),
@@ -119,6 +128,70 @@ class GamePortalRoute<T> extends PageRouteBuilder<T> {
             child: child,
           ),
         );
+
+  final GamePortal _portal;
+
+  @override
+  void install() {
+    super.install();
+    // Denetleyicinin kendisi dinlenir: sayfa ilk karede ekran dışında
+    // ölçülürken rotanın görünen değeri 1'e çekiliyor.
+    controller!.addListener(
+      () => _portal.opening.value = _portalCurve.transform(controller!.value),
+    );
+  }
+
+  /// Daire zamana değil kareye bağlı ilerler ([_SteadyTransition]).
+  @override
+  Simulation? createSimulation({required bool forward}) {
+    final from = controller!.value;
+    final to = forward ? 1.0 : 0.0;
+    final full = forward ? transitionDuration : reverseTransitionDuration;
+    return _SteadyTransition(
+      from: from,
+      to: to,
+      seconds: full.inMicroseconds /
+          Duration.microsecondsPerSecond *
+          (to - from).abs(),
+    );
+  }
+}
+
+/// Geçişi kareyle ilerletir: bir kare ne kadar uzun sürerse sürsün daire o
+/// karede en çok [_maxStep] kadar ilerler. Zamana bağlıyken oyun sayfasının
+/// ilk karesi (kurulum ve ekran dışında ölçüm; debug'da 200 ms'ye kadar)
+/// dairenin yarısını tek karede geçiriyordu, daire takılarak açılıyordu.
+/// Ağır kare artık daireyi bekletir, atlatmaz.
+class _SteadyTransition extends Simulation {
+  _SteadyTransition({
+    required this.from,
+    required this.to,
+    required this.seconds,
+  });
+
+  final double from;
+  final double to;
+  final double seconds;
+
+  /// Bir karede sayılan en uzun süre: 60 Hz'de iki kare.
+  static const _maxStep = 1 / 30;
+
+  double _elapsed = 0;
+  double _lastTime = 0;
+
+  @override
+  double x(double time) {
+    _elapsed += clampDouble(time - _lastTime, 0, _maxStep);
+    _lastTime = time;
+    if (isDone(time)) return to;
+    return from + (to - from) * _elapsed / seconds;
+  }
+
+  @override
+  double dx(double time) => seconds <= 0 ? 0 : (to - from) / seconds;
+
+  @override
+  bool isDone(double time) => _elapsed >= seconds;
 }
 
 /// Dairenin ekranı kaplamak için varması gereken yarıçap.
@@ -151,7 +224,7 @@ class _PortalTransition extends StatelessWidget {
       animation: animation,
       child: child,
       builder: (context, page) {
-        final t = Curves.easeInOutCubic.transform(animation.value);
+        final t = _portalCurve.transform(animation.value);
         final radius = portal.startRadius + (far - portal.startRadius) * t;
         final open = animation.isCompleted;
         // Ağaç biçimi değişmez: oyun sayfası yeniden kurulmasın.
@@ -205,14 +278,22 @@ class TicketSpendPlayback {
   }
 
   /// Oyun sayfası üste açılırken sahne altında kalır, daire ekranı
-  /// kaplayınca kaldırılır.
+  /// kaplayınca kaldırılır. Daire kareyle ilerlediği için süresi sabit değil;
+  /// sabit bir süreden sonra kaldırılsaydı karartma daire açılırken kalkardı.
   void removeWhenCovered() {
-    unawaited(
-      Future<void>.delayed(
-        Duration(milliseconds: (_Beat.portalLength + 40).round()),
-        cancel,
-      ),
-    );
+    final portal = this.portal;
+    if (portal == null) {
+      cancel();
+      return;
+    }
+    void check() {
+      if (portal.opening.value < 1) return;
+      portal.opening.removeListener(check);
+      cancel();
+    }
+
+    portal.opening.addListener(check);
+    check();
   }
 }
 
@@ -254,9 +335,14 @@ TicketSpendPlayback playTicketSpend(
   );
 
   final arrived = Completer<void>();
+  final portal = GamePortal(
+    center: node,
+    startRadius: nodeRadius * _portalStart,
+  );
   final entry = OverlayEntry(
     builder: (_) => _TicketSpendOverlay(
       geometry: scene,
+      portal: portal,
       onImpact: (value) => to.currentState?._setImpact(value),
       onArrived: () {
         if (!arrived.isCompleted) arrived.complete();
@@ -266,7 +352,7 @@ TicketSpendPlayback playTicketSpend(
   overlay.insert(entry);
   return TicketSpendPlayback._(
     arrived: arrived.future,
-    portal: GamePortal(center: node, startRadius: nodeRadius * _portalStart),
+    portal: portal,
     remove: () {
       if (!arrived.isCompleted) arrived.complete();
       to.currentState?._setImpact(0);
@@ -302,11 +388,13 @@ class _SceneGeometry {
 class _TicketSpendOverlay extends StatefulWidget {
   const _TicketSpendOverlay({
     required this.geometry,
+    required this.portal,
     required this.onImpact,
     required this.onArrived,
   });
 
   final _SceneGeometry geometry;
+  final GamePortal portal;
   final ValueChanged<double> onImpact;
   final VoidCallback onArrived;
 
@@ -322,6 +410,8 @@ class _TicketSpendOverlayState extends State<_TicketSpendOverlay>
   )
     ..addListener(_onTick)
     ..forward();
+
+  late final _ticks = Listenable.merge([_clock, widget.portal.opening]);
 
   bool _tore = false;
   bool _hit = false;
@@ -354,9 +444,10 @@ class _TicketSpendOverlayState extends State<_TicketSpendOverlay>
     // Sahne sürerken başka bir oyun açılmasın.
     return AbsorbPointer(
       child: AnimatedBuilder(
-        animation: _clock,
+        animation: _ticks,
         builder: (context, _) => _Scene(
           ms: _clock.value * _Beat.end,
+          opening: widget.portal.opening.value,
           geometry: widget.geometry,
         ),
       ),
@@ -365,9 +456,16 @@ class _TicketSpendOverlayState extends State<_TicketSpendOverlay>
 }
 
 class _Scene extends StatelessWidget {
-  const _Scene({required this.ms, required this.geometry});
+  const _Scene({
+    required this.ms,
+    required this.opening,
+    required this.geometry,
+  });
 
   final double ms;
+
+  /// Oyun dairesinin açıklığı ([GamePortal.opening]).
+  final double opening;
   final _SceneGeometry geometry;
 
   double _seg(double a, double b) => ((ms - a) / (b - a)).clamp(0.0, 1.0);
@@ -387,9 +485,6 @@ class _Scene extends StatelessWidget {
 
     // Sahne oyun sayfasının üstünde kalır: oyun açılırken karartma dairenin
     // dışına çekilir, açılan sayfayı karartmaz.
-    final opening = Curves.easeInOutCubic.transform(
-      _seg(_Beat.portal, _Beat.portal + _Beat.portalLength),
-    );
     final start = g.nodeRadius * _portalStart;
     final hole = math.max(
       g.nodeRadius + 34 * s,
