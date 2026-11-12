@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:lingualloop/ui/widgets/profile_learning_stats_card.dart' show ArticleLearnedIcon;
 
 /// Görev kartlarının ikonları. Bayrak simgesiyle aynı dilde çizilir:
 /// dolu ve tombul gövde, gövdenin altına inen koyu kalınlık bandı
@@ -18,11 +19,19 @@ class QuestIcon extends StatelessWidget {
   final String questKey;
   final double size;
 
+  /// Aynı işi farklı hedefle isteyen görevler aynı simgeyi taşır.
+  static const _sharedIcons = {
+    'correct_eight': 'correct_five',
+    'correct_ten': 'correct_five',
+    'streak_keep': 'streak_three',
+  };
+
   @override
   Widget build(BuildContext context) {
+    if (questKey == 'article_three') return ArticleLearnedIcon(size: size);
     return CustomPaint(
       size: Size.square(size),
-      painter: _QuestIconPainter(questKey),
+      painter: _QuestIconPainter(_sharedIcons[questKey] ?? questKey),
     );
   }
 }
