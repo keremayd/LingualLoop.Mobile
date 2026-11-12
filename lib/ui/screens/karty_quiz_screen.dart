@@ -18,6 +18,7 @@ import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/ui/screens/karty_session_summary_screen.dart';
 import 'package:lingualloop/ui/widgets/league_badge_mark.dart';
 import 'package:lingualloop/services/KartyService.dart';
+import 'package:lingualloop/services/cached_signed_image.dart';
 import 'package:lingualloop/services/GameFeedbackService.dart';
 import 'package:lingualloop/services/PronunciationService.dart';
 import 'package:lingualloop/ui/widgets/SwipableCard.dart';
@@ -738,7 +739,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
                 KartyWord(
                   word: word.nounText,
                   article: word.article,
-                  image: NetworkImage(word.kartyUrl),
+                  image: CachedSignedImage(word.kartyUrl),
                   box: word.box,
                 ),
             ]

@@ -55,7 +55,7 @@ class _SlowQueueServer extends _Server {
 
 class _Files extends Fake implements LocalFileService {
   @override
-  Future<String> cacheKartyImage(String imageUrl, int kartyId) async =>
+  Future<String> cacheKartyImage(String imageUrl) async =>
       imageUrl;
 }
 

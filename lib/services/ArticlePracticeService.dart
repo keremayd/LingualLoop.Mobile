@@ -51,10 +51,7 @@ class ArticlePracticeService {
 
   Future<ArticlePracticeTask?> _cacheTask(ArticlePracticeTask? task) async {
     if (task == null || task.kartyUrl.isEmpty) return task;
-    final imagePath = await _localFileService.cacheKartyImage(
-      task.kartyUrl,
-      task.kartyId,
-    );
+    final imagePath = await _localFileService.cacheKartyImage(task.kartyUrl);
     return task.withLocalImage(imagePath);
   }
 

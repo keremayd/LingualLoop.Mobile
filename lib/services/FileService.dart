@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:lingualloop/services/cached_signed_image.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -61,21 +63,31 @@ class LocalFileService {
     await userProvider.setProfilePhoto(filePath);
   }
 
-  Future<String> cacheKartyImage(String imageUrl, int kartyId) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final filePath = '${directory.path}/$kartyId.png';
-    final file = File(filePath);
+  /// Kart görselinin diskteki yolu. Patika, oyun ve Artikel aynı önbelleği
+  /// kullanır ([SignedImageCache]); sunucuda değişen görsel sonraki açılışta
+  /// yenilenir.
+  Future<String> cacheKartyImage(String imageUrl) async {
+    unawaited(_removeLegacyKartyImages());
+    return (await SignedImageCache.fileFor(imageUrl)).path;
+  }
 
-    // Eğer daha önce kaydedilmişse tekrar indirme
-    if (await file.exists()) return filePath;
+  static bool _legacyRemoved = false;
 
-    final response = await Dio().get<List<int>>(
-      imageUrl,
-      options: Options(responseType: ResponseType.bytes),
-    );
-
-    await file.writeAsBytes(response.data!);
-
-    return filePath;
+  /// Eski önbellek `Documents/<kartyId>.png` idi: sunucuya hiç sormuyordu ve
+  /// yedeklenen klasörde duruyordu. Artık kullanılmıyor, bir kez silinir.
+  Future<void> _removeLegacyKartyImages() async {
+    if (_legacyRemoved) return;
+    _legacyRemoved = true;
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final legacy = RegExp(r'/\d+\.png$');
+      await for (final entity in directory.list()) {
+        if (entity is File && legacy.hasMatch(entity.path)) {
+          await entity.delete();
+        }
+      }
+    } catch (_) {
+      // Silinemeyen dosya yalnız yer kaplar; uygulamayı durdurmaz.
+    }
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:lingualloop/models/responses/KartyPathResponse.dart';
+import 'package:lingualloop/services/cached_signed_image.dart';
 
 /// Karty Yolu'nun ekran modeli: ünite → deste (8 kelime) → kelime. Sunucudaki karşılığı `GET karty/path/{userId}`
 /// ([KartyPathResponse]); ekran yalnız bu modeli tanır.
@@ -23,11 +24,14 @@ class KartyPathData {
   }
 
   /// Sunucu yanıtını ekran modeline çevirir. [image] testte yerel görsel
-  /// vermek için; uygulamada imzalı adresten [NetworkImage].
+  /// vermek için; uygulamada imzalı adresten [CachedSignedImage]: ana ekran
+  /// her tazelendiğinde ünite resmi ve deste penceresindeki görseller
+  /// silinip yeniden inmesin.
   factory KartyPathData.fromResponse(
     KartyPathResponse response, {
-    ImageProvider Function(String url) image = _network,
+    ImageProvider Function(String url)? image,
   }) {
+    final picture = image ?? CachedSignedImage.new;
     KartyStepState stepState(String state) => switch (state) {
           'done' => KartyStepState.done,
           'current' => KartyStepState.current,
@@ -50,7 +54,7 @@ class KartyPathData {
         wordCount: unit.wordCount,
         consolidatedCount: unit.consolidatedCount,
         unlockGoal: unit.unlockGoal,
-        emblem: unit.emblemUrl == null ? null : image(unit.emblemUrl!),
+        emblem: unit.emblemUrl == null ? null : picture(unit.emblemUrl!),
         unlockHint: previous == null
             ? null
             : 'Ünite ${previous.number}${genitive(previous.number)} '
@@ -71,12 +75,14 @@ class KartyPathData {
                   KartyWord(
                     word: word.nounText,
                     article: word.article,
-                    image: image(word.kartyUrl),
+                    image: picture(word.kartyUrl),
                     box: word.box,
                     due: word.isDue,
                   ),
               ],
-              upcoming: [for (final url in step.upcomingImageUrls) image(url)],
+              upcoming: [
+                for (final url in step.upcomingImageUrls) picture(url),
+              ],
             ),
         ],
       ));
@@ -90,8 +96,6 @@ class KartyPathData {
             pendingUnlock: data.unlockFor(pending),
           );
   }
-
-  static ImageProvider _network(String url) => NetworkImage(url);
 
   /// Sayının ilgi hâli eki: 1'in, 2'nin, 3'ün, 6'nın, 10'un.
   static String genitive(int n) {

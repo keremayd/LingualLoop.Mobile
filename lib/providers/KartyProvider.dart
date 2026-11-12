@@ -249,14 +249,13 @@ class KartyProvider with ChangeNotifier {
       // Gelen signedUrl'deki karty görselini cache'e aktarıyoruz
       final cacheUrl = await localFileService.cacheKartyImage(
         apiResponse.data!.kartyUrl,
-        apiResponse.data!.kartyId,
       );
 
       // Seçenek görselleri de soru ekrana gelmeden iner.
       final options = await Future.wait(apiResponse.data!.options.map(
         (option) async => KartyOption(
           kartyId: option.kartyId,
-          imagePath: await localFileService.cacheKartyImage(option.kartyUrl, option.kartyId),
+          imagePath: await localFileService.cacheKartyImage(option.kartyUrl),
         ),
       ));
 
