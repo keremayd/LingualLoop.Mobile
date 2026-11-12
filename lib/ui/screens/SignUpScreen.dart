@@ -8,6 +8,8 @@ import 'package:lingualloop/ui/widgets/Buttons/auth_back_button.dart';
 import 'package:lingualloop/ui/widgets/Buttons/auth_social_button.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:provider/provider.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart'
+    show SignInWithAppleException;
 import '../../services/AuthenticationService.dart';
 
 class _RegistrationFailure {
@@ -32,6 +34,7 @@ class _SignUpScreenState extends State<SignUpScreen>
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _googleLoading = false;
+  bool _appleLoading = false;
   bool _accountCreated = false;
   SignUpRequest? _submittedRequest;
   String? _formError;
@@ -57,7 +60,7 @@ class _SignUpScreenState extends State<SignUpScreen>
   static const _warningColor = Color(0xFFFF4D5E);
   static const _warningBackgroundColor = Color(0xFF102948);
 
-  bool get _isBusy => _isLoading || _googleLoading;
+  bool get _isBusy => _isLoading || _googleLoading || _appleLoading;
 
   @override
   void dispose() {
@@ -253,12 +256,40 @@ class _SignUpScreenState extends State<SignUpScreen>
     }
   }
 
-  void _showAppleUnavailable() {
-    if (_isBusy) return;
+  /// Apple ile devam: hesap yoksa sunucu açar, varsa giriş yapılır.
+  Future<void> _continueWithApple() async {
+    if (_isBusy || _accountCreated) return;
+    final authService = Provider.of<AuthService>(context, listen: false);
     setState(() {
+      _appleLoading = true;
       _errors.updateAll((key, value) => null);
-      _formError = 'Apple ile kayıt henüz kullanılamıyor.';
+      _formError = null;
     });
+
+    try {
+      final response = await authService.signInWithApple(context);
+      if (!mounted) return;
+      if (response.errorCode == null && response.data != null) {
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        setState(() => _formError = response.errorCode == 'İşlem iptal edildi!'
+            ? 'Apple ile devam etme iptal edildi.'
+            : 'Apple ile devam edilemedi. Tekrar dene.');
+      }
+    } catch (error) {
+      if (!mounted) return;
+      final connectionError = error is! SignInWithAppleException &&
+          error is DioError &&
+          (error.type == DioErrorType.connectTimeout ||
+              error.type == DioErrorType.sendTimeout ||
+              error.type == DioErrorType.receiveTimeout ||
+              error.type == DioErrorType.other);
+      setState(() => _formError = connectionError
+          ? 'Bağlantı kurulamadı. İnternetini ve sunucuyu kontrol et.'
+          : 'Apple ile devam edilemedi. Tekrar dene.');
+    } finally {
+      if (mounted) setState(() => _appleLoading = false);
+    }
   }
 
   Widget _dividerLine(double scale) => Container(
@@ -441,7 +472,8 @@ class _SignUpScreenState extends State<SignUpScreen>
                       ),
                     ),
                     Positioned(
-                      left: 211 * scale,
+                      // Apple yokken Google iki düğmenin ortasına oturur.
+                      left: (appleSignInShown ? 211 : 297.5) * scale,
                       top: 1030 * scale + errorOffset,
                       child: AuthSocialButton(
                         provider: AuthSocialProvider.google,
@@ -454,19 +486,21 @@ class _SignUpScreenState extends State<SignUpScreen>
                         onPressed: _continueWithGoogle,
                       ),
                     ),
-                    Positioned(
-                      left: 384 * scale,
-                      top: 1030 * scale + errorOffset,
-                      child: AuthSocialButton(
-                        provider: AuthSocialProvider.apple,
-                        label: 'Apple ile kayıt ol',
-                        size: 120 * scale,
-                        radius: 34 * scale,
-                        iconSize: 62 * scale,
-                        enabled: !_isBusy && !_accountCreated,
-                        onPressed: _showAppleUnavailable,
+                    if (appleSignInShown)
+                      Positioned(
+                        left: 384 * scale,
+                        top: 1030 * scale + errorOffset,
+                        child: AuthSocialButton(
+                          provider: AuthSocialProvider.apple,
+                          label: 'Apple ile kayıt ol',
+                          size: 120 * scale,
+                          radius: 34 * scale,
+                          iconSize: 62 * scale,
+                          enabled: !_isBusy && !_accountCreated,
+                          isLoading: _appleLoading,
+                          onPressed: _continueWithApple,
+                        ),
                       ),
-                    ),
                     Positioned(
                       left: 0,
                       right: 0,

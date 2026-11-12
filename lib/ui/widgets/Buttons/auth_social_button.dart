@@ -1,7 +1,13 @@
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 
 enum AuthSocialProvider { google, apple }
+
+/// Apple ile giriş yalnız iOS'ta: Android'de Apple'ın web akışı ve ayrı
+/// sunucu ayarı gerekiyor, App Store şartı da iOS için.
+bool get appleSignInShown => defaultTargetPlatform == TargetPlatform.iOS;
 
 class AuthSocialButton extends StatelessWidget {
   const AuthSocialButton({

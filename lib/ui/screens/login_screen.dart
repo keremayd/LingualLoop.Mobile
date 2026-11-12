@@ -9,11 +9,13 @@ import 'package:lingualloop/ui/widgets/Buttons/auth_back_button.dart';
 import 'package:lingualloop/ui/widgets/Buttons/auth_social_button.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:provider/provider.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart'
+    show SignInWithAppleException;
 
 import '../../Enums/LoginMethod.dart';
 import '../../services/AuthenticationService.dart';
 
-enum _LoginSource { form, test, google }
+enum _LoginSource { form, test, google, apple }
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -82,12 +84,17 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   String _failureMessage(Object error, LoginMethod method) {
+    if (error is SignInWithAppleException) {
+      return 'Apple ile giriş yapılamadı. Tekrar dene.';
+    }
     if (error is DioError) {
       if (error.response?.statusCode == 400 ||
           error.response?.statusCode == 401) {
-        return method == LoginMethod.usernamePassword
-            ? 'E-posta veya şifre hatalı.'
-            : 'Google ile giriş yapılamadı. Tekrar dene.';
+        return switch (method) {
+          LoginMethod.usernamePassword => 'E-posta veya şifre hatalı.',
+          LoginMethod.google => 'Google ile giriş yapılamadı. Tekrar dene.',
+          LoginMethod.apple => 'Apple ile giriş yapılamadı. Tekrar dene.',
+        };
       }
       if (error.type == DioErrorType.connectTimeout ||
           error.type == DioErrorType.sendTimeout ||
@@ -102,10 +109,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login(LoginMethod method, {bool useTestAccount = false}) async {
     if (_isLoading) return;
     if (useTestAccount && !kDebugMode) return;
-    if (method == LoginMethod.apple) {
-      setState(() => _errorMessage = 'Apple ile giriş henüz kullanılamıyor.');
-      return;
-    }
     if (method == LoginMethod.usernamePassword &&
         !useTestAccount &&
         !_validateCredentials()) {
@@ -117,34 +120,42 @@ class _LoginScreenState extends State<LoginScreen> {
       _errorMessage = null;
       _emailInvalid = false;
       _passwordInvalid = false;
-      _loadingSource = method == LoginMethod.google
-          ? _LoginSource.google
-          : useTestAccount
-              ? _LoginSource.test
-              : _LoginSource.form;
+      _loadingSource = switch (method) {
+        LoginMethod.google => _LoginSource.google,
+        LoginMethod.apple => _LoginSource.apple,
+        LoginMethod.usernamePassword =>
+          useTestAccount ? _LoginSource.test : _LoginSource.form,
+      };
     });
 
     try {
-      final response = method == LoginMethod.google
-          ? await authService.signInWithGoogle(context)
-          : await authService.signIn(
-              // Test hesabı yalnız debug derlemesindeki ayrı butondan gelir.
-              useTestAccount
-                  ? 'sefa@gmail.com'
-                  : _usernameController.text.trim(),
-              useTestAccount ? 'sefa123' : _passwordController.text,
-              context,
-            );
+      final response = await switch (method) {
+        LoginMethod.google => authService.signInWithGoogle(context),
+        LoginMethod.apple => authService.signInWithApple(context),
+        LoginMethod.usernamePassword => authService.signIn(
+            // Test hesabı yalnız debug derlemesindeki ayrı butondan gelir.
+            useTestAccount
+                ? 'sefa@gmail.com'
+                : _usernameController.text.trim(),
+            useTestAccount ? 'sefa123' : _passwordController.text,
+            context,
+          ),
+      };
       if (!mounted) return;
       if (response.errorCode == null && response.data != null) {
         Navigator.pushReplacementNamed(context, '/home');
       } else {
+        final canceled = response.errorCode == 'İşlem iptal edildi!';
         setState(() {
-          _errorMessage = method == LoginMethod.google
-              ? response.errorCode == 'İşlem iptal edildi!'
-                  ? 'Google ile giriş iptal edildi.'
-                  : 'Google ile giriş yapılamadı. Tekrar dene.'
-              : 'E-posta veya şifre hatalı.';
+          _errorMessage = switch (method) {
+            LoginMethod.google => canceled
+                ? 'Google ile giriş iptal edildi.'
+                : 'Google ile giriş yapılamadı. Tekrar dene.',
+            LoginMethod.apple => canceled
+                ? 'Apple ile giriş iptal edildi.'
+                : 'Apple ile giriş yapılamadı. Tekrar dene.',
+            LoginMethod.usernamePassword => 'E-posta veya şifre hatalı.',
+          };
         });
       }
     } catch (error) {
@@ -258,9 +269,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Center(
                           child: Text(
                             _errorMessage ??
-                                (_loadingSource == _LoginSource.google
-                                    ? 'Google ile giriş yapılıyor...'
-                                    : 'Giriş yapılıyor...'),
+                                switch (_loadingSource) {
+                                  _LoginSource.google =>
+                                    'Google ile giriş yapılıyor...',
+                                  _LoginSource.apple =>
+                                    'Apple ile giriş yapılıyor...',
+                                  _ => 'Giriş yapılıyor...',
+                                },
                             maxLines: 2,
                             textAlign: TextAlign.center,
                             style: TextStyle(
@@ -344,7 +359,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   Positioned(
-                    left: 226 * scale,
+                    // Apple yokken Google iki düğmenin ortasına oturur.
+                    left: (appleSignInShown ? 226 : 313) * scale,
                     top: 990 * scale,
                     child: AuthSocialButton(
                       provider: AuthSocialProvider.google,
@@ -357,19 +373,21 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () => _login(LoginMethod.google),
                     ),
                   ),
-                  Positioned(
-                    left: 400 * scale,
-                    top: 990 * scale,
-                    child: AuthSocialButton(
-                      provider: AuthSocialProvider.apple,
-                      label: 'Apple ile giriş yap',
-                      size: 120 * scale,
-                      radius: 34 * scale,
-                      iconSize: 62 * scale,
-                      enabled: !_isLoading,
-                      onPressed: () => _login(LoginMethod.apple),
+                  if (appleSignInShown)
+                    Positioned(
+                      left: 400 * scale,
+                      top: 990 * scale,
+                      child: AuthSocialButton(
+                        provider: AuthSocialProvider.apple,
+                        label: 'Apple ile giriş yap',
+                        size: 120 * scale,
+                        radius: 34 * scale,
+                        iconSize: 62 * scale,
+                        enabled: !_isLoading,
+                        isLoading: _loadingSource == _LoginSource.apple,
+                        onPressed: () => _login(LoginMethod.apple),
+                      ),
                     ),
-                  ),
                   if (kDebugMode)
                     Positioned(
                       left: 143 * scale,

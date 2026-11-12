@@ -17,9 +17,11 @@ class _FakeAuthService extends AuthService {
   final registrations = <SignUpRequest>[];
   final logins = <(String, String)>[];
   int googleLogins = 0;
+  int appleLogins = 0;
   Completer<ApiResponse<Map<String, dynamic>>> registration = Completer();
   Completer<ApiResponse<AuthenticateResponse>> login = Completer();
   Completer<ApiResponse<AuthenticateResponse>> googleLogin = Completer();
+  Completer<ApiResponse<AuthenticateResponse>> appleLogin = Completer();
 
   @override
   Future<ApiResponse<Map<String, dynamic>>> signUp(
@@ -40,6 +42,13 @@ class _FakeAuthService extends AuthService {
       BuildContext context) {
     googleLogins++;
     return googleLogin.future;
+  }
+
+  @override
+  Future<ApiResponse<AuthenticateResponse>> signInWithApple(
+      BuildContext context) {
+    appleLogins++;
+    return appleLogin.future;
   }
 }
 
@@ -244,7 +253,7 @@ void main() {
     expect(find.text('Ana ekran'), findsOneWidget);
   });
 
-  testWidgets('Google iptali ve Apple desteği ekranda açıklanır',
+  testWidgets('Google iptali ve bağlantı hatası ekranda açıklanır',
       (tester) async {
     final auth = _FakeAuthService();
     await showSignUp(tester, auth);
@@ -268,9 +277,33 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.tap(find.byType(AuthSocialButton).last);
-    await tester.pumpAndSettle();
-    expect(find.text('Apple ile kayıt henüz kullanılamıyor.'), findsOneWidget);
     expect(auth.registrations, isEmpty);
   });
+
+  testWidgets('Android\'de Apple ile kayıt düğmesi yok', (tester) async {
+    await showSignUp(tester, _FakeAuthService());
+    expect(find.bySemanticsLabel('Apple ile kayıt ol'), findsNothing);
+    expect(find.byType(AuthSocialButton), findsOneWidget);
+  });
+
+  testWidgets('iOS\'ta Apple ile devam hesabı açar, iptal ekranda açıklanır',
+      (tester) async {
+    final auth = _FakeAuthService();
+    await showSignUp(tester, auth);
+
+    await tester.tap(find.bySemanticsLabel('Apple ile kayıt ol'));
+    await tester.pump();
+    auth.appleLogin.complete(ApiResponse(errorCode: 'İşlem iptal edildi!'));
+    await tester.pumpAndSettle();
+    expect(find.text('Apple ile devam etme iptal edildi.'), findsOneWidget);
+
+    auth.appleLogin = Completer();
+    await tester.tap(find.bySemanticsLabel('Apple ile kayıt ol'));
+    await tester.pump();
+    expect(auth.appleLogins, 2);
+    auth.appleLogin.complete(loggedIn());
+    await tester.pumpAndSettle();
+    expect(find.text('Ana ekran'), findsOneWidget);
+    expect(auth.registrations, isEmpty);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 }

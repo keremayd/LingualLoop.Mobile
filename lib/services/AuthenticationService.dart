@@ -17,16 +17,45 @@ import 'package:lingualloop/services/FileService.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:crypto/crypto.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 
 import '../models/User.dart';
 import '../ui/screens/login_screen.dart';
 
+/// Apple'ın giriş penceresini açar; verilen nonce özeti token'a gömülür.
+typedef AppleCredentialRequest = Future<AuthorizationCredentialAppleID>
+    Function(String hashedNonce);
+
 class AuthService {
   Dio _dio;
   final _storage = const FlutterSecureStorage();
+  final AppleCredentialRequest _appleCredential;
 
-  AuthService(this._dio);
+  AuthService(this._dio, {AppleCredentialRequest? appleCredential})
+      : _appleCredential = appleCredential ?? _requestAppleCredential;
+
+  static Future<AuthorizationCredentialAppleID> _requestAppleCredential(
+          String hashedNonce) =>
+      SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: hashedNonce,
+      );
+
+  /// Apple'a giden nonce'un açık hâli. Apple özetini token'a gömer, sunucu
+  /// açık hâlin özetiyle karşılaştırır: token başka bir girişten alınıp
+  /// tekrar kullanılamaz.
+  static String _rawNonce() {
+    const chars =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(32, (_) => chars[random.nextInt(chars.length)])
+        .join();
+  }
 
   Dio get dio => _dio;
 
@@ -203,7 +232,78 @@ class AuthService {
       );
     }
   }
-  
+
+  /// Apple ile giriş. Kimlik token'ını sunucu doğrular; hesap yoksa açar,
+  /// aynı e-postayla açılmış hesap varsa ona bağlar. Ad yalnız ilk girişte
+  /// gelir, sunucuya o zaman iletilir. Apple fotoğraf vermez.
+  Future<ApiResponse<AuthenticateResponse>> signInWithApple(BuildContext context) async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final fileService = LocalFileService();
+    final rawNonce = _rawNonce();
+
+    final AuthorizationCredentialAppleID credential;
+    try {
+      credential = await _appleCredential(
+        sha256.convert(utf8.encode(rawNonce)).toString(),
+      );
+    } on SignInWithAppleAuthorizationException catch (error) {
+      if (error.code == AuthorizationErrorCode.canceled) {
+        return ApiResponse(errorCode: 'İşlem iptal edildi!');
+      }
+      rethrow;
+    }
+
+    if (credential.identityToken == null) {
+      return ApiResponse(errorCode: 'Hata alındı!');
+    }
+
+    final response = await _dio.post('authentication/apple-login', data: {
+      'identityToken': credential.identityToken,
+      'rawNonce': rawNonce,
+      'givenName': credential.givenName,
+      'familyName': credential.familyName,
+    });
+
+    var apiResponse = ApiResponse<AuthenticateResponse>.fromJson(
+      response.data,
+      (data) => AuthenticateResponse.fromJson(data as Map<String, dynamic>),
+    );
+
+    if (apiResponse.errorCode != null || apiResponse.data == null) {
+      return apiResponse;
+    }
+
+    // Apple ile açılan hesabın fotoğrafı yok, varsayılan görsel görünür;
+    // e-postayla bağlanan eski hesabın fotoğrafı varsa iner.
+    String? cachedPhotoPath;
+    if (apiResponse.data!.profilePhotoUrl.isNotEmpty) {
+      try {
+        cachedPhotoPath = await fileService.cacheProfilePhoto(
+          apiResponse.data!.profilePhotoUrl,
+          apiResponse.data!.userId,
+        );
+      } catch (_) {
+        // Fotoğraf inmese de doğrulanmış giriş tamamlanır.
+      }
+    }
+
+    final user = User(
+      userId: apiResponse.data!.userId,
+      firstName: apiResponse.data!.firstName,
+      lastName: apiResponse.data!.lastName,
+      displayName: apiResponse.data!.displayName,
+      profilePhotoUrl: cachedPhotoPath,
+      userNickname: apiResponse.data!.userNickname,
+      userName: apiResponse.data!.userName,
+      userRank: apiResponse.data!.userRank,
+    );
+
+    userProvider.setUser(user);
+    await _saveSession(apiResponse.data!, user);
+
+    return apiResponse;
+  }
+
   Future<ApiResponse<Map<String, dynamic>>> signUp(SignUpRequest request, BuildContext context) async {
     final random = Random().nextInt(5) + 1; // 1..5 arası
 

@@ -43,7 +43,8 @@ class TokenInterceptor extends Interceptor {
     // Yanlış giriş bilgileri için dönen 401, süresi dolmuş oturum değildir.
     // Ekran bu yanıtı alıp kullanıcıya giriş hatasını göstermelidir.
     if (err.requestOptions.path == 'authentication/login' ||
-        err.requestOptions.path == 'authentication/google-login') {
+        err.requestOptions.path == 'authentication/google-login' ||
+        err.requestOptions.path == 'authentication/apple-login') {
       return handler.next(err);
     }
 

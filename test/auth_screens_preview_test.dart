@@ -44,14 +44,20 @@ void main() {
         find.byType(MaterialApp), matchesGoldenFile('goldens/$name.png'));
   }
 
+  // Tasarımın referansı iOS: Apple ile giriş düğmesi yalnız orada görünür.
+  final ios = TargetPlatformVariant.only(TargetPlatform.iOS);
+
   testWidgets(
-      'giris ekrani', (t) async => shoot(t, LoginScreen(), 'auth_login'));
+      'giris ekrani', (t) async => shoot(t, LoginScreen(), 'auth_login'),
+      variant: ios);
   testWidgets(
-      'kayit ekrani', (t) async => shoot(t, SignUpScreen(), 'auth_signup'));
+      'kayit ekrani', (t) async => shoot(t, SignUpScreen(), 'auth_signup'),
+      variant: ios);
   testWidgets(
     'kayit hata gorunumu',
     (t) async =>
         shoot(t, SignUpScreen(), 'auth_signup_error', submitEmptyForm: true),
+    variant: ios,
   );
 
   testWidgets('geri düğmesi başlık alanında kırpılmaz', (tester) async {

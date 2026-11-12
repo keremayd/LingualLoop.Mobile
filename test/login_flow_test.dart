@@ -21,12 +21,21 @@ class _FakeAuthService extends AuthService {
 
   final requests = <_LoginRequest>[];
   Completer<ApiResponse<AuthenticateResponse>> pending = Completer();
+  int appleLogins = 0;
+  Completer<ApiResponse<AuthenticateResponse>> applePending = Completer();
 
   @override
   Future<ApiResponse<AuthenticateResponse>> signIn(
       String email, String password, BuildContext context) {
     requests.add(_LoginRequest(email, password));
     return pending.future;
+  }
+
+  @override
+  Future<ApiResponse<AuthenticateResponse>> signInWithApple(
+      BuildContext context) {
+    appleLogins++;
+    return applePending.future;
   }
 }
 
@@ -147,4 +156,57 @@ void main() {
     );
     expect(auth.requests, hasLength(2));
   });
+
+  testWidgets('Android\'de Apple ile giriş düğmesi yok', (tester) async {
+    await showLogin(tester, _FakeAuthService());
+    expect(find.bySemanticsLabel('Apple ile giriş yap'), findsNothing);
+    expect(find.bySemanticsLabel('Google ile giriş yap'), findsOneWidget);
+  });
+
+  testWidgets('iOS\'ta Apple ile giriş ana ekranı açar; iptal ve ret ekranda',
+      (tester) async {
+    final auth = _FakeAuthService();
+    await showLogin(tester, auth);
+
+    await tester.tap(find.bySemanticsLabel('Apple ile giriş yap'));
+    await tester.pump();
+    expect(find.text('Apple ile giriş yapılıyor...'), findsOneWidget);
+    auth.applePending.complete(ApiResponse(errorCode: 'İşlem iptal edildi!'));
+    await tester.pumpAndSettle();
+    expect(find.text('Apple ile giriş iptal edildi.'), findsOneWidget);
+
+    // Sunucu Apple token'ını reddetti (401): oturum yenilemesi denenmez.
+    auth.applePending = Completer();
+    await tester.tap(find.bySemanticsLabel('Apple ile giriş yap'));
+    await tester.pump();
+    final options = RequestOptions(path: 'authentication/apple-login');
+    auth.applePending.completeError(DioError(
+      requestOptions: options,
+      response: Response(requestOptions: options, statusCode: 401),
+      type: DioErrorType.response,
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Apple ile giriş yapılamadı. Tekrar dene.'), findsOneWidget);
+
+    auth.applePending = Completer();
+    await tester.tap(find.bySemanticsLabel('Apple ile giriş yap'));
+    await tester.pump();
+    auth.applePending.complete(ApiResponse(
+        data: AuthenticateResponse(
+      userId: 'apple-user',
+      firstName: 'Ada',
+      lastName: 'Yılmaz',
+      displayName: 'Ada Yılmaz',
+      profilePhotoUrl: '',
+      userNickname: 'adayilmaz',
+      userName: 'adayilmaz',
+      userRank: 1,
+      accessToken: 'apple-token',
+      refreshToken: 'apple-refresh',
+    )));
+    await tester.pumpAndSettle();
+    expect(find.text('Ana ekran'), findsOneWidget);
+    expect(auth.appleLogins, 3);
+    expect(auth.requests, isEmpty);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 }
