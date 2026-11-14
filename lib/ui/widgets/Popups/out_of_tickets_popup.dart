@@ -39,6 +39,97 @@ Future<void> showOutOfTicketsPopup(
   int? questTickets,
   bool reviewAvailable = true,
 }) {
+  return _showTicketsDialog(
+    context,
+    (context) => OutOfTicketsCard(
+      nextTicketAt: nextTicketAt,
+      onRefreshTickets: onRefreshTickets,
+      onTicketsReady: () => Navigator.of(context).pop(),
+      questTickets: questTickets,
+      reviewAvailable: reviewAvailable,
+      onGoToReview: () {
+        Navigator.of(context).pop();
+        onGoToReview();
+      },
+      onGoToQuests: () {
+        Navigator.of(context).pop();
+        onGoToQuests();
+      },
+      onGoPremium: () {
+        Navigator.of(context).pop();
+        onGoPremium();
+      },
+    ),
+  );
+}
+
+/// Bilet penceresinin canlı değerleri (üst şeritteki bilete dokununca).
+class TicketStatus {
+  const TicketStatus({
+    required this.balance,
+    this.maxBalance,
+    this.nextTicketAt,
+    this.questTickets,
+    this.reviewAvailable = true,
+  });
+
+  final int balance;
+  final int? maxBalance;
+  final DateTime? nextTicketAt;
+  final int? questTickets;
+  final bool reviewAvailable;
+}
+
+/// Üst şeritteki bilete dokununca açılan pencere: elindeki bilet, sıradakinin
+/// süresi, ücretsiz yollar ve Premium. Bilet bitmişse aynı kart "Biletin
+/// bitti" hâlinde açılır. Pencere beklemeden açılır; değerler [changes]
+/// bildirdikçe [read]'den yeniden okunur (tazeleme arkada, §3.1).
+Future<void> showTicketStatusPopup(
+  BuildContext context, {
+  required Listenable changes,
+  required TicketStatus Function() read,
+  required Future<bool> Function() onRefreshTickets,
+  required VoidCallback onGoToReview,
+  required VoidCallback onGoToQuests,
+  required VoidCallback onGoPremium,
+}) {
+  return _showTicketsDialog(
+    context,
+    (context) => ListenableBuilder(
+      listenable: changes,
+      builder: (context, _) {
+        final status = read();
+        return OutOfTicketsCard(
+          balance: status.balance,
+          maxBalance: status.maxBalance,
+          nextTicketAt: status.nextTicketAt,
+          questTickets: status.questTickets,
+          reviewAvailable: status.reviewAvailable,
+          onRefreshTickets: onRefreshTickets,
+          // Bilet gelince pencere açık kalır, sayı kendiliğinden artar.
+          onTicketsReady: () {},
+          onGoToReview: () {
+            Navigator.of(context).pop();
+            onGoToReview();
+          },
+          onGoToQuests: () {
+            Navigator.of(context).pop();
+            onGoToQuests();
+          },
+          onGoPremium: () {
+            Navigator.of(context).pop();
+            onGoPremium();
+          },
+        );
+      },
+    ),
+  );
+}
+
+Future<void> _showTicketsDialog(
+  BuildContext context,
+  Widget Function(BuildContext context) card,
+) {
   return showDialog(
     context: context,
     barrierDismissible: true,
@@ -48,25 +139,7 @@ Future<void> showOutOfTicketsPopup(
       insetPadding: EdgeInsets.symmetric(
         horizontal: MediaQuery.sizeOf(context).width * 0.06,
       ),
-      child: OutOfTicketsCard(
-        nextTicketAt: nextTicketAt,
-        onRefreshTickets: onRefreshTickets,
-        onTicketsReady: () => Navigator.of(context).pop(),
-        questTickets: questTickets,
-        reviewAvailable: reviewAvailable,
-        onGoToReview: () {
-          Navigator.of(context).pop();
-          onGoToReview();
-        },
-        onGoToQuests: () {
-          Navigator.of(context).pop();
-          onGoToQuests();
-        },
-        onGoPremium: () {
-          Navigator.of(context).pop();
-          onGoPremium();
-        },
-      ),
+      child: card(context),
     ),
   );
 }
@@ -84,9 +157,17 @@ class OutOfTicketsCard extends StatefulWidget {
     required this.onGoPremium,
     this.questTickets,
     this.reviewAvailable = true,
+    this.balance,
+    this.maxBalance,
   });
 
   final DateTime? nextTicketAt;
+
+  /// Verilir ve sıfırdan büyükse kart bilet durumu hâlinde açılır (üst
+  /// şeritteki bilete dokununca): büyük bilet, "8/15 bilet", geri sayım.
+  /// Tavandaysa kazanma yolları gizlenir, o an bilet kazanılamıyor.
+  final int? balance;
+  final int? maxBalance;
   final Future<bool> Function() onRefreshTickets;
   final VoidCallback onTicketsReady;
 
@@ -135,6 +216,24 @@ class _OutOfTicketsCardState extends State<OutOfTicketsCard>
       if (mounted) setState(() {});
     });
     _scheduleTicketRefresh();
+  }
+
+  @override
+  void didUpdateWidget(OutOfTicketsCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Durum penceresinde bilet gelince yeni zaman gelir: sayaç yeniden kurulur.
+    if (oldWidget.nextTicketAt != widget.nextTicketAt) {
+      _refreshAt?.cancel();
+      _readyHandled = false;
+      _scheduleTicketRefresh();
+    }
+  }
+
+  bool get _hasTickets => (widget.balance ?? 0) > 0;
+
+  bool get _atCap {
+    final max = widget.maxBalance;
+    return _hasTickets && max != null && widget.balance! >= max;
   }
 
   @override
@@ -264,45 +363,65 @@ class _OutOfTicketsCardState extends State<OutOfTicketsCard>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _depletedTicketMascot(scale),
+            if (_hasTickets)
+              _balanceTicket(scale)
+            else
+              _depletedTicketMascot(scale),
             SizedBox(height: 10 * scale),
-            Text(
-              'Biletin bitti',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 46 * scale,
-                fontWeight: AppTypography.heading,
-                fontFamily: AppTypography.displayFamily,
-                height: 1,
+            if (_hasTickets)
+              _balanceTitle(scale)
+            else
+              Text(
+                'Biletin bitti',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 46 * scale,
+                  fontWeight: AppTypography.heading,
+                  fontFamily: AppTypography.displayFamily,
+                  height: 1,
+                ),
               ),
-            ),
             SizedBox(height: 14 * scale),
-            _countdownRow(scale),
+            if (_atCap)
+              Text(
+                'En fazla ${widget.maxBalance} bilet birikir.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: _muted,
+                  fontSize: 27 * scale,
+                  fontWeight: AppTypography.caption,
+                  fontFamily: AppTypography.family,
+                ),
+              )
+            else
+              _countdownRow(scale),
             SizedBox(height: 26 * scale),
 
             // Ücretsiz kazanma yolları. Rövanş önce geliyor çünkü **anlık**
-            // sonuç veriyor; görevler günlük ve bitmiş olabilir.
-            _earnRow(
-              scale,
-              icon: QuestIcon(questKey: 'review_two', size: 46 * scale),
-              title: 'Rövanş oyna',
-              subtitle: widget.reviewAvailable
-                  ? 'Yanlışlarını tekrarla'
-                  : 'Bekleyen rövanş kartın yok',
-              reward: widget.reviewAvailable ? 1 : null,
-              onTap: widget.reviewAvailable ? widget.onGoToReview : null,
-            ),
-            SizedBox(height: 12 * scale),
-            _earnRow(
-              scale,
-              icon: QuestFlagMark(size: 44 * scale),
-              title: 'Görevleri bitir',
-              subtitle: 'Günlük görevlerden kazan',
-              reward: widget.questTickets,
-              onTap: widget.onGoToQuests,
-            ),
-
-            SizedBox(height: 24 * scale),
+            // sonuç veriyor; görevler günlük ve bitmiş olabilir. Tavanda
+            // gizli: ödül tavanı aşmaz (§5).
+            if (!_atCap) ...[
+              _earnRow(
+                scale,
+                icon: QuestIcon(questKey: 'review_two', size: 46 * scale),
+                title: 'Rövanş oyna',
+                subtitle: widget.reviewAvailable
+                    ? 'Yanlışlarını tekrarla'
+                    : 'Bekleyen rövanş kartın yok',
+                reward: widget.reviewAvailable ? 1 : null,
+                onTap: widget.reviewAvailable ? widget.onGoToReview : null,
+              ),
+              SizedBox(height: 12 * scale),
+              _earnRow(
+                scale,
+                icon: QuestFlagMark(size: 44 * scale),
+                title: 'Görevleri bitir',
+                subtitle: 'Günlük görevlerden kazan',
+                reward: widget.questTickets,
+                onTap: widget.onGoToQuests,
+              ),
+              SizedBox(height: 24 * scale),
+            ],
             DepthPressableButton(
               width: _contentWidth * scale,
               height: 120 * scale,
@@ -413,6 +532,57 @@ class _OutOfTicketsCardState extends State<OutOfTicketsCard>
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// Bakiye bileti: üst şeritteki biletin büyüğü, Görevler başlığındaki gibi
+  /// kalınlık bandıyla (§2.5). Bant `Image(color:, srcIn)` ile; ShaderMask
+  /// katman açardı (§4.4).
+  Widget _balanceTicket(double scale) {
+    final width = 230 * scale;
+    final depth = 12 * scale;
+    return SizedBox(
+      width: width,
+      height: width * 110 / 172 + depth,
+      child: Stack(
+        children: [
+          Positioned(
+            top: depth,
+            child: Image.asset(
+              'assets/icons/ticket.png',
+              width: width,
+              color: const Color(0xFFB87E00),
+              colorBlendMode: BlendMode.srcIn,
+            ),
+          ),
+          Image.asset('assets/icons/ticket.png', width: width),
+        ],
+      ),
+    );
+  }
+
+  /// "8/15 bilet": tavan Görevler başlığındaki gibi kesirle (§5).
+  Widget _balanceTitle(double scale) {
+    final style = TextStyle(
+      color: Colors.white,
+      fontSize: 46 * scale,
+      fontWeight: AppTypography.heading,
+      fontFamily: AppTypography.displayFamily,
+      height: 1,
+    );
+    return Text.rich(
+      TextSpan(
+        style: style,
+        children: [
+          TextSpan(text: '${widget.balance}'),
+          if (widget.maxBalance != null)
+            TextSpan(
+              text: '/${widget.maxBalance}',
+              style: style.copyWith(color: _muted),
+            ),
+          const TextSpan(text: ' bilet'),
+        ],
       ),
     );
   }

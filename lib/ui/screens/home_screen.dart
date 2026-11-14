@@ -473,6 +473,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             tickets: data?.lives ?? 0,
             freezeCount: data?.freezeCount ?? 0,
             onStreakTap: () => unawaited(showStreakSheet(context)),
+            onTicketsTap: () => unawaited(showTicketStatus(
+              context,
+              onGoToReview: () => unawaited(_openGame('/kartyreview')),
+              onGoToQuests: () =>
+                  NavbarWidget.requestedTab.value = NavbarWidget.questsTabIndex,
+            )),
             ticketIconKey: _ticketIconKey,
           );
         },

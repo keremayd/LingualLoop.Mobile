@@ -6,7 +6,13 @@ import 'package:lingualloop/ui/widgets/Popups/out_of_tickets_popup.dart';
 /// Bilet bitti penceresi: uzun ve kisa geri sayimla iki durum.
 void main() {
   setUpAll(loadPreviewFonts);
-  Future<void> shot(WidgetTester tester, Duration left, String file) async {
+  Future<void> shot(
+    WidgetTester tester,
+    Duration? left,
+    String file, {
+    int? balance,
+    int? maxBalance,
+  }) async {
     const size = Size(430, 932);
     await tester.binding.setSurfaceSize(size);
     tester.view.physicalSize = size;
@@ -20,7 +26,10 @@ void main() {
             color: const Color(0xFF041227),
             child: Center(
               child: OutOfTicketsCard(
-                nextTicketAt: DateTime.now().toUtc().add(left),
+                nextTicketAt:
+                    left == null ? null : DateTime.now().toUtc().add(left),
+                balance: balance,
+                maxBalance: maxBalance,
                 onRefreshTickets: () async => false,
                 onTicketsReady: () {},
                 questTickets: 7,
@@ -54,6 +63,23 @@ void main() {
 
   testWidgets('out of tickets - yakin sure', (tester) async {
     await shot(tester, const Duration(minutes: 8), 'out_of_tickets_urgent.png');
+  });
+
+  // Üst şeritteki bilete dokununca açılan durum hâli.
+  testWidgets('bilet durumu - tavanin altinda', (tester) async {
+    await shot(tester, const Duration(hours: 1, minutes: 24),
+        'ticket_status_normal.png',
+        balance: 8, maxBalance: 15);
+    expect(find.text('Rövanş oyna'), findsOneWidget);
+    expect(find.text('Biletin bitti'), findsNothing);
+  });
+
+  testWidgets('bilet durumu - tavanda kazanma yollari gizli', (tester) async {
+    await shot(tester, null, 'ticket_status_full.png',
+        balance: 15, maxBalance: 15);
+    expect(find.text('En fazla 15 bilet birikir.'), findsOneWidget);
+    expect(find.text('Rövanş oyna'), findsNothing);
+    expect(find.text('Görevleri bitir'), findsNothing);
   });
 
   testWidgets('bekleyen rovanş yoksa yol pasif kalir', (tester) async {

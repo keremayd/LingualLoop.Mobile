@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lingualloop/Utils/AppNotifier.dart';
 import 'package:lingualloop/models/ApiResponse.dart';
@@ -99,4 +101,54 @@ Future<bool> spendTicketForGame(
     },
   );
   return false;
+}
+
+/// Üst şeritteki bilete dokununca: elindeki bilet, sıradakinin süresi,
+/// ücretsiz yollar ve Premium. Bilet bitmişse aynı pencere "Biletin bitti"
+/// hâliyle açılır. Beklemeden açılır; bakiye, görevler ve Rövanş arkada
+/// tazelenir, pencere değiştikçe kendini yeniler.
+Future<void> showTicketStatus(
+  BuildContext context, {
+  required VoidCallback onGoToReview,
+  required VoidCallback onGoToQuests,
+}) {
+  final userService = Provider.of<UserService>(context, listen: false);
+  final scoreProvider = context.read<ScoreWithLivesProvider>();
+  final questsProvider = context.read<QuestsProvider>();
+  final profileStatsProvider = context.read<ProfileLearningStatsProvider>();
+
+  // Ağ hatası pencereyi bozmaz: eldeki son değerlerle durur (§3.1).
+  unawaited(
+      userService.scoreWithLivesById(context).then((_) {}, onError: (_) {}));
+  unawaited(questsProvider.load(silent: questsProvider.data != null));
+  unawaited(profileStatsProvider.refreshFromService(userService));
+
+  return showTicketStatusPopup(
+    context,
+    changes:
+        Listenable.merge([scoreProvider, questsProvider, profileStatsProvider]),
+    read: () {
+      final score = scoreProvider.scoreWithLives;
+      return TicketStatus(
+        balance: score?.lives ?? 0,
+        maxBalance: score?.maxLives,
+        nextTicketAt: score?.nextTicketAt,
+        questTickets: questsProvider.data?.quests
+            .where((quest) => !quest.isClaimed)
+            .fold<int>(0, (total, quest) => total + quest.rewardTickets),
+        reviewAvailable:
+            (profileStatsProvider.stats?.reviewPendingCount ?? 0) > 0,
+      );
+    },
+    onRefreshTickets: () async {
+      if (!context.mounted) return false;
+      final refreshed = await userService.scoreWithLivesById(context);
+      return (refreshed.data?.lives ?? 0) > 0;
+    },
+    onGoToReview: onGoToReview,
+    onGoToQuests: onGoToQuests,
+    onGoPremium: () {
+      if (context.mounted) PremiumScreen.open(context);
+    },
+  );
 }
