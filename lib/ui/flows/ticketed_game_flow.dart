@@ -6,6 +6,7 @@ import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
 import 'package:lingualloop/providers/QuestsProvider.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/services/UserService.dart';
+import 'package:lingualloop/ui/screens/premium_screen.dart';
 import 'package:lingualloop/ui/widgets/Popups/out_of_tickets_popup.dart';
 import 'package:lingualloop/ui/widgets/ticket_spend_scene.dart';
 import 'package:provider/provider.dart';
@@ -94,9 +95,7 @@ Future<bool> spendTicketForGame(
     onGoToReview: onGoToReview,
     onGoToQuests: onGoToQuests,
     onGoPremium: () {
-      // Premium akışı henüz yok; niyet kaydı burada duruyor ki pencere
-      // hazır olduğunda tek yerden bağlansın.
-      AppNotifier.showMessage('Premium yakında!');
+      if (context.mounted) PremiumScreen.open(context);
     },
   );
   return false;

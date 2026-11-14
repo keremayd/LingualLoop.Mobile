@@ -20,6 +20,7 @@ import 'package:lingualloop/ui/flows/league_promotion_flow.dart';
 import 'package:lingualloop/ui/flows/ticketed_game_flow.dart';
 import 'package:lingualloop/ui/screens/karty_path_screen.dart';
 import 'package:lingualloop/ui/screens/karty_unit_unlock_screen.dart';
+import 'package:lingualloop/ui/screens/premium_screen.dart';
 import 'package:lingualloop/ui/widgets/Buttons/app_button_style.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:lingualloop/ui/widgets/NavbarWidget.dart';
@@ -537,6 +538,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               _DebugButton(
                 label: 'AÇILIŞ',
                 onTap: () => _simulateUnlock(data),
+              ),
+              const SizedBox(height: 10),
+              // Premium ekranı normalde yalnız bilet bitince açılıyor.
+              _DebugButton(
+                label: 'PREMİUM',
+                onTap: () => PremiumScreen.open(context),
               ),
             ],
           ),
