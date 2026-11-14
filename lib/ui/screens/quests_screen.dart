@@ -1,6 +1,6 @@
 import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/app_shape_style.dart';
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show kDebugMode;
@@ -12,11 +12,13 @@ import 'package:lingualloop/providers/QuestsProvider.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
-import 'package:lingualloop/ui/widgets/countdown_pill.dart';
+import 'package:lingualloop/ui/widgets/clock_mark.dart';
 import 'package:lingualloop/ui/widgets/hop_motion.dart';
 import 'package:lingualloop/ui/widgets/loading_skeleton.dart';
 import 'package:lingualloop/ui/widgets/quest_icons.dart';
 import 'package:lingualloop/ui/widgets/quest_reward_celebration.dart';
+import 'package:lingualloop/ui/widgets/streak_freeze_flake.dart';
+import 'package:lingualloop/ui/widgets/surface_gloss.dart';
 import 'package:lingualloop/ui/widgets/ticket_with_count.dart';
 import 'package:provider/provider.dart';
 
@@ -30,11 +32,15 @@ class QuestsScreen extends StatefulWidget {
 class _QuestsScreenState extends State<QuestsScreen>
     with WidgetsBindingObserver, RouteAware, TickerProviderStateMixin {
   static const _backgroundColor = Color(0xFF041227);
-  static const _cardFaceColor = Color(0xFF041227);
   static const _cardBorderColor = Color(0xFF0B2143);
   static const _iconTileColor = Color(0xFF0C2244);
-  static const _trackColor = Color(0xFF0B2143);
   static const _progressColor = Color(0xFFFFC93A);
+
+  /// Kuponun tonları (§2.2): yüz iç panel `0C2244`, kalınlık ve boş adım
+  /// yuvası onun koyusu `07182F`, ödülü hazır koçan vurgulu satır `163258`.
+  static const _couponFace = Color(0xFF0C2244);
+  static const _couponDepth = Color(0xFF07182F);
+  static const _stubOpen = Color(0xFF163258);
 
   /// Henüz kazanılmamış ödülün tonu. Palet dışı değil: §2.6'daki `yildiz`
   /// lig taşının koyu tonu, yani bilet altınının belgeli koyusu.
@@ -246,6 +252,30 @@ class _QuestsScreenState extends State<QuestsScreen>
     } catch (_) {}
   }
 
+  /// Günün bütün görevleri bitince seri korumasını toplar. Kutlama perdesi
+  /// açılmaz: hedef kartındaki koruma onaylanır, sayısı üst şeritte artar.
+  Future<void> _claimFreeze() async {
+    final result = await context.read<QuestsProvider>().claimFreeze();
+    if (result == null || !mounted) return;
+
+    if (result.blockedByCap) {
+      // Talep tüketilmedi: koruma harcanınca aynı gün yine alınabilir.
+      AppNotifier.showMessage(
+        'En fazla ${result.freezeCap} seri koruması tutulabilir.',
+        color: _iconTileColor,
+      );
+      return;
+    }
+    if (!result.claimed) return;
+
+    AppNotifier.showMessage('Seri koruması alındı.', color: _iconTileColor);
+    // Koruma sayısı ana ekranın üst şeridiyle senkron kalsın.
+    try {
+      await Provider.of<UserService>(context, listen: false)
+          .scoreWithLivesById(context);
+    } catch (_) {}
+  }
+
   /// Kutlamayı sunucuya dokunmadan tetikler. Yalnızca debug derlemesinde
   /// görünen tasarım aracı; animasyonu tekrar tekrar izleyip ayarlamak için.
   /// Tasarım kesinleşince bu buton ve `_DemoCelebrationButton` silinecek.
@@ -367,21 +397,38 @@ class _QuestsScreenState extends State<QuestsScreen>
                     ),
                     padding: EdgeInsets.fromLTRB(
                       34 * scale,
-                      36 * scale,
+                      14 * scale,
                       34 * scale,
                       54 * scale,
                     ),
                     children: [
-                      _QuestsHeaderCard(
+                      _QuestsTopBar(
+                        scale: scale,
                         iconKey: _ticketIconKey,
                         pendingTickets: _pendingTickets,
                         fly: _flyController,
                         flyingCount: _flyingCount,
-                        scale: scale,
-                        resetAtUtc: data?.resetAtUtc,
-                        quests: quests,
                       ),
-                      SizedBox(height: 34 * scale),
+                      if (quests.isNotEmpty) ...[
+                        SizedBox(height: 22 * scale),
+                        _GoalSceneCard(
+                          scale: scale,
+                          quests: quests,
+                          freezeBonus: data?.freezeBonus,
+                          claimingFreeze: provider.claimingFreeze,
+                          onClaimFreeze: _claimFreeze,
+                        ),
+                      ],
+                      SizedBox(height: 36 * scale),
+                      _SectionLabel(
+                        'GÜNLÜK GÖREVLER',
+                        scale: scale,
+                        trailing: _ResetCountdown(
+                          scale: scale,
+                          resetAtUtc: data?.resetAtUtc,
+                        ),
+                      ),
+                      SizedBox(height: 14 * scale),
                       _buildQuestBoard(quests, scale, provider),
                     ],
                   );
@@ -394,20 +441,21 @@ class _QuestsScreenState extends State<QuestsScreen>
     );
   }
 
-  /// Görev kartlarını konumlarını hesaplayarak yerleştirir: ödülü alınanlar
-  /// "Tamamlananlar" başlığının altına kayar. Kart yükseklikleri sabit
-  /// olduğu için hedef konumlar hesaplanabiliyor ve geçiş animasyonlu olur.
+  /// Görev kuponlarını konumlarını hesaplayarak yerleştirir: ödülü alınanlar
+  /// "TAMAMLANANLAR" başlığının altına koçanı koparılmış hâlde kayar. Kupon
+  /// boyları sabit olduğu için hedef konumlar hesaplanabiliyor ve geçiş
+  /// animasyonlu olur.
   Widget _buildQuestBoard(
     List<DailyQuest> quests,
     double scale,
     QuestsProvider provider,
   ) {
     const animationDuration = Duration(milliseconds: 420);
-    final activeHeight = _QuestCard.totalHeight(scale);
-    final completedHeight = _CompletedQuestRow.totalHeight(scale);
-    final activeGap = 22 * scale;
-    final completedGap = 15 * scale;
-    final sectionHeaderHeight = 73 * scale;
+    final activeHeight = _QuestCoupon.totalHeight(scale);
+    final completedHeight = _TornCoupon.height * scale;
+    final activeGap = 18 * scale;
+    final completedGap = 14 * scale;
+    final sectionHeaderHeight = 72 * scale;
     final allDoneHeight = 96 * scale;
 
     final active = quests.where((q) => !q.isClaimed).toList();
@@ -470,7 +518,13 @@ class _QuestsScreenState extends State<QuestsScreen>
                 right: 0,
                 top: sectionHeaderTop,
                 height: sectionHeaderHeight,
-                child: _CompletedSectionHeader(scale: scale),
+                child: Align(
+                  alignment: Alignment.bottomLeft,
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: 14 * scale),
+                    child: _SectionLabel('TAMAMLANANLAR', scale: scale),
+                  ),
+                ),
               ),
             for (final quest in quests)
               AnimatedPositioned(
@@ -481,28 +535,17 @@ class _QuestsScreenState extends State<QuestsScreen>
                 right: 0,
                 top: tops[quest.questKey] ?? 0,
                 height: quest.isClaimed ? completedHeight : activeHeight,
-                child: AnimatedOpacity(
-                  duration: animationDuration,
-                  opacity: quest.isClaimed ? 0.72 : 1,
-                  child: quest.isClaimed
-                      ? _CompletedQuestRow(
-                          scale: scale,
-                          quest: quest,
-                          icon: QuestIcon(
-                            questKey: quest.questKey,
-                            size: 32 * scale,
-                          ),
-                        )
-                      : _QuestCard(
-                          // Ödül uçuşunun kaynağı bu kart; konumu talep
-                          // anında bu anahtarla ölçülüyor.
-                          key: _cardKey(quest.questKey),
-                          scale: scale,
-                          quest: quest,
-                          isClaiming: provider.isClaiming(quest.questKey),
-                          onClaim: () => _claim(quest.questKey),
-                        ),
-                ),
+                child: quest.isClaimed
+                    ? _TornCoupon(scale: scale, quest: quest)
+                    : _QuestCoupon(
+                        scale: scale,
+                        quest: quest,
+                        // Ödül uçuşunun kaynağı koçandaki bilet; konumu
+                        // talep anında bu anahtarla ölçülüyor.
+                        stubKey: _cardKey(quest.questKey),
+                        isClaiming: provider.isClaiming(quest.questKey),
+                        onClaim: () => _claim(quest.questKey),
+                      ),
               ),
           ],
         ),
@@ -511,175 +554,229 @@ class _QuestsScreenState extends State<QuestsScreen>
   }
 }
 
-class _CompletedSectionHeader extends StatelessWidget {
-  const _CompletedSectionHeader({required this.scale});
-
-  final double scale;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(
-          'Tamamlananlar',
-          style: TextStyle(
-            color: _QuestsScreenState._mutedTextColor,
-            fontSize: 26 * scale,
-            fontWeight: AppTypography.heading,
-            fontFamily: AppTypography.displayFamily,
-          ),
-        ),
-        SizedBox(width: 16 * scale),
-        Expanded(
-          child: Container(
-            height: 2 * scale,
-            color: _QuestsScreenState._cardBorderColor,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _QuestsHeaderCard extends StatelessWidget {
-  const _QuestsHeaderCard({
+/// Üst satır: ekranın adı ve bilet bakiyesi. Bakiye uçan biletlerin hedefi.
+class _QuestsTopBar extends StatelessWidget {
+  const _QuestsTopBar({
     required this.scale,
-    required this.resetAtUtc,
-    required this.quests,
     required this.iconKey,
     required this.pendingTickets,
     required this.fly,
     required this.flyingCount,
   });
 
-  /// Uçan biletlerin hedefi. Konumu ölçülebilsin diye dışarıdan veriliyor.
+  final double scale;
   final GlobalKey iconKey;
-
+  final int pendingTickets;
   final Animation<double> fly;
   final int flyingCount;
 
-  /// Kutlamadan sonra havada olan biletler. Sayaç, biletler **varana kadar**
-  /// bu kadar eksik gösterir; yoksa ödül daha uçmadan bakiyeye eklenmiş olur
-  /// ve animasyonun anlamı kalmaz.
-  final int pendingTickets;
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        // Dar ekranda sayaca yer bırakır: sığmazsa küçülür, kesilmez.
+        Expanded(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Görevler',
+              maxLines: 1,
+              style: TextStyle(
+                color: _QuestsScreenState._textColor,
+                fontSize: 46 * scale,
+                fontWeight: AppTypography.heading,
+                fontFamily: AppTypography.displayFamily,
+                height: 1.05,
+              ),
+            ),
+          ),
+        ),
+        SizedBox(width: 14 * scale),
+        // Bayrak yerine bilet sayacı: başlıkta dekoratif bir simge yerine
+        // **durumu değişen** bir sayı duruyor. Uçan biletlerin hedefi de burası.
+        _TicketCounter(
+          scale: scale,
+          ticketWidth: 84,
+          pendingTickets: pendingTickets,
+          iconKey: iconKey,
+          fly: fly,
+          flyingCount: flyingCount,
+        ),
+      ],
+    );
+  }
+}
+
+/// Günün hedefi (15 Kas 2026, kullanıcı onayı — taslak A): sahneli kart.
+/// Solda hedef, her görev için bir adım ve sonunda ödül olan seri koruması;
+/// sağda maskot sahnesi. Ekranın odağı bu kart: önceki tasarımda beş eş kart
+/// alt alta duruyor, hiçbiri öne çıkmıyordu (`docs/GOREVLER_ARASTIRMA.md`).
+///
+/// Kuruluş seri penceresindeki sahneli kartla aynı: görsel sola doğru kendi
+/// alfasıyla kartın rengine söner, kart rengi sahneden **ölçülür** (§5
+/// "Güne/duruma özel seri kartları"). Turuncu keyfî değil, sahnenin rengi.
+/// Sahne şimdilik **yer tutucu** (kupa sahnesi); görevlere özel sahne
+/// üretilince `_scene`, [face] ve `_edge` birlikte değişir.
+class _GoalSceneCard extends StatelessWidget {
+  const _GoalSceneCard({
+    required this.scale,
+    required this.quests,
+    required this.freezeBonus,
+    required this.claimingFreeze,
+    required this.onClaimFreeze,
+  });
 
   final double scale;
-  final DateTime? resetAtUtc;
   final List<DailyQuest> quests;
+  final QuestFreezeBonus? freezeBonus;
+  final bool claimingFreeze;
+  final VoidCallback onClaimFreeze;
 
-  /// "2/5 görev · 15 bilet kazanıldı, 35 bilet duruyor" gibi günlük özet.
-  String _summaryText() {
-    if (quests.isEmpty) return '';
+  /// Kart yüzü ve sağ ucu: kupa sahnesinden ölçüldü
+  /// (`streak_day_scenes.dart`, `harika_gidiyorsun`: %95'te kompozit
+  /// `F2822E`, sahnenin sol kenarı `FD8B36`).
+  static const face = Color(0xFFF2822E);
+  static const _edge = Color(0xFFFD8B36);
+  static const _scene = 'assets/scenes/harika_gidiyorsun.png';
 
-    final done = quests.where((q) => q.isClaimed).length;
-    final earned = quests
-        .where((q) => q.isClaimed)
-        .fold<int>(0, (sum, q) => sum + q.rewardTickets);
-    final remaining = quests
-        .where((q) => !q.isClaimed)
-        .fold<int>(0, (sum, q) => sum + q.rewardTickets);
+  /// Kartın boyu (tasarım birimi).
+  static const height = 300.0;
 
-    final head = '$done/${quests.length} görev';
-    if (earned == 0) return '$head · $remaining bilet seni bekliyor';
-    if (remaining == 0) return '$head · $earned bilet kazandın';
-    return '$head · $earned bilet kazandın, $remaining bilet duruyor';
-  }
+  /// Biten görev sayılır, ödülü alınmasa da: seri koruması da bitene bakar
+  /// (bilet tavanındaki kullanıcı ödül alamasa bile korumayı kazanır).
+  int get _done => quests.where((q) => q.isCompleted || q.isClaimed).length;
 
-  /// Süre kritikleşince (son 2 saat) geri sayım sıcak tona geçer; renk
-  /// sürekli yanan bir vurgu değil, gerçek bir aciliyet sinyali olur.
-  bool _isUrgent() {
-    final endsAt = resetAtUtc;
-    if (endsAt == null) return false;
+  bool get _freezeShown => freezeBonus != null && freezeBonus!.total > 0;
 
-    final remaining = endsAt.difference(DateTime.now().toUtc());
-    return !remaining.isNegative && remaining.inMinutes <= 120;
-  }
-
-  String _countdownText() {
-    final endsAt = resetAtUtc;
-    if (endsAt == null) return '';
-
-    final remaining = endsAt.difference(DateTime.now().toUtc());
-    if (remaining.isNegative) return 'Görevler yenileniyor';
-
-    if (remaining.inHours > 0) {
-      final minutes = remaining.inMinutes - remaining.inHours * 60;
-      return '${remaining.inHours} sa $minutes dk';
-    }
-    return '${remaining.inMinutes} dk';
+  String _caption() {
+    final head = '$_done/${quests.length} görev';
+    final bonus = freezeBonus;
+    if (bonus == null || !_freezeShown) return head;
+    if (bonus.claimed) return '$head · seri koruması alındı';
+    if (bonus.unlocked) return '$head · seri koruması hazır';
+    return '$head · ödül: seri koruması';
   }
 
   @override
   Widget build(BuildContext context) {
-    return _QuestSurface(
-      scale: scale,
-      radius: 34 * scale,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          36 * scale,
-          34 * scale,
-          30 * scale,
-          32 * scale,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final s = scale;
+    final h = height * s;
+    final r = 36 * s;
+    return SizedBox(
+      height: h,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(r),
+        child: Stack(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Günlük Görevler',
-                        style: TextStyle(
-                          color: _QuestsScreenState._textColor,
-                          fontSize: 36 * scale,
-                          fontWeight: AppTypography.heading,
-                          fontFamily: AppTypography.displayFamily,
-                          height: 1,
-                        ),
-                      ),
-                      SizedBox(height: 18 * scale),
-                      // Yalnız saat + değer; "sonra yenilenir" kalktı.
-                      // Lig başlığıyla aynı bileşen (bkz. CountdownPill).
-                      CountdownPill(
-                        scale: scale,
-                        value: _countdownText(),
-                        urgent: _isUrgent(),
-                        semanticLabel:
-                            'Görevler ${_countdownText()} sonra yenilenir',
-                      ),
-                    ],
+            const Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [face, _edge],
+                    stops: [0.45, 1],
                   ),
                 ),
-                SizedBox(width: 14 * scale),
-                // Bayrak yerine bilet sayacı: başlıkta dekoratif bir simge
-                // yerine **durumu değişen** bir sayı duruyor. Uçan biletlerin
-                // hedefi de burası.
-                _TicketCounter(
-                  scale: scale,
-                  pendingTickets: pendingTickets,
-                  iconKey: iconKey,
-                  fly: fly,
-                  flyingCount: flyingCount,
-                ),
-              ],
+              ),
             ),
-            if (quests.isNotEmpty) ...[
-              SizedBox(height: 25 * scale),
-              _DailyGoalBar(scale: scale, quests: quests),
-              SizedBox(height: 15 * scale),
-              Text(
-                _summaryText(),
-                style: TextStyle(
-                  color: _QuestsScreenState._mutedTextColor,
-                  fontSize: 22 * scale,
-                  fontWeight: AppTypography.caption,
-                  fontFamily: AppTypography.family,
+            // Sahne sağda; sola doğru kendi alfasıyla söner (seri kartındaki
+            // gibi üstüne kart renginde katman konmaz, sınırda çizgi kalır).
+            Positioned(
+              right: -40 * s,
+              top: -6 * s,
+              bottom: -6 * s,
+              width: h * 1.78,
+              child: ExcludeSemantics(
+                child: ShaderMask(
+                  blendMode: BlendMode.dstIn,
+                  shaderCallback: (rect) => const LinearGradient(
+                    colors: [Colors.transparent, Colors.black],
+                    stops: [0.0, 0.34],
+                  ).createShader(rect),
+                  child: Image.asset(
+                    _scene,
+                    fit: BoxFit.cover,
+                    alignment: Alignment.centerRight,
+                  ),
                 ),
               ),
-            ],
+            ),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(
+                  painter: TopRimPainter(
+                    color: Colors.white.withValues(alpha: 0.42),
+                    radius: r,
+                    strokeWidth: 3 * s,
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 34 * s,
+              top: 30 * s,
+              width: 372 * s,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'BUGÜNÜN HEDEFİ',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.86),
+                      fontSize: 20 * s,
+                      fontWeight: AppTypography.number,
+                      fontFamily: AppTypography.family,
+                      letterSpacing: 1.6 * s,
+                      height: 1.15,
+                    ),
+                  ),
+                  SizedBox(height: 8 * s),
+                  Text(
+                    'Tüm görevleri bitir',
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 35 * s,
+                      fontWeight: AppTypography.heading,
+                      fontFamily: AppTypography.displayFamily,
+                      height: 1.05,
+                    ),
+                  ),
+                  SizedBox(height: 26 * s),
+                  Row(
+                    children: [
+                      for (var i = 0; i < quests.length; i++) ...[
+                        if (i > 0) SizedBox(width: 9 * s),
+                        _StepPip(scale: s, done: i < _done),
+                      ],
+                      if (_freezeShown) ...[
+                        SizedBox(width: 12 * s),
+                        _FreezeReward(
+                          // Testin dokunabilmesi için sabit anahtar.
+                          key: const ValueKey('claim-freeze'),
+                          scale: s,
+                          ready: freezeBonus!.unlocked,
+                          claimed: freezeBonus!.claimed,
+                          isClaiming: claimingFreeze,
+                          onPressed: onClaimFreeze,
+                        ),
+                      ],
+                    ],
+                  ),
+                  SizedBox(height: 18 * s),
+                  Text(
+                    _caption(),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      fontSize: 21 * s,
+                      fontWeight: AppTypography.label,
+                      fontFamily: AppTypography.family,
+                      height: 1.15,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -687,8 +784,172 @@ class _QuestsHeaderCard extends StatelessWidget {
   }
 }
 
-/// Günlük hedef çubuğu: her görev için bir bölme. Ödülü alınanlar dolu,
-/// tamamlanıp henüz alınmayanlar yarı saydam gösterilir.
+/// Hedef kartındaki görev adımı: biten beyaz ve onaylı, kalan beyazın
+/// soluk izi. Onay işaretinin rengi kartın kendi rengi.
+class _StepPip extends StatelessWidget {
+  const _StepPip({required this.scale, required this.done});
+
+  final double scale;
+  final bool done;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = 38 * scale;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: done ? Colors.white : Colors.white.withValues(alpha: 0.24),
+        borderRadius: BorderRadius.circular(11 * scale),
+      ),
+      child: done
+          ? const CustomPaint(
+              painter: _PipCheckPainter(color: _GoalSceneCard.face),
+            )
+          : null,
+    );
+  }
+}
+
+class _PipCheckPainter extends CustomPainter {
+  const _PipCheckPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final u = size.width / 100;
+    canvas.drawPath(
+      Path()
+        ..moveTo(28 * u, 52 * u)
+        ..lineTo(44 * u, 67 * u)
+        ..lineTo(73 * u, 35 * u),
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 12 * u
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _PipCheckPainter oldDelegate) =>
+      oldDelegate.color != color;
+}
+
+/// Bölüm başlığı: büyük harf, sönük, harf aralıklı (Duolingo'nun "DAILY
+/// QUESTS" satırı gibi); sağında isteğe bağlı bir değer.
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text, {required this.scale, this.trailing});
+
+  final String text;
+  final double scale;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 6 * scale),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: _QuestsScreenState._mutedTextColor,
+                fontSize: 21 * scale,
+                fontWeight: AppTypography.number,
+                fontFamily: AppTypography.family,
+                letterSpacing: 1.6 * scale,
+                height: 1.15,
+              ),
+            ),
+          ),
+          if (trailing != null) ...[
+            SizedBox(width: 12 * scale),
+            trailing!,
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Görevlerin yenilenmesine kalan süre, bölüm başlığının sağında (Duolingo
+/// da günlük görevlerin başlığına yalnız "⏱ 5 HOURS" yazar). Saat §2.5
+/// reçeteli `ClockMark`. §2.10: son 2 saatte saat ve değer sıcak tona geçer.
+class _ResetCountdown extends StatelessWidget {
+  const _ResetCountdown({required this.scale, required this.resetAtUtc});
+
+  final double scale;
+  final DateTime? resetAtUtc;
+
+  static const _urgentColor = Color(0xFFFF6B3D);
+
+  Duration? get _remaining => resetAtUtc?.difference(DateTime.now().toUtc());
+
+  bool get _urgent {
+    final remaining = _remaining;
+    return remaining != null &&
+        !remaining.isNegative &&
+        remaining.inMinutes <= 120;
+  }
+
+  /// Büyük harf elle yazılır: `toUpperCase` Türkçe "i"yi "I" yapıyor.
+  String get _value {
+    final remaining = _remaining;
+    if (remaining == null) return '';
+    if (remaining.isNegative) return 'YENİLENİYOR';
+    if (remaining.inHours > 0) {
+      final minutes = remaining.inMinutes - remaining.inHours * 60;
+      return '${remaining.inHours} SA $minutes DK';
+    }
+    return '${remaining.inMinutes} DK';
+  }
+
+  String get _spoken {
+    final remaining = _remaining;
+    if (remaining == null || remaining.isNegative) {
+      return 'Görevler yenileniyor';
+    }
+    final minutes = remaining.inMinutes - remaining.inHours * 60;
+    return remaining.inHours > 0
+        ? 'Görevler ${remaining.inHours} saat $minutes dakika sonra yenilenir'
+        : 'Görevler ${remaining.inMinutes} dakika sonra yenilenir';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (resetAtUtc == null) return const SizedBox.shrink();
+    final urgent = _urgent;
+    return Semantics(
+      label: _spoken,
+      excludeSemantics: true,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ClockMark(size: 28 * scale, urgent: urgent),
+          SizedBox(width: 8 * scale),
+          Text(
+            _value,
+            style: TextStyle(
+              color: urgent ? _urgentColor : _QuestsScreenState._mutedTextColor,
+              fontSize: 21 * scale,
+              fontWeight: AppTypography.number,
+              fontFamily: AppTypography.family,
+              letterSpacing: 1.2 * scale,
+              height: 1.15,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Uçuş zamanlaması. Hem uçan biletler hem sayaç aynı matematiği okur;
 /// ayrı hesaplasalardı sayaç, bilet ona değmeden ya da değdikten sonra artardı.
 class _FlyMath {
@@ -823,6 +1084,7 @@ class _FlyingTickets extends StatelessWidget {
 class _TicketCounter extends StatelessWidget {
   const _TicketCounter({
     required this.scale,
+    this.ticketWidth = 100,
     required this.pendingTickets,
     required this.iconKey,
     required this.fly,
@@ -830,6 +1092,9 @@ class _TicketCounter extends StatelessWidget {
   });
 
   final double scale;
+
+  /// Biletin eni (tasarım birimi).
+  final double ticketWidth;
   final int pendingTickets;
 
   /// Uçan biletlerin hedefi bu ikon — hapın ortası değil.
@@ -879,8 +1144,8 @@ class _TicketCounter extends StatelessWidget {
                     // Kesir eklenince sayaç genişledi ve geri sayım
                     // kırpılmaya başladı ("sonra yenile..."). Bilet ve sayı
                     // küçültülerek yer açıldı; kırpılan metin bilgi kaybıdır.
-                    width: 100 * scale,
-                    height: 100 * scale * 110 / 172 + 6 * scale,
+                    width: ticketWidth * scale,
+                    height: ticketWidth * scale * 110 / 172 + 6 * scale,
                     child: Stack(
                       children: [
                         Positioned(
@@ -896,7 +1161,7 @@ class _TicketCounter extends StatelessWidget {
                             ).createShader(rect),
                             child: Image.asset(
                               'assets/icons/ticket.png',
-                              width: 100 * scale,
+                              width: ticketWidth * scale,
                               fit: BoxFit.contain,
                             ),
                           ),
@@ -908,7 +1173,7 @@ class _TicketCounter extends StatelessWidget {
                             'assets/icons/ticket.png',
                             // Uçan biletlerin hedefi bu ikon — sayı değil.
                             key: iconKey,
-                            width: 100 * scale,
+                            width: ticketWidth * scale,
                             fit: BoxFit.contain,
                           ),
                         ),
@@ -963,111 +1228,150 @@ class _TicketCounter extends StatelessWidget {
   }
 }
 
-class _DailyGoalBar extends StatelessWidget {
-  const _DailyGoalBar({
+/// Kupon biçimi: köşeleri yuvarlak dikdörtgen, koçan çizgisinde üstte ve
+/// altta yarım daire çentik (bilet simgesinin çentiklerinin dili).
+Path _couponPath(Size size, double radius, double stubX, double notch) {
+  final base = Path()
+    ..addRRect(
+        RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(radius)));
+  final cuts = Path()
+    ..addOval(Rect.fromCircle(center: Offset(stubX, 0), radius: notch))
+    ..addOval(
+        Rect.fromCircle(center: Offset(stubX, size.height), radius: notch));
+  return Path.combine(PathOperation.difference, base, cuts);
+}
+
+/// Kuponun yüzü, kalınlığı, koçanı ve yırtma çizgisi.
+class _CouponPainter extends CustomPainter {
+  const _CouponPainter({
     required this.scale,
-    required this.quests,
+    required this.stubWidth,
+    required this.band,
+    required this.face,
+    required this.depth,
+    required this.stubFace,
   });
 
   final double scale;
-  final List<DailyQuest> quests;
+  final double stubWidth;
+  final double band;
+  final Color face;
+  final Color depth;
+  final Color stubFace;
 
   @override
-  Widget build(BuildContext context) {
-    // Bölmeler görev sırasına göre değil, soldan sırayla dolar: önce ödülü
-    // alınanlar, ardından tamamlanıp henüz alınmayanlar.
-    final claimedCount = quests.where((q) => q.isClaimed).length;
-    final readyCount =
-        quests.where((q) => !q.isClaimed && q.isCompleted).length;
+  void paint(Canvas canvas, Size size) {
+    final s = scale;
+    final bandHeight = band * s;
+    final faceSize = Size(size.width, size.height - bandHeight);
+    final notch = 15 * s;
+    final stubX = size.width - stubWidth * s;
+    final shape = _couponPath(faceSize, 28 * s, stubX, notch);
 
-    return Row(
-      children: [
-        for (var i = 0; i < quests.length; i++) ...[
-          if (i > 0) SizedBox(width: 9 * scale),
-          Expanded(
-            child: Container(
-              height: 15 * scale,
-              decoration: BoxDecoration(
-                color: i < claimedCount
-                    ? _QuestsScreenState._progressColor
-                    : i < claimedCount + readyCount
-                        ? _QuestsScreenState._progressColor
-                            .withValues(alpha: 0.42)
-                        : _QuestsScreenState._trackColor,
-                borderRadius: BorderRadius.circular(99),
-              ),
-            ),
-          ),
-        ],
-      ],
+    // Kalınlık: aynı biçim aşağı kaydırılmış (§2.4 dili). Alt çentik bandı
+    // da boydan boya keser; yoksa bandın ucu çentiğin içinde leke kalıyor.
+    final through = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+        Rect.fromLTRB(stubX - notch, faceSize.height - notch, stubX + notch,
+            faceSize.height + bandHeight + notch),
+        Radius.circular(notch),
+      ));
+    canvas.drawPath(
+      Path.combine(PathOperation.difference, shape.shift(Offset(0, bandHeight)),
+          through),
+      Paint()..color = depth,
     );
+    canvas.drawPath(shape, Paint()..color = face);
+
+    canvas.save();
+    canvas.clipPath(shape);
+    canvas.drawRect(
+      Rect.fromLTWH(stubX, 0, size.width - stubX, faceSize.height),
+      Paint()..color = stubFace,
+    );
+    canvas.restore();
+
+    // Yırtma çizgisi: sayfa zemininin renginde kısa çizgiler.
+    final dash = Paint()
+      ..color = _QuestsScreenState._backgroundColor
+      ..strokeWidth = 3.5 * s
+      ..strokeCap = StrokeCap.round;
+    for (var y = notch + 10 * s;
+        y < faceSize.height - notch - 8 * s;
+        y += 16 * s) {
+      canvas.drawLine(Offset(stubX, y), Offset(stubX, y + 7 * s), dash);
+    }
   }
+
+  @override
+  bool shouldRepaint(covariant _CouponPainter oldDelegate) =>
+      oldDelegate.scale != scale ||
+      oldDelegate.stubWidth != stubWidth ||
+      oldDelegate.band != band ||
+      oldDelegate.face != face ||
+      oldDelegate.depth != depth ||
+      oldDelegate.stubFace != stubFace;
 }
 
-class _QuestCard extends StatelessWidget {
-  const _QuestCard({
-    super.key,
+/// Görev kuponu (15 Kas 2026, kullanıcı onayı — taslak A1). Solda görev ve
+/// adımları, sağdaki koçanda ödül bileti. Koçan çizgisindeki kesik çizgi ve
+/// çentikler bilet simgesinin çentiklerinden: görev biletle ödüllendiriliyor,
+/// kartın biçimi bunu söylüyor. Önceki kontur kart + sarı çubuk yapısının
+/// yerine geçti.
+///
+/// Ödül hazırsa koçan açılır (`163258`), bilet zıplar (`_ClaimButton`,
+/// §5 "sönükten parlağa") ve altında "AL" yazar; koçanın tamamı dokunulur.
+/// Alınınca kupon koçanı koparılmış hâliyle "Tamamlananlar"a iner
+/// ([_TornCoupon]).
+class _QuestCoupon extends StatelessWidget {
+  const _QuestCoupon({
     required this.scale,
     required this.quest,
+    required this.stubKey,
     required this.isClaiming,
     required this.onClaim,
   });
 
   final double scale;
   final DailyQuest quest;
+
+  /// Koçanın anahtarı: ödül uçuşu buradan kalkar.
+  final GlobalKey stubKey;
   final bool isClaiming;
   final VoidCallback onClaim;
 
-  /// 138'den 152'ye çıktı: ödül ayrı sütundan **metin sütununun içine**
-  /// taşındı (barın ucuna), yani satırın dikey yükü arttı. İki satırlık
-  /// başlıkta (örn. "2 rövanş kartını geri kazan") 138 taşıyordu:
-  /// başlık 2×29 + boşluk 13 + ödül 72 = 143 > 138.
-  static const _faceHeight = 152.0;
-  static const _lipHeight = 7.0;
+  static const _faceHeight = 150.0;
+  static const band = 8.0;
+  static const stubWidth = 148.0;
 
-  /// Barın ucundaki ödülün kapladığı yükseklik. 430px cihazda ≈46pt eder —
-  /// dokunma hedefi olarak Apple'ın 44pt alt sınırının üstünde kalmalı,
-  /// bu yüzden küçültmek yerine kart yüksekliği büyütüldü.
-  static const _endCapSize = 72.0;
-
-  /// Kart yüzü + taban dudağı. Görev panosu konumları bu sabite dayanır.
-  static double totalHeight(double scale) => (_faceHeight + _lipHeight) * scale;
-
-  Widget questIcon({double? size}) {
-    return QuestIcon(
-      questKey: quest.questKey,
-      size: size ?? 48 * scale,
-    );
-  }
+  /// Kupon yüzü + kalınlık. Pano konumları bu sabite dayanır.
+  static double totalHeight(double scale) => (_faceHeight + band) * scale;
 
   @override
   Widget build(BuildContext context) {
-    final fraction = quest.target == 0
-        ? 0.0
-        : (quest.progress / quest.target).clamp(0.0, 1.0);
-
-    return _QuestSurface(
-      scale: scale,
-      radius: 28 * scale,
-      child: Container(
-        height: _faceHeight * scale,
-        padding: EdgeInsets.symmetric(horizontal: 25 * scale),
+    final s = scale;
+    final ready = quest.isCompleted;
+    return CustomPaint(
+      painter: _CouponPainter(
+        scale: s,
+        stubWidth: stubWidth,
+        band: band,
+        face: _QuestsScreenState._couponFace,
+        depth: _QuestsScreenState._couponDepth,
+        stubFace: ready
+            ? _QuestsScreenState._stubOpen
+            : _QuestsScreenState._couponFace,
+      ),
+      child: Padding(
+        padding: EdgeInsets.only(bottom: band * s),
         child: Row(
           children: [
-            Container(
-              width: 87 * scale,
-              height: 87 * scale,
-              decoration: BoxDecoration(
-                color: _QuestsScreenState._iconTileColor,
-                borderRadius: BorderRadius.circular(24 * scale),
-              ),
-              alignment: Alignment.center,
-              child: questIcon(),
-            ),
-            SizedBox(width: 25 * scale),
+            SizedBox(width: 24 * s),
+            QuestIcon(questKey: quest.questKey, size: 62 * s),
+            SizedBox(width: 20 * s),
             Expanded(
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -1076,227 +1380,422 @@ class _QuestCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: _QuestsScreenState._textColor,
-                      fontSize: 25 * scale,
+                      fontSize: 25 * s,
                       fontWeight: AppTypography.label,
                       fontFamily: AppTypography.family,
                       height: 1.15,
                     ),
                   ),
-                  SizedBox(height: 13 * scale),
-                  // Ödül, barın **varış noktası**. Ayrı bir sütunda dururken
-                  // bar bir yere doğru dolmuyordu; goal-gradient etkisi ancak
-                  // hedef görünürse çalışır (Duolingo'nun sandığı da barın
-                  // ucundadır). Bar sağdan içeri çekilir, ödül ucuna biner.
-                  SizedBox(
-                    height: _endCapSize * scale,
-                    child: Stack(
-                      alignment: Alignment.centerLeft,
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.only(right: 46 * scale),
-                          child: _QuestProgressBar(
-                            scale: scale,
-                            fraction: fraction,
-                            label: '${quest.progress}/${quest.target}',
-                          ),
-                        ),
-                        Positioned(right: 0, child: _rewardEndCap()),
-                      ],
-                    ),
+                  SizedBox(height: 14 * s),
+                  _QuestPips(
+                    scale: s,
+                    progress: quest.progress,
+                    target: quest.target,
                   ),
                 ],
               ),
             ),
+            SizedBox(width: 12 * s),
+            SizedBox(
+              key: stubKey,
+              width: stubWidth * s,
+              height: _faceHeight * s,
+              child: ready ? _readyStub(s) : _waitingStub(s),
+            ),
           ],
         ),
       ),
     );
   }
 
-  /// Barın ucundaki ödül — iki hâli var (§5 "sönükten parlağa"):
-  /// bekleyen kısık ve küçük, hazır olan tam renk, kabarık, hâleli ve nabız
-  /// atıyor. Yeşil kap kullanılmaz; yükseltmeyi boyut + doygunluk + kabartma
-  /// + hâle birlikte taşır.
-  Widget _rewardEndCap() {
-    if (quest.isCompleted) {
-      return _ClaimButton(
-        // Testin dokunabilmesi için sabit anahtar: talep gönderme durumu
-        // ancak dokunarak üretilebiliyor ve o durumun golden'ı olmadığı için
-        // iki hata canlıya kadar gitmişti (bkz. quest_claim_pending_test).
-        key: ValueKey('claim-${quest.questKey}'),
-        scale: scale,
-        rewardTickets: quest.rewardTickets,
-        isClaiming: isClaiming,
-        onPressed: onClaim,
+  /// Bekleyen ödül kısık: opak koyu altın bilet ve adet (§5).
+  Widget _waitingStub(double s) => Center(
+        child: TicketWithCount(
+          scale: s,
+          count: quest.rewardTickets,
+          ticketWidth: 62,
+          badgeSize: 30,
+          dim: true,
+        ),
       );
-    }
 
-    return TicketWithCount(
-      scale: scale,
-      count: quest.rewardTickets,
-      ticketWidth: 62,
-      badgeSize: 30,
-      dim: true,
+  /// Hazır ödül: koçanın tamamı dokunulur, bilet kendi basma hareketiyle.
+  Widget _readyStub(double s) => Semantics(
+        button: true,
+        label: 'Ödülü al: ${quest.rewardTickets} bilet',
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: isClaiming ? null : onClaim,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _ClaimButton(
+                // Testin dokunabilmesi için sabit anahtar: talep gönderme
+                // durumu ancak dokunarak üretilebiliyor ve o durumun
+                // golden'ı olmadığı için iki hata canlıya kadar gitmişti
+                // (bkz. quest_claim_pending_test).
+                key: ValueKey('claim-${quest.questKey}'),
+                scale: s,
+                rewardTickets: quest.rewardTickets,
+                isClaiming: isClaiming,
+                onPressed: onClaim,
+              ),
+              SizedBox(height: 6 * s),
+              Text(
+                'AL',
+                style: TextStyle(
+                  color: _QuestsScreenState._progressColor,
+                  fontSize: 22 * s,
+                  fontWeight: AppTypography.number,
+                  fontFamily: AppTypography.family,
+                  letterSpacing: 1.4 * s,
+                  height: 1,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+}
+
+/// Görevin adımları: hedef kartındaki adım karelerinin dili. Biten altın
+/// (görev ilerlemesi bilet altını, §5), kalan koyu yuva; yanında sayı.
+/// Hedef büyüdükçe kareler sığacak kadar küçülür (10 kelimelik görev).
+class _QuestPips extends StatelessWidget {
+  const _QuestPips({
+    required this.scale,
+    required this.progress,
+    required this.target,
+  });
+
+  final double scale;
+  final int progress;
+  final int target;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = scale;
+    final done = progress.clamp(0, target < 0 ? 0 : target);
+    final label = Text(
+      '$done/$target',
+      maxLines: 1,
+      style: TextStyle(
+        color: _QuestsScreenState._mutedTextColor,
+        fontSize: 20 * s,
+        fontWeight: AppTypography.number,
+        fontFamily: AppTypography.family,
+        height: 1.15,
+      ),
+    );
+    if (target <= 0) return label;
+    final gap = 7 * s;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final fit =
+            (constraints.maxWidth - 70 * s - gap * (target - 1)) / target;
+        final size = math.max(10 * s, math.min(22 * s, fit));
+        return Row(
+          children: [
+            for (var i = 0; i < target; i++) ...[
+              if (i > 0) SizedBox(width: gap),
+              Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  color: i < done
+                      ? _QuestsScreenState._progressColor
+                      : _QuestsScreenState._couponDepth,
+                  borderRadius: BorderRadius.circular(size * 0.3),
+                ),
+              ),
+            ],
+            SizedBox(width: 12 * s),
+            label,
+          ],
+        );
+      },
     );
   }
 }
 
-/// Ödülü alınmış görev: bar ve büyük ikon kalkar, satır yarı yüksekliğe iner.
-/// Kart yüzeyi ve border dili aktif kartlarla aynı kalır.
-class _CompletedQuestRow extends StatelessWidget {
-  const _CompletedQuestRow({
-    required this.scale,
-    required this.quest,
-    required this.icon,
-  });
+/// Ödülü alınmış görev: koçanı koparılmış kupon. Sağ kenar tırtıklı
+/// (yırtma çizgisinin yarısı), koçanın yeri boş; ödül ve onay gövdenin
+/// içinde. Sönük tonlu ve düz: işi bitmiş, dikkat aktif görevlerde kalsın.
+class _TornCoupon extends StatelessWidget {
+  const _TornCoupon({required this.scale, required this.quest});
 
   final double scale;
   final DailyQuest quest;
-  final Widget icon;
 
-  static const _faceHeight = 91.0;
-  static const _lipHeight = 7.0;
-
-  static double totalHeight(double scale) => (_faceHeight + _lipHeight) * scale;
+  /// Yükseklik (tasarım birimi); pano konumları buna dayanır.
+  static const height = 96.0;
 
   @override
   Widget build(BuildContext context) {
-    return _QuestSurface(
-      scale: scale,
-      radius: 22 * scale,
-      child: Container(
-        height: _faceHeight * scale,
-        padding: EdgeInsets.symmetric(horizontal: 25 * scale),
-        child: Row(
-          children: [
-            Container(
-              width: 58 * scale,
-              height: 58 * scale,
-              decoration: BoxDecoration(
-                color: _QuestsScreenState._iconTileColor,
-                borderRadius: BorderRadius.circular(16 * scale),
+    final s = scale;
+    return Padding(
+      // Koçanın yeri boş kalır; pay, uzun başlık ("2 rövanş kartını geri
+      // kazan") kesilmeyecek kadar dar.
+      padding: EdgeInsets.only(right: 64 * s),
+      child: CustomPaint(
+        painter: _TornPainter(scale: s, color: _QuestsScreenState._couponDepth),
+        child: Padding(
+          padding: EdgeInsets.only(right: 26 * s),
+          child: Row(
+            children: [
+              SizedBox(width: 24 * s),
+              Opacity(
+                opacity: 0.55,
+                child: QuestIcon(questKey: quest.questKey, size: 44 * s),
               ),
-              alignment: Alignment.center,
-              child: icon,
-            ),
-            SizedBox(width: 22 * scale),
-            Expanded(
-              child: Text(
-                quest.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: const Color(0xFFC7D2E0),
-                  fontSize: 24 * scale,
-                  fontWeight: AppTypography.label,
-                  fontFamily: AppTypography.family,
-                ),
-              ),
-            ),
-            SizedBox(width: 12 * scale),
-            Text(
-              '+${quest.rewardTickets}',
-              style: TextStyle(
-                color: _QuestsScreenState._mutedTextColor,
-                fontSize: 20 * scale,
-                fontWeight: AppTypography.number,
-                fontFamily: AppTypography.family,
-              ),
-            ),
-            SizedBox(width: 14 * scale),
-            QuestCheckMark(size: 44 * scale),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _QuestProgressBar extends StatelessWidget {
-  const _QuestProgressBar({
-    required this.scale,
-    required this.fraction,
-    required this.label,
-  });
-
-  final double scale;
-  final double fraction;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final height = 25 * scale;
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(height / 2),
-      child: SizedBox(
-        height: height,
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: ColoredBox(color: _QuestsScreenState._trackColor),
-            ),
-            if (fraction > 0)
-              Positioned.fill(
-                child: FractionallySizedBox(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: fraction,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: _QuestsScreenState._progressColor,
-                      borderRadius: BorderRadius.circular(height / 2),
-                    ),
+              SizedBox(width: 20 * s),
+              Expanded(
+                child: Text(
+                  quest.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: _QuestsScreenState._mutedTextColor,
+                    fontSize: 23 * s,
+                    fontWeight: AppTypography.label,
+                    fontFamily: AppTypography.family,
                   ),
                 ),
               ),
-            // Etiket iki kez çizilir: dolgunun üstünde koyu, boş kısımda
-            // beyaz. Böylece barın doluluğu ne olursa olsun okunur kalır.
-            Center(
-              child: Text(
-                label,
+              Text(
+                '+${quest.rewardTickets}',
                 style: TextStyle(
-                  color: _QuestsScreenState._textColor,
-                  fontSize: 18 * scale,
+                  color: _QuestsScreenState._mutedTextColor,
+                  fontSize: 21 * s,
                   fontWeight: AppTypography.number,
                   fontFamily: AppTypography.family,
                 ),
               ),
-            ),
-            if (fraction > 0)
-              ClipRect(
-                clipper: _FillClipper(fraction),
-                child: Center(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      color: _QuestsScreenState._onProgressColor,
-                      fontSize: 18 * scale,
-                      fontWeight: AppTypography.number,
-                      fontFamily: AppTypography.family,
-                    ),
-                  ),
-                ),
-              ),
-          ],
+              SizedBox(width: 10 * s),
+              QuestCheckMark(size: 40 * s),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// Etiketin yalnızca barın dolu kısmına denk gelen bölümünü gösterir.
-class _FillClipper extends CustomClipper<Rect> {
-  const _FillClipper(this.fraction);
+class _TornPainter extends CustomPainter {
+  const _TornPainter({required this.scale, required this.color});
 
-  final double fraction;
-
-  @override
-  Rect getClip(Size size) =>
-      Rect.fromLTWH(0, 0, size.width * fraction, size.height);
+  final double scale;
+  final Color color;
 
   @override
-  bool shouldReclip(covariant _FillClipper oldClipper) =>
-      oldClipper.fraction != fraction;
+  void paint(Canvas canvas, Size size) {
+    final r = 28 * scale;
+    final bite = 7 * scale;
+    final body = Path()
+      ..addRRect(RRect.fromRectAndCorners(
+        Offset.zero & size,
+        topLeft: Radius.circular(r),
+        bottomLeft: Radius.circular(r),
+      ));
+    final bites = Path();
+    for (var y = bite; y < size.height; y += bite * 2.6) {
+      bites.addOval(
+          Rect.fromCircle(center: Offset(size.width, y), radius: bite));
+    }
+    canvas.drawPath(
+      Path.combine(PathOperation.difference, body, bites),
+      Paint()..color = color,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _TornPainter oldDelegate) =>
+      oldDelegate.scale != scale || oldDelegate.color != color;
+}
+
+/// Günün hedefinin ödülü: hedef kartındaki adımların vardığı lacivert
+/// düğüm karosu, içinde seri koruması. Buz mavisi alev turuncu kartta ancak
+/// lacivert bir karonun içinde seçiliyor. Bütün görevler bitmeden karo
+/// kapalı tonda, koruma soluk; hazır olunca karo açılır ve zıplar
+/// (`HopMotion`, "buraya dokun"); alınınca köşesinde onay. Talep sürerken
+/// zıplama durur, üstünde gösterge döner. Yazısı olmadığı için dokununca ne
+/// olduğunu söyler.
+class _FreezeReward extends StatefulWidget {
+  const _FreezeReward({
+    super.key,
+    required this.scale,
+    required this.ready,
+    required this.claimed,
+    required this.isClaiming,
+    required this.onPressed,
+  });
+
+  /// Karonun eni (kalınlık dahil boyu da bu). Dokunma hedefi ≈44pt.
+  static const boxSize = 74.0;
+  static const _depth = 7.0;
+
+  final double scale;
+  final bool ready;
+  final bool claimed;
+  final bool isClaiming;
+  final VoidCallback onPressed;
+
+  @override
+  State<_FreezeReward> createState() => _FreezeRewardState();
+}
+
+class _FreezeRewardState extends State<_FreezeReward>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _hop =
+      AnimationController(vsync: this, duration: HopMotion.duration);
+
+  bool get _hopping => widget.ready && !widget.claimed && !widget.isClaiming;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_hopping) _hop.repeat();
+  }
+
+  @override
+  void didUpdateWidget(covariant _FreezeReward oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_hopping && !_hop.isAnimating) {
+      _hop.repeat();
+    } else if (!_hopping && _hop.isAnimating) {
+      // Durduğu yerde donmasın, yere otursun (bilet ödülündeki ders).
+      _hop.stop();
+      _hop.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _hop.dispose();
+    super.dispose();
+  }
+
+  void _onTap() {
+    if (widget.isClaiming) return;
+    if (widget.claimed) {
+      AppNotifier.showMessage(
+        'Bugünün seri koruması alındı.',
+        color: _QuestsScreenState._iconTileColor,
+      );
+      return;
+    }
+    if (!widget.ready) {
+      AppNotifier.showMessage(
+        'Seri koruması tüm görevler bitince alınabilir.',
+        color: _QuestsScreenState._iconTileColor,
+      );
+      return;
+    }
+    widget.onPressed();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = widget.scale;
+    final box = _FreezeReward.boxSize * scale;
+    return Semantics(
+      button: true,
+      label: 'Seri koruması',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: _onTap,
+        child: SizedBox(
+          width: box,
+          height: box,
+          child: AnimatedBuilder(
+            animation: _hop,
+            builder: (context, child) {
+              final hop = HopMotion.at(_hop.value);
+              return Transform.translate(
+                offset: Offset(0, -hop.lift * HopMotion.height * scale),
+                child: Transform(
+                  alignment: Alignment.bottomCenter,
+                  transform: HopMotion.squash(hop.squash),
+                  child: child,
+                ),
+              );
+            },
+            child: _node(scale, box),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Karo: yüz + altında koyu kalınlık; zıplarken ikisi birlikte kalkar.
+  Widget _node(double scale, double box) {
+    final open = widget.ready || widget.claimed;
+    final depth = _FreezeReward._depth * scale;
+    final radius = BorderRadius.circular(box * 0.29);
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          left: 0,
+          right: 0,
+          top: depth,
+          bottom: 0,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: open
+                  ? _QuestsScreenState._cardBorderColor
+                  : _QuestsScreenState._couponDepth,
+              borderRadius: radius,
+            ),
+          ),
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          top: 0,
+          bottom: depth,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: open
+                  ? _QuestsScreenState._stubOpen
+                  : _QuestsScreenState._couponFace,
+              borderRadius: radius,
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                if (open)
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: FaceGlossPainter(radius: box * 0.29),
+                    ),
+                  ),
+                Opacity(
+                  opacity: open ? 1 : 0.6,
+                  child: StreakFreezeFlake(size: box * 0.74),
+                ),
+                if (widget.isClaiming)
+                  SizedBox(
+                    width: 28 * scale,
+                    height: 28 * scale,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 3,
+                      color: Colors.white,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        if (widget.claimed)
+          Positioned(
+            right: -8 * scale,
+            bottom: -4 * scale,
+            child: QuestCheckMark(size: 34 * scale),
+          ),
+      ],
+    );
+  }
 }
 
 class _ClaimButton extends StatefulWidget {
@@ -1638,8 +2137,8 @@ class _ErrorState extends StatelessWidget {
   }
 }
 
-/// Görevler ilk kez inerken: başlık kartı ve beş görev kartı, içleri boş.
-/// Veri ana ekranla birlikte indiği için çoğunlukla hiç görünmez.
+/// Görevler ilk kez inerken: üst satır, hedef kartı ve dört kupon, içleri
+/// boş. Veri ana ekranla birlikte indiği için çoğunlukla hiç görünmez.
 class _QuestsSkeleton extends StatelessWidget {
   const _QuestsSkeleton({required this.scale});
 
@@ -1647,113 +2146,88 @@ class _QuestsSkeleton extends StatelessWidget {
 
   /// Görev başlıklarının kabaca boyları: hepsi aynı olsa liste çizgili
   /// kâğıt gibi duruyor.
-  static const _titleWidths = [250.0, 300.0, 300.0, 390.0, 230.0];
+  static const _titleWidths = [250.0, 300.0, 320.0, 220.0];
 
   @override
   Widget build(BuildContext context) {
     final s = scale;
+    const inner = _QuestsScreenState._couponDepth;
     return SkeletonReveal(
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
         ),
-        padding: EdgeInsets.fromLTRB(34 * s, 36 * s, 34 * s, 54 * s),
+        padding: EdgeInsets.fromLTRB(34 * s, 14 * s, 34 * s, 54 * s),
         children: [
-          _QuestSurface(
-            scale: s,
-            radius: 34 * s,
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(36 * s, 34 * s, 30 * s, 32 * s),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+          Row(
+            children: [
+              SkeletonBlock(width: 220 * s, height: 46 * s, radius: 12 * s),
+              const Spacer(),
+              SkeletonBlock(width: 84 * s, height: 54 * s, radius: 12 * s),
+              SizedBox(width: 10 * s),
+              SkeletonBlock(width: 70 * s, height: 36 * s, radius: 10 * s),
+            ],
+          ),
+          SizedBox(height: 22 * s),
+          SkeletonBlock(height: _GoalSceneCard.height * s, radius: 36 * s),
+          SizedBox(height: 36 * s),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 6 * s),
+            child: Row(
+              children: [
+                SkeletonBlock(width: 230 * s, height: 22 * s, radius: 7 * s),
+                const Spacer(),
+                SkeletonBlock(width: 150 * s, height: 22 * s, radius: 7 * s),
+              ],
+            ),
+          ),
+          SizedBox(height: 14 * s),
+          for (final (index, titleWidth) in _titleWidths.indexed) ...[
+            if (index > 0) SizedBox(height: 18 * s),
+            SizedBox(
+              height: _QuestCoupon.totalHeight(s),
+              child: CustomPaint(
+                painter: _CouponPainter(
+                  scale: s,
+                  stubWidth: _QuestCoupon.stubWidth,
+                  band: _QuestCoupon.band,
+                  face: _QuestsScreenState._couponFace,
+                  depth: _QuestsScreenState._couponDepth,
+                  stubFace: _QuestsScreenState._couponFace,
+                ),
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: _QuestCoupon.band * s),
+                  child: Row(
                     children: [
+                      SizedBox(width: 24 * s),
+                      SkeletonBlock(
+                          width: 62 * s,
+                          height: 62 * s,
+                          radius: 18 * s,
+                          color: inner),
+                      SizedBox(width: 20 * s),
                       Expanded(
                         child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             SkeletonBlock(
-                                width: 300 * s, height: 36 * s, radius: 10 * s),
-                            SizedBox(height: 18 * s),
+                                width: titleWidth * s,
+                                height: 25 * s,
+                                radius: 8 * s,
+                                color: inner),
+                            SizedBox(height: 14 * s),
                             SkeletonBlock(
-                                width: 220 * s, height: 52 * s, radius: 16 * s),
+                                width: 160 * s,
+                                height: 22 * s,
+                                radius: 7 * s,
+                                color: inner),
                           ],
                         ),
                       ),
-                      SizedBox(width: 14 * s),
-                      SkeletonBlock(
-                          width: 100 * s, height: 72 * s, radius: 16 * s),
-                      SizedBox(width: 12 * s),
-                      SkeletonBlock(
-                          width: 64 * s, height: 40 * s, radius: 10 * s),
+                      SizedBox(width: (12 + _QuestCoupon.stubWidth) * s),
                     ],
                   ),
-                  SizedBox(height: 25 * s),
-                  Row(
-                    children: [
-                      for (var i = 0; i < 5; i++) ...[
-                        if (i > 0) SizedBox(width: 9 * s),
-                        Expanded(
-                          child: SkeletonBlock(
-                              height: 15 * s, radius: 7.5 * s),
-                        ),
-                      ],
-                    ],
-                  ),
-                  SizedBox(height: 15 * s),
-                  SkeletonBlock(width: 380 * s, height: 22 * s, radius: 7 * s),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(height: 34 * s),
-          for (final (index, titleWidth) in _titleWidths.indexed) ...[
-            if (index > 0) SizedBox(height: 22 * s),
-            _QuestSurface(
-              scale: s,
-              radius: 28 * s,
-              child: Container(
-                height: _QuestCard._faceHeight * s,
-                padding: EdgeInsets.symmetric(horizontal: 25 * s),
-                child: Row(
-                  children: [
-                    SkeletonBlock(
-                        width: 87 * s, height: 87 * s, radius: 24 * s),
-                    SizedBox(width: 25 * s),
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SkeletonBlock(
-                              width: titleWidth * s,
-                              height: 25 * s,
-                              radius: 8 * s),
-                          SizedBox(height: 13 * s),
-                          SizedBox(
-                            height: _QuestCard._endCapSize * s,
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: SkeletonBlock(
-                                    height: 25 * s,
-                                    radius: 12.5 * s,
-                                    color: _QuestsScreenState._trackColor,
-                                  ),
-                                ),
-                                SizedBox(width: 8 * s),
-                                SkeletonBlock(
-                                    width: 62 * s,
-                                    height: 44 * s,
-                                    radius: 10 * s),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
                 ),
               ),
             ),
@@ -1761,170 +2235,6 @@ class _QuestsSkeleton extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-/// Profil/lig kartlarıyla aynı yüzey dili: zemin renginde yüz, üst kenarsız
-/// kontur ve altta taban dudağı.
-class _QuestSurface extends StatelessWidget {
-  const _QuestSurface({
-    required this.scale,
-    required this.radius,
-    required this.child,
-  });
-
-  final double scale;
-  final double radius;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: _QuestsScreenState._cardBorderColor,
-        borderRadius: BorderRadius.circular(AppShapeStyle.cardRadius(radius)),
-      ),
-      padding: EdgeInsets.only(bottom: AppShapeStyle.cardDepth(7 * scale)),
-      child: Container(
-        decoration: BoxDecoration(
-          color: _QuestsScreenState._cardFaceColor,
-          borderRadius: BorderRadius.circular(AppShapeStyle.cardRadius(radius)),
-        ),
-        foregroundDecoration: _NoTopBorderDecoration(
-          color: _QuestsScreenState._cardBorderColor,
-          strokeWidth: AppShapeStyle.outline(2 * scale),
-          radius: AppShapeStyle.cardRadius(radius),
-        ),
-        child: child,
-      ),
-    );
-  }
-}
-
-/// Profil kartlarındaki border dili (ProfileCard/_NoTopBorderPainter ile
-/// aynı): üst kenarı olmayan, sol/sağ üst köşelerde gradyanla incelerek
-/// biten kontur.
-class _NoTopBorderPainter extends CustomPainter {
-  const _NoTopBorderPainter({
-    required this.color,
-    required this.strokeWidth,
-    required this.radius,
-  });
-
-  final Color color;
-  final double strokeWidth;
-  final double radius;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final inset = strokeWidth / 2;
-    final usableRadius = radius.clamp(0, size.shortestSide / 2).toDouble();
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.butt
-      ..strokeJoin = StrokeJoin.round;
-
-    final path = Path()
-      ..moveTo(inset, usableRadius)
-      ..lineTo(inset, size.height - usableRadius)
-      ..quadraticBezierTo(
-        inset,
-        size.height - inset,
-        usableRadius,
-        size.height - inset,
-      )
-      ..lineTo(size.width - usableRadius, size.height - inset)
-      ..quadraticBezierTo(
-        size.width - inset,
-        size.height - inset,
-        size.width - inset,
-        size.height - usableRadius,
-      )
-      ..lineTo(size.width - inset, usableRadius);
-
-    canvas.drawPath(path, paint);
-
-    final leftCorner = Path()
-      ..moveTo(usableRadius, inset)
-      ..quadraticBezierTo(inset, inset, inset, usableRadius);
-    final rightCorner = Path()
-      ..moveTo(size.width - usableRadius, inset)
-      ..quadraticBezierTo(
-        size.width - inset,
-        inset,
-        size.width - inset,
-        usableRadius,
-      );
-
-    final cornerPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    canvas.drawPath(
-      leftCorner,
-      cornerPaint
-        ..shader = ui.Gradient.linear(
-          Offset(usableRadius, inset),
-          Offset(inset, usableRadius),
-          [color.withValues(alpha: 0), color],
-        ),
-    );
-    canvas.drawPath(
-      rightCorner,
-      cornerPaint
-        ..shader = ui.Gradient.linear(
-          Offset(size.width - usableRadius, inset),
-          Offset(size.width - inset, usableRadius),
-          [color.withValues(alpha: 0), color],
-        ),
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _NoTopBorderPainter oldDelegate) =>
-      oldDelegate.color != color ||
-      oldDelegate.strokeWidth != strokeWidth ||
-      oldDelegate.radius != radius;
-}
-
-class _NoTopBorderDecoration extends Decoration {
-  const _NoTopBorderDecoration({
-    required this.color,
-    required this.strokeWidth,
-    required this.radius,
-  });
-
-  final Color color;
-  final double strokeWidth;
-  final double radius;
-
-  @override
-  BoxPainter createBoxPainter([VoidCallback? onChanged]) =>
-      _NoTopBorderBoxPainter(this);
-}
-
-class _NoTopBorderBoxPainter extends BoxPainter {
-  _NoTopBorderBoxPainter(this.decoration);
-
-  final _NoTopBorderDecoration decoration;
-
-  @override
-  void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
-    final size = configuration.size;
-    if (size == null) return;
-
-    canvas.save();
-    canvas.translate(offset.dx, offset.dy);
-    _NoTopBorderPainter(
-      color: decoration.color,
-      strokeWidth: decoration.strokeWidth,
-      radius: decoration.radius,
-    ).paint(canvas, size);
-    canvas.restore();
   }
 }
 
