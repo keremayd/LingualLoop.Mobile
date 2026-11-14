@@ -36,6 +36,16 @@ class PremiumOffer {
   final int trialDays;
 }
 
+const _bg = Color(0xFF041227);
+const _muted = Color(0xFF8FA0B5);
+const _accent = Color(0xFF1CB1F5);
+const _accentDepth = Color(0xFF1B84B5);
+const _green = Color(0xFF93D334);
+// Bulutların açık zemini: Satürn ligi açığından (`BFB3FF`) türedi.
+const _ground = Color(0xFFF3F1FF);
+// Satürn ligi moru: başlık vurgusu ve Premium onayı.
+const _violet = Color(0xFF4536A4);
+
 /// Premium akışı. İlk adım premium maskot ve karşılaştırma tablosu; tablo
 /// öğrenme içeriğinin iki tarafta da aynı olduğunu söyler. İkinci adım iki
 /// plan (yıllık seçili), mağaza iptal cümlesi, düğme ve yenilenme metni.
@@ -64,8 +74,9 @@ class PremiumScreen extends StatefulWidget {
   final PremiumStep initialStep;
   final VoidCallback? onClose;
 
-  /// Premium akışını tam ekran açar. Bugün bilet bitti penceresinden
-  /// geliniyor; seri koruması girişi (`PremiumEntry.streak`) sonra bağlanacak.
+  /// Premium akışını tam ekran açar: alt menüdeki ∞ bilet ve bilet bitti
+  /// penceresi. Alt menü ekranın altında kalır; çarpı kullanıcıyı kaldığı
+  /// ekrana döndürür. Seri koruması girişi (`PremiumEntry.streak`) sonra.
   /// Mağaza bağlantısı (Apple Developer onayı, StoreKit) gelene kadar fiyatlar
   /// yer tutucu, satın alma ve geri yükleme yalnız haber verir.
   static Future<void> open(
@@ -104,20 +115,9 @@ class PremiumScreen extends StatefulWidget {
 }
 
 class _PremiumScreenState extends State<PremiumScreen> {
-  static const _bg = Color(0xFF041227);
-  static const _muted = Color(0xFF8FA0B5);
-  static const _accent = Color(0xFF1CB1F5);
-  static const _accentDepth = Color(0xFF1B84B5);
-  static const _green = Color(0xFF93D334);
-  // Bulutların açık zemini: Satürn ligi açığından (`BFB3FF`) türedi.
-  static const _ground = Color(0xFFF3F1FF);
-  // Satürn ligi moru: başlık vurgusu ve Premium onayı.
-  static const _violet = Color(0xFF4536A4);
-
   late PremiumPlan _plan = widget.initialPlan;
   late PremiumStep _step = widget.initialStep;
-  late final PageController _pages =
-      PageController(initialPage: widget.initialStep.index);
+  late final PageController _pages = PageController(initialPage: _step.index);
 
   @override
   void dispose() {
@@ -158,126 +158,15 @@ class _PremiumScreenState extends State<PremiumScreen> {
           physics: const NeverScrollableScrollPhysics(),
           children: [
             // İki adımın gökyüzü de durum çubuğunun arkasından başlar.
-            _benefitsPage(s, bottomInset),
+            PremiumBenefitsView(
+              ctaText: 'DEVAM ET',
+              entry: widget.entry,
+              onContinue: () => _goTo(PremiumStep.plans),
+              onClose: widget.onClose ?? () => Navigator.of(context).maybePop(),
+            ),
             _plansPage(s, bottomInset),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _benefitsPage(double s, double bottomInset) {
-    const tickets = (label: 'Sınırsız bilet', free: false);
-    const freeze = (label: 'Haftada 2 seri koruması', free: false);
-    final rows = [
-      // Duolingo da tabloyu öğrenme içeriğiyle açıyor: ücretsiz kullanıcı
-      // dersi kaybetmediğini ilk satırda görür.
-      (label: 'Tüm öğrenme içeriği', free: true),
-      if (widget.entry == PremiumEntry.streak) ...[
-        freeze,
-        tickets
-      ] else ...[
-        tickets,
-        freeze,
-      ],
-    ];
-
-    final width = MediaQuery.sizeOf(context).width;
-    return ColoredBox(
-      color: _ground,
-      child: Column(
-        children: [
-          Expanded(
-            child: Stack(
-              children: [
-                LayoutBuilder(
-                  builder: (context, constraints) => SingleChildScrollView(
-                    // Açık zemin altta biter; esneyen kaydırma altından
-                    // lacivert sayfayı gösterirdi.
-                    physics: const ClampingScrollPhysics(),
-                    child: ConstrainedBox(
-                      constraints:
-                          BoxConstraints(minHeight: constraints.maxHeight),
-                      child: Column(
-                        // Artan yer başlık bloğunun üstüne ve altına eşit
-                        // dağılır.
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _scene(s, width),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 40 * s),
-                            child: Column(
-                              children: [
-                                // Ürün adı değil vaat: sahneyle aynı cümle
-                                // (kullanıcı: teşvik edici olmalı). Vurgu,
-                                // bulutların ve Premium onayının morunda.
-                                Text.rich(
-                                  TextSpan(
-                                    children: [
-                                      const TextSpan(
-                                          text: 'Almanca seviyeni\n'),
-                                      TextSpan(
-                                        text: 'bulutların üstüne',
-                                        style: _title(s, _violet),
-                                      ),
-                                      const TextSpan(text: ' çıkar'),
-                                    ],
-                                  ),
-                                  textAlign: TextAlign.center,
-                                  style: _title(s, _bg),
-                                ),
-                                SizedBox(height: 8 * s),
-                                Text(
-                                  'Sınırsız bilet ve seri korumasıyla kesintisiz öğren.',
-                                  textAlign: TextAlign.center,
-                                  style: _body(s, size: 27).copyWith(
-                                      color: _bg.withValues(alpha: 0.6)),
-                                ),
-                                Padding(
-                                  padding: EdgeInsets.only(
-                                      top: 28 * s, bottom: 24 * s),
-                                  child: _ComparisonTable(scale: s, rows: rows),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox.shrink(),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                // Kapatma kaymaz, hep gökyüzünün üstünde durur.
-                Positioned(
-                  top: MediaQuery.paddingOf(context).top + 16 * s,
-                  left: 40 * s,
-                  child: AppIconControlButton(
-                    scale: s,
-                    label: 'Kapat',
-                    onPressed: widget.onClose ??
-                        () => Navigator.of(context).maybePop(),
-                    child: KartyControlMark(
-                      glyph: KartyControlGlyph.cross,
-                      size: 50.25 * s,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          _panel(
-            s,
-            bottom: 24 * s + bottomInset,
-            color: _ground,
-            children: [
-              _primaryButton(
-                s,
-                text: 'DEVAM ET',
-                onPressed: () => _goTo(PremiumStep.plans),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
@@ -405,59 +294,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
     );
   }
 
-  /// Tablo adımının üst yarısı: gece gökyüzü, yıldızlar ve bulut denizi
-  /// kodla çiziliyor, görsel yalnız maskot (kullanıcı kararı: "görsel kısım
-  /// sadece maskot olmalı, geri kalan ekranda çizilmeli"). Maskot bulut
-  /// denizinden yukarı fırlıyor: arka iki katman ve kalkış izi arkasında,
-  /// ön iki katman bacaklarının önünde. Ekranın tepesinden (durum
-  /// çubuğunun arkasından) başlar; en öndeki katman sayfanın rengi, başlık
-  /// ve tablo onun üstünde.
-  Widget _scene(double s, double width) {
-    final top = MediaQuery.paddingOf(context).top;
-    final height = top + 680 * s;
-    final clouds = 320 * s;
-    Widget layers(List<_CloudLayer> list) => Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          height: clouds,
-          child: CustomPaint(
-            painter: _CloudLayersPainter(
-              list,
-              scale: s,
-              bleed: identical(list, _CloudLayer.front) ? 20 : 0,
-            ),
-          ),
-        );
-    return Container(
-      width: width,
-      height: height,
-      color: _bg,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned.fill(
-            child: CustomPaint(painter: _StarsPainter(scale: s, top: top)),
-          ),
-          layers(_CloudLayer.back),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 110 * s,
-            child: Center(
-              child: Image.asset(
-                'assets/icons/mascot_premium.png',
-                height: 440 * s,
-                filterQuality: FilterQuality.medium,
-              ),
-            ),
-          ),
-          layers(_CloudLayer.front),
-        ],
-      ),
-    );
-  }
-
   /// Plan adımının paneli: mağazanın iptal cümlesi, düğme, yenilenme metni
   /// ve bağlantılar. Yenilenen tam fiyat ile "otomatik olarak yenilenir" burada
   /// (App Store 3.1.2).
@@ -553,66 +389,253 @@ class _PremiumScreenState extends State<PremiumScreen> {
       ],
     );
   }
-
-  Widget _panel(
-    double s, {
-    required double bottom,
-    required List<Widget> children,
-    Color color = _bg,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: color,
-        // Açık zeminde ayraç yok: bulut zemini düğmeye kadar kesintisiz.
-        border: color == _bg
-            ? const Border(top: BorderSide(color: Color(0xFF0B2143), width: 2))
-            : null,
-      ),
-      padding: EdgeInsets.fromLTRB(40 * s, 24 * s, 40 * s, bottom),
-      child: Column(mainAxisSize: MainAxisSize.min, children: children),
-    );
-  }
-
-  Widget _primaryButton(
-    double s, {
-    required String text,
-    required VoidCallback onPressed,
-  }) {
-    return DepthPressableButton(
-      text: text,
-      width: 670 * s,
-      height: 96 * s,
-      radius: 26 * s,
-      shadowOffset: 10 * s,
-      backgroundColor: _accent,
-      shadowColor: _accentDepth,
-      fontSize: 28 * s,
-      onPressed: onPressed,
-    );
-  }
-
-  TextStyle _title(double s, Color color) => TextStyle(
-        color: color,
-        fontFamily: AppTypography.displayFamily,
-        fontSize: 54 * s,
-        fontWeight: AppTypography.heading,
-        height: 1.1,
-      );
-
-  TextStyle _body(double s, {required double size}) => TextStyle(
-        color: _muted,
-        fontFamily: AppTypography.family,
-        fontSize: size * s,
-        fontWeight: AppTypography.body,
-        height: 1.35,
-      );
 }
 
-/// Ücretsiz ile Premium'un karşılaştırması. Premium sütunu lig tablosundaki
-/// kendi satırın tonunda (`163258`) tek parça vurgulanır; başlığında premium
-/// bilet durur. İşaretler kontrol glifi: Premium'da yeşil onay, ücretsizde
-/// sönük onay ya da kısa çizgi. Gri kullanılmaz, gri bu uygulamada kilitli
-/// demek.
+/// Tablo adımı: gece sahnesi, başlık, Ücretsiz/Premium tablosu ve düğme.
+/// Duolingo'nun "planları karşılaştır" sayfasının bizdeki karşılığı: tek ürün
+/// olduğu için karşılaştırma bu tablo.
+class PremiumBenefitsView extends StatelessWidget {
+  const PremiumBenefitsView({
+    super.key,
+    required this.ctaText,
+    required this.onContinue,
+    this.entry = PremiumEntry.tickets,
+    this.onClose,
+  });
+
+  final String ctaText;
+  final VoidCallback onContinue;
+  final PremiumEntry entry;
+
+  /// Verilirse sol üstte kapatma düğmesi durur.
+  final VoidCallback? onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = MediaQuery.sizeOf(context).width / 750;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    const tickets = (label: 'Sınırsız bilet', free: false);
+    const freeze = (label: 'Haftada 2 seri koruması', free: false);
+    final rows = [
+      // Duolingo da tabloyu öğrenme içeriğiyle açıyor: ücretsiz kullanıcı
+      // dersi kaybetmediğini ilk satırda görür.
+      (label: 'Tüm öğrenme içeriği', free: true),
+      if (entry == PremiumEntry.streak) ...[
+        freeze,
+        tickets
+      ] else ...[
+        tickets,
+        freeze,
+      ],
+    ];
+
+    final width = MediaQuery.sizeOf(context).width;
+    return ColoredBox(
+      color: _ground,
+      child: Column(
+        children: [
+          Expanded(
+            child: Stack(
+              children: [
+                LayoutBuilder(
+                  builder: (context, constraints) => SingleChildScrollView(
+                    // Açık zemin altta biter; esneyen kaydırma altından
+                    // lacivert sayfayı gösterirdi.
+                    physics: const ClampingScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints:
+                          BoxConstraints(minHeight: constraints.maxHeight),
+                      child: Column(
+                        // Artan yer başlık bloğunun üstüne ve altına eşit
+                        // dağılır.
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _scene(context, s, width),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 40 * s),
+                            child: Column(
+                              children: [
+                                // Ürün adı değil vaat: sahneyle aynı cümle
+                                // (kullanıcı: teşvik edici olmalı). Vurgu,
+                                // bulutların ve Premium onayının morunda.
+                                Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      const TextSpan(
+                                          text: 'Almanca seviyeni\n'),
+                                      TextSpan(
+                                        text: 'bulutların üstüne',
+                                        style: _title(s, _violet),
+                                      ),
+                                      const TextSpan(text: ' çıkar'),
+                                    ],
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  style: _title(s, _bg),
+                                ),
+                                SizedBox(height: 8 * s),
+                                Text(
+                                  'Sınırsız bilet ve seri korumasıyla kesintisiz öğren.',
+                                  textAlign: TextAlign.center,
+                                  style: _body(s, size: 27).copyWith(
+                                      color: _bg.withValues(alpha: 0.6)),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.only(
+                                      top: 28 * s, bottom: 24 * s),
+                                  child: _ComparisonTable(scale: s, rows: rows),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox.shrink(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                // Kapatma kaymaz, hep gökyüzünün üstünde durur. Sekmede yok.
+                if (onClose != null)
+                  Positioned(
+                    top: MediaQuery.paddingOf(context).top + 16 * s,
+                    left: 40 * s,
+                    child: AppIconControlButton(
+                      scale: s,
+                      label: 'Kapat',
+                      onPressed: onClose!,
+                      child: KartyControlMark(
+                        glyph: KartyControlGlyph.cross,
+                        size: 50.25 * s,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          _panel(
+            s,
+            bottom: 24 * s + bottomInset,
+            color: _ground,
+            children: [
+              _primaryButton(s, text: ctaText, onPressed: onContinue),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Tablo adımının üst yarısı: gece gökyüzü, yıldızlar ve bulut denizi
+  /// kodla çiziliyor, görsel yalnız maskot (kullanıcı kararı: "görsel kısım
+  /// sadece maskot olmalı, geri kalan ekranda çizilmeli"). Maskot bulut
+  /// denizinden yukarı fırlıyor: arka iki katman ve kalkış izi arkasında,
+  /// ön iki katman bacaklarının önünde. Ekranın tepesinden (durum
+  /// çubuğunun arkasından) başlar; en öndeki katman sayfanın rengi, başlık
+  /// ve tablo onun üstünde.
+  Widget _scene(BuildContext context, double s, double width) {
+    final top = MediaQuery.paddingOf(context).top;
+    final height = top + 680 * s;
+    final clouds = 320 * s;
+    Widget layers(List<_CloudLayer> list) => Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: clouds,
+          child: CustomPaint(
+            painter: _CloudLayersPainter(
+              list,
+              scale: s,
+              bleed: identical(list, _CloudLayer.front) ? 20 : 0,
+            ),
+          ),
+        );
+    return Container(
+      width: width,
+      height: height,
+      color: _bg,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(
+            child: CustomPaint(painter: _StarsPainter(scale: s, top: top)),
+          ),
+          layers(_CloudLayer.back),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 110 * s,
+            child: Center(
+              child: Image.asset(
+                'assets/icons/mascot_premium.png',
+                height: 440 * s,
+                filterQuality: FilterQuality.medium,
+              ),
+            ),
+          ),
+          layers(_CloudLayer.front),
+        ],
+      ),
+    );
+  }
+}
+
+Widget _panel(
+  double s, {
+  required double bottom,
+  required List<Widget> children,
+  Color color = _bg,
+}) {
+  return Container(
+    decoration: BoxDecoration(
+      color: color,
+      // Açık zeminde ayraç yok: bulut zemini düğmeye kadar kesintisiz.
+      border: color == _bg
+          ? const Border(top: BorderSide(color: Color(0xFF0B2143), width: 2))
+          : null,
+    ),
+    padding: EdgeInsets.fromLTRB(40 * s, 24 * s, 40 * s, bottom),
+    child: Column(mainAxisSize: MainAxisSize.min, children: children),
+  );
+}
+
+Widget _primaryButton(
+  double s, {
+  required String text,
+  required VoidCallback onPressed,
+}) {
+  return DepthPressableButton(
+    text: text,
+    width: 670 * s,
+    height: 96 * s,
+    radius: 26 * s,
+    shadowOffset: 10 * s,
+    backgroundColor: _accent,
+    shadowColor: _accentDepth,
+    fontSize: 28 * s,
+    onPressed: onPressed,
+  );
+}
+
+TextStyle _title(double s, Color color) => TextStyle(
+      color: color,
+      fontFamily: AppTypography.displayFamily,
+      fontSize: 54 * s,
+      fontWeight: AppTypography.heading,
+      height: 1.1,
+    );
+
+TextStyle _body(double s, {required double size}) => TextStyle(
+      color: _muted,
+      fontFamily: AppTypography.family,
+      fontSize: size * s,
+      fontWeight: AppTypography.body,
+      height: 1.35,
+    );
+
+/// Ücretsiz ile Premium'un karşılaştırması, bulutların açık zemininde.
+/// Premium sütunu tek parça beyaz; başlığında premium bilet durur. İşaretler
+/// kontrol glifi: Premium'da Satürn moru onay, ücretsizde sönük onay ya da
+/// kısa çizgi. Gri kullanılmaz, gri bu uygulamada kilitli demek.
 class _ComparisonTable extends StatelessWidget {
   const _ComparisonTable({required this.scale, required this.rows});
 
@@ -624,8 +647,10 @@ class _ComparisonTable extends StatelessWidget {
   static final _muted = _ink.withValues(alpha: 0.45);
   // Premium onayı Satürn ligi morunda, bulutlarla aynı aile.
   static const _premiumCheck = Color(0xFF4536A4);
-  static const _freeWidth = 124.0;
-  static const _premiumWidth = 156.0;
+  // İki sütun eşit: açık zeminde beyaz dolgu Premium sütununu zaten öne
+  // çıkarıyor; geniş olunca "ÜCRETSİZ" yazısı ona değecek kadar sıkıştı.
+  static const _freeWidth = 140.0;
+  static const _premiumWidth = 140.0;
 
   @override
   Widget build(BuildContext context) {

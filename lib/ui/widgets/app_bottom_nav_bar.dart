@@ -2,10 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:lingualloop/ui/widgets/Buttons/app_button_style.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:lingualloop/ui/widgets/nav_marks.dart';
+import 'package:lingualloop/ui/widgets/premium_ticket_mark.dart';
 import 'package:lingualloop/ui/widgets/quest_flag_mark.dart';
 import 'package:lingualloop/ui/widgets/quest_icons.dart';
 
-/// Dört ana ekranın ortak alt menüsü; önizlemede de uygulamada da aynı yüzey.
+/// Beş ana ekranın ortak alt menüsü; önizlemede de uygulamada da aynı yüzey.
+///
+/// Premium profilin solunda, Duolingo'da Super'in durduğu gibi sona yakın.
+/// Sekme değil: dokununca premium ekranı tam ekran açılır, seçili hâle
+/// geçmez. İkonu premium bilet (∞): 3B premium maskot bu boyda seçilmiyor.
 class AppBottomNavBar extends StatelessWidget {
   const AppBottomNavBar({
     super.key,
@@ -54,6 +59,10 @@ class AppBottomNavBar extends StatelessWidget {
                 _item((size) => TrophyIcon(size: size), 2, 'Ligler', scale),
                 _item(
                     (size) => QuestFlagMark(size: size), 1, 'Görevler', scale),
+                // Bilet kare değil (en/boy 1,56): kare ikonlarla aynı ağırlıkta
+                // dursun diye biraz geniş.
+                _item((size) => PremiumTicketMark(width: size * 1.2), 4,
+                    'Premium', scale),
                 _item((size) => NavMark(kind: NavMarkKind.profile, size: size),
                     3, 'Profil', scale),
               ],

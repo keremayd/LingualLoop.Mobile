@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
 import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/ui/screens/league_screen.dart';
+import 'package:lingualloop/ui/screens/premium_screen.dart';
 import 'package:lingualloop/ui/screens/profile_screen.dart';
 import 'package:lingualloop/ui/screens/quests_screen.dart';
 import 'package:lingualloop/ui/widgets/Popups/streak_at_risk_popup.dart';
@@ -23,6 +24,10 @@ class NavbarWidget extends StatefulWidget {
   static const questsTabIndex = 1;
   static const leagueTabIndex = 2;
   static const profileTabIndex = 3;
+
+  /// Alt menüdeki ∞ bilet. Bir sekme değil: dokununca premium ekranı tam
+  /// ekran açılır, seçili sekme değişmez (`_pages`'te karşılığı yok).
+  static const premiumTabIndex = 4;
 
   @override
   _NavbarWidgetState createState() => _NavbarWidgetState();
@@ -127,6 +132,13 @@ class _NavbarWidgetState extends State<NavbarWidget>
         context,
         MaterialPageRoute(builder: (context) => LoginScreen()),
       );
+      return;
+    }
+
+    if (index == NavbarWidget.premiumTabIndex) {
+      // Alt menünün üstünde açık zemin kopuk duruyordu (kullanıcı): ekran
+      // tam ekran açılır, çarpı kullanıcıyı kaldığı sekmeye döndürür.
+      PremiumScreen.open(context);
       return;
     }
 
