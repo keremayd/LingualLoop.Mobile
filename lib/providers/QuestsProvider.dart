@@ -15,6 +15,9 @@ class QuestsProvider extends ChangeNotifier {
 
   bool isClaiming(String questKey) => _claiming.contains(questKey);
 
+  /// Seri koruması talebi sürüyor.
+  bool claimingFreeze = false;
+
   Future<void> load({bool silent = false}) async {
     if (!silent) {
       status = QuestsStatus.loading;
@@ -47,9 +50,8 @@ class QuestsProvider extends ChangeNotifier {
       final response = await _service.claimReward(questKey);
       final result = response.data;
       if (result != null && result.claimed) {
-        final quest = data?.quests
-            .where((q) => q.questKey == questKey)
-            .firstOrNull;
+        final quest =
+            data?.quests.where((q) => q.questKey == questKey).firstOrNull;
         quest?.isClaimed = true;
         return result;
       }
@@ -64,6 +66,33 @@ class QuestsProvider extends ChangeNotifier {
       return null;
     } finally {
       _claiming.remove(questKey);
+      notifyListeners();
+    }
+  }
+
+  /// Günün bütün görevleri bitince seri korumasını toplar. Tavandaysa
+  /// (`blockedByCap`) sonuç yutulmaz: ekran kullanıcıya söyleyebilsin.
+  Future<ClaimFreezeResponse?> claimFreeze() async {
+    if (claimingFreeze) return null;
+    claimingFreeze = true;
+    notifyListeners();
+
+    try {
+      final result = (await _service.claimFreeze()).data;
+      final bonus = data?.freezeBonus;
+      if (result != null && bonus != null) {
+        bonus.freezeCount = result.freezeCount;
+        if (result.claimed) bonus.claimed = true;
+      }
+      // Kabul edilmediyse (gün döndü, görev değişti) listeyi tazele.
+      if (result == null || (!result.claimed && !result.blockedByCap)) {
+        await load(silent: true);
+      }
+      return result;
+    } catch (_) {
+      return null;
+    } finally {
+      claimingFreeze = false;
       notifyListeners();
     }
   }

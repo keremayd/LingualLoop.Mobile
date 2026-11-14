@@ -14,6 +14,10 @@ DailyQuestsResponse _$DailyQuestsResponseFromJson(Map<String, dynamic> json) =>
               ?.map((e) => DailyQuest.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      freezeBonus: json['freezeBonus'] == null
+          ? null
+          : QuestFreezeBonus.fromJson(
+              json['freezeBonus'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$DailyQuestsResponseToJson(
@@ -22,6 +26,7 @@ Map<String, dynamic> _$DailyQuestsResponseToJson(
       'dayKey': instance.dayKey,
       'resetAtUtc': instance.resetAtUtc.toIso8601String(),
       'quests': instance.quests,
+      'freezeBonus': instance.freezeBonus,
     };
 
 DailyQuest _$DailyQuestFromJson(Map<String, dynamic> json) => DailyQuest(
@@ -43,6 +48,41 @@ Map<String, dynamic> _$DailyQuestToJson(DailyQuest instance) =>
       'rewardTickets': instance.rewardTickets,
       'isCompleted': instance.isCompleted,
       'isClaimed': instance.isClaimed,
+    };
+
+QuestFreezeBonus _$QuestFreezeBonusFromJson(Map<String, dynamic> json) =>
+    QuestFreezeBonus(
+      completed: (json['completed'] as num?)?.toInt() ?? 0,
+      total: (json['total'] as num?)?.toInt() ?? 0,
+      claimed: json['claimed'] as bool? ?? false,
+      freezeCount: (json['freezeCount'] as num?)?.toInt() ?? 0,
+      freezeCap: (json['freezeCap'] as num?)?.toInt() ?? 1,
+    );
+
+Map<String, dynamic> _$QuestFreezeBonusToJson(QuestFreezeBonus instance) =>
+    <String, dynamic>{
+      'completed': instance.completed,
+      'total': instance.total,
+      'claimed': instance.claimed,
+      'freezeCount': instance.freezeCount,
+      'freezeCap': instance.freezeCap,
+    };
+
+ClaimFreezeResponse _$ClaimFreezeResponseFromJson(Map<String, dynamic> json) =>
+    ClaimFreezeResponse(
+      claimed: json['claimed'] as bool,
+      freezeCount: (json['freezeCount'] as num?)?.toInt() ?? 0,
+      freezeCap: (json['freezeCap'] as num?)?.toInt() ?? 1,
+      blockedByCap: json['blockedByCap'] as bool? ?? false,
+    );
+
+Map<String, dynamic> _$ClaimFreezeResponseToJson(
+        ClaimFreezeResponse instance) =>
+    <String, dynamic>{
+      'claimed': instance.claimed,
+      'freezeCount': instance.freezeCount,
+      'freezeCap': instance.freezeCap,
+      'blockedByCap': instance.blockedByCap,
     };
 
 ClaimQuestResponse _$ClaimQuestResponseFromJson(Map<String, dynamic> json) =>

@@ -34,4 +34,15 @@ class QuestService {
       (data) => ClaimQuestResponse.fromJson(data as Map<String, dynamic>),
     );
   }
+
+  /// Günün bütün görevleri bitince seri korumasını toplar.
+  Future<ApiResponse<ClaimFreezeResponse>> claimFreeze() async {
+    final userId = await _storage.read(key: 'userId');
+    final response = await _dio.post('quests/freeze', data: {'userId': userId});
+
+    return ApiResponse<ClaimFreezeResponse>.fromJson(
+      response.data,
+      (data) => ClaimFreezeResponse.fromJson(data as Map<String, dynamic>),
+    );
+  }
 }
