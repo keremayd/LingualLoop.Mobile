@@ -55,6 +55,7 @@ void main() {
       for (final label in [
         'Kullanım koşulları',
         'Gizlilik politikası',
+        'Aboneliği yönet',
         'Çıkış yap',
         'Hesabı sil',
       ]) {
@@ -69,7 +70,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
       expect(settings.muted.value, isTrue);
       expect(settings.vibration.value, isFalse);
-      expect(settings.chosen, hasLength(4));
+      expect(settings.chosen, hasLength(SettingsAction.values.length));
       expect(tester.takeException(), isNull);
     });
   }

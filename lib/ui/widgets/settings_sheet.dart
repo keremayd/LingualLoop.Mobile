@@ -9,7 +9,13 @@ import 'package:lingualloop/ui/widgets/app_shape_style.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
-enum SettingsAction { terms, privacy, signOut, deleteAccount }
+enum SettingsAction {
+  terms,
+  privacy,
+  manageSubscription,
+  signOut,
+  deleteAccount,
+}
 
 /// Profildeki çarkın penceresi. Seri penceresinin kalıbıyla alttan açılır.
 /// Ses ve titreşim pencerede değişir; diğer seçimler pencereyi kapatır ve
@@ -164,13 +170,17 @@ class SettingsSheetPanel extends StatelessWidget {
                     on: (enabled) => enabled,
                     onChanged: onVibration,
                   ),
-                  // Kümeler arası boşluk: ayarlar, metinler, hesap eylemleri.
+                  // Kümeler arası boşluk: ayarlar, metinler, hesap eylemleri
+                  // (abonelik, çıkış, silme).
                   SizedBox(height: 40 * s),
                   row('Kullanım koşulları', SettingsAction.terms, opens: true),
                   SizedBox(height: 18 * s),
                   row('Gizlilik politikası', SettingsAction.privacy,
                       opens: true),
                   SizedBox(height: 40 * s),
+                  row('Aboneliği yönet', SettingsAction.manageSubscription,
+                      opens: true),
+                  SizedBox(height: 18 * s),
                   row('Çıkış yap', SettingsAction.signOut),
                   SizedBox(height: 18 * s),
                   // Kalıcı eylem düğme yüzü almaz, en altta kırmızı bağlantıdır;

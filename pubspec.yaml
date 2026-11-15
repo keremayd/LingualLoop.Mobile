@@ -27,6 +27,7 @@ dependencies:
   sign_in_with_apple: ^8.2.0
   crypto: ^3.0.8
   package_info_plus: ^9.0.1
+  url_launcher: ^6.3.3
 
 dev_dependencies:
   build_runner: ^2.3.3

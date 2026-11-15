@@ -5,8 +5,10 @@ import 'dart:ui' as ui;
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:lingualloop/Utils/AppNotifier.dart';
 import 'package:lingualloop/services/AuthenticationService.dart';
 import 'package:lingualloop/services/UserService.dart';
+import 'package:lingualloop/services/subscription_management.dart';
 import 'package:lingualloop/ui/screens/legal_document_screen.dart';
 import 'package:lingualloop/ui/widgets/ProfilePhoto.dart';
 import 'package:lingualloop/ui/widgets/settings_sheet.dart';
@@ -152,6 +154,10 @@ class ProfileCard extends StatelessWidget {
         await LegalDocumentScreen.open(context, LegalDocument.terms);
       case SettingsAction.privacy:
         await LegalDocumentScreen.open(context, LegalDocument.privacy);
+      case SettingsAction.manageSubscription:
+        if (!await SubscriptionManagement.open()) {
+          AppNotifier.showMessage('Abonelik sayfası açılamadı. Tekrar dene.');
+        }
       case SettingsAction.signOut:
         await AuthService(Dio()).signOut(context);
       case SettingsAction.deleteAccount:
