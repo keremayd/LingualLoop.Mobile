@@ -1,5 +1,4 @@
 import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/app_shape_style.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -117,29 +116,11 @@ class _LeaguePromotionScreenState extends State<LeaguePromotionScreen>
               Column(
                 children: [
                   Expanded(
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        _PromotionHero(
-                          scale: scale,
-                          promotion: widget.promotion,
-                          controller: _entranceController,
-                          floatController: _floatController,
-                        ),
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          top: media.padding.top + 18 * scale,
-                          child: Center(
-                            child: _Entrance(
-                              controller: _entranceController,
-                              interval: const Interval(0, 0.52),
-                              offset: const Offset(0, -0.12),
-                              child: _Eyebrow(scale: scale),
-                            ),
-                          ),
-                        ),
-                      ],
+                    child: _PromotionHero(
+                      scale: scale,
+                      promotion: widget.promotion,
+                      controller: _entranceController,
+                      floatController: _floatController,
                     ),
                   ),
                   Padding(
@@ -148,50 +129,56 @@ class _LeaguePromotionScreenState extends State<LeaguePromotionScreen>
                       controller: _entranceController,
                       interval: const Interval(0.35, 0.78),
                       offset: const Offset(0, 0.14),
+                      // Ünite açılışının kalıbı (16 Kas 2026, kullanıcı
+                      // onayı): olay etiketi, yeni ligin adı, nereden
+                      // gelindiği. Yerine geçtiği "YENİ LİG AÇILDI" ve
+                      // "Nebula → Kosmoz" hapları tam yuvarlak, konturlu ve
+                      // Material ikonluydu; uygulamanın biçim dilinde yok.
                       child: Column(
                         children: [
                           Text(
-                            'Lig atladın!',
+                            'LİG ATLADIN',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: const Color(0xFF1CB1F5),
+                              fontFamily: AppTypography.family,
+                              fontSize: 15 * scale,
+                              fontWeight: AppTypography.number,
+                              letterSpacing: 1.7 * scale,
+                              height: 1,
+                            ),
+                          ),
+                          SizedBox(height: 12 * scale),
+                          Text(
+                            '${widget.promotion.toLeagueName} Ligi',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.white,
                               fontFamily: AppTypography.displayFamily,
-                              fontSize: 38 * scale,
+                              fontSize: 40 * scale,
                               fontWeight: AppTypography.heading,
                               height: 1.04,
                               letterSpacing: -1.1 * scale,
                             ),
                           ),
                           SizedBox(height: 12 * scale),
-                          Text.rich(
-                            TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: widget.promotion.toLeagueName,
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                                const TextSpan(text: ' Ligi’ne yükseldin.'),
-                              ],
-                            ),
+                          Text(
+                            '${widget.promotion.fromLeagueName} Ligi’nden '
+                            'yükseldin.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: const Color(0xFF9DACC0),
+                              color: const Color(0xFF8FA0B5),
                               fontFamily: AppTypography.family,
                               fontSize: 19 * scale,
                               fontWeight: AppTypography.body,
                               height: 1.28,
                             ),
                           ),
-                          SizedBox(height: 20 * scale),
-                          _LeagueStepPill(
-                            scale: scale,
-                            promotion: widget.promotion,
-                          ),
                         ],
                       ),
                     ),
                   ),
-                  SizedBox(height: 27 * scale),
+                  SizedBox(height: 32 * scale),
                   Padding(
                     padding: EdgeInsets.fromLTRB(
                       22 * scale,
@@ -234,48 +221,6 @@ class _LeaguePromotionScreenState extends State<LeaguePromotionScreen>
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _Eyebrow extends StatelessWidget {
-  const _Eyebrow({required this.scale});
-
-  final double scale;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding:
-          EdgeInsets.symmetric(horizontal: 15 * scale, vertical: 8 * scale),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0B2143),
-        borderRadius: BorderRadius.circular(99),
-        border: Border.all(
-          color: const Color(0xFF1CB1F5).withValues(alpha: 0.30),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.auto_awesome_rounded,
-            color: const Color(0xFFFFD52F),
-            size: 17 * scale,
-          ),
-          SizedBox(width: 7 * scale),
-          Text(
-            'YENİ LİG AÇILDI',
-            style: TextStyle(
-              color: const Color(0xFFB9C7D9),
-              fontFamily: AppTypography.family,
-              fontSize: 12 * scale,
-              fontWeight: AppTypography.label,
-              letterSpacing: 1.25 * scale,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -530,58 +475,6 @@ class _NewLeagueHalo extends StatelessWidget {
         ],
       ),
       child: LeagueBadgeMark(leagueKey: leagueKey, size: size),
-    );
-  }
-}
-
-class _LeagueStepPill extends StatelessWidget {
-  const _LeagueStepPill({required this.scale, required this.promotion});
-
-  final double scale;
-  final LeaguePromotionResponse promotion;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding:
-          EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 10 * scale),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0B2143),
-        borderRadius:
-            BorderRadius.circular(AppShapeStyle.cardRadius(15 * scale)),
-        border: Border.all(color: const Color(0xFF173A66)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            promotion.fromLeagueName,
-            style: TextStyle(
-              color: const Color(0xFF8395AC),
-              fontFamily: AppTypography.family,
-              fontSize: 13 * scale,
-              fontWeight: AppTypography.label,
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 9 * scale),
-            child: Icon(
-              Icons.arrow_forward_rounded,
-              color: const Color(0xFF1CB1F5),
-              size: 18 * scale,
-            ),
-          ),
-          Text(
-            promotion.toLeagueName,
-            style: TextStyle(
-              color: Colors.white,
-              fontFamily: AppTypography.family,
-              fontSize: 13 * scale,
-              fontWeight: AppTypography.label,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
