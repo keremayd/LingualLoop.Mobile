@@ -146,6 +146,44 @@ void main() {
     );
   });
 
+  // Bir ünite baştan sona görünürken ikinci ünite görünmez (kullanıcı,
+  // 15 Kas 2026: iki desteli Ünite 1'in altında Ünite 2'nin başlığı
+  // görünüyordu). Sınır: ilk destenin yarısı yapışan başlık kartının altına
+  // girene kadar sonraki başlık ekranın altında kalır. Kısa ünitede boy
+  // desteler arasına eklenir; kısa ekranda ünite zaten bir ekrandan uzun.
+  for (final height in [737.0, 560.0]) {
+    testWidgets('ünite baştan sona görünürken sonraki ünite görünmez ($height)',
+        (tester) async {
+      final semantics = tester.ensureSemantics();
+      final controller = await pump(tester, sample(), height: height);
+      final area = tester.getRect(find.byType(SingleChildScrollView));
+      const card = KartyUnitHeader.height * 402 / 750;
+      final firstDeck = find.bySemanticsLabel(RegExp('^Deste 1, tamamlandı'));
+      final next = find
+          .ancestor(
+            of: find.text('Yolculuk'),
+            matching: find.byType(KartyUnitHeader),
+          )
+          .first;
+
+      controller.jumpTo(0);
+      await tester.pump();
+      final limit = tester.getCenter(firstDeck).dy - (area.top + card);
+      expect(limit, greaterThan(0));
+      for (var i = 0; i <= 8; i++) {
+        final offset = limit * i / 8;
+        controller.jumpTo(offset);
+        await tester.pump();
+        expect(
+          tester.getRect(next).top,
+          greaterThanOrEqualTo(area.bottom - 0.5),
+          reason: 'kaydırma ${offset.toStringAsFixed(1)}',
+        );
+      }
+      semantics.dispose();
+    });
+  }
+
   testWidgets('deste bitince patika yeni desteye kayar', (tester) async {
     // Kısa ekran: yeni deste ilk konumda ekranın altında kalıyor.
     final controller = await pump(tester, sample(), height: 560);

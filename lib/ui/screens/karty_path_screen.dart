@@ -125,8 +125,17 @@ class _KartyPathScreenState extends State<KartyPathScreen>
     with SingleTickerProviderStateMixin {
   late final ScrollController _controller =
       widget.controller ?? ScrollController();
-  late _PathLayout _layout =
-      _PathLayout.compute(widget.data, stations: widget.stations);
+
+  /// Patika alanının boyu (tasarım birimi); ilk çizimde ölçülür.
+  double _viewportUnits = 0;
+
+  late _PathLayout _layout = _computeLayout();
+
+  _PathLayout _computeLayout() => _PathLayout.compute(
+        widget.data,
+        stations: widget.stations,
+        minUnitSpan: _viewportUnits,
+      );
   late final AnimationController _arrival = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 3200),
@@ -149,7 +158,7 @@ class _KartyPathScreenState extends State<KartyPathScreen>
     if (oldWidget.data != widget.data ||
         oldWidget.stations._layoutKey != widget.stations._layoutKey) {
       final before = _layout.current;
-      _layout = _PathLayout.compute(widget.data, stations: widget.stations);
+      _layout = _computeLayout();
       final after = _layout.current;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _updatePinned();
@@ -358,36 +367,6 @@ class _KartyPathScreenState extends State<KartyPathScreen>
             });
           }
 
-          Widget scroll = SingleChildScrollView(
-            controller: _controller,
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
-            child: AnimatedBuilder(
-              animation: _arrival,
-              builder: (context, _) => _KartyPathBody(
-                data: widget.data,
-                layout: _layout,
-                scale: scale,
-                onContinue: widget.onContinue,
-                currentNodeKey: widget.currentNodeKey,
-                hopCurrent: widget.hopCurrent,
-                onStepTap: _openStep,
-                arrival: _arrivalState(),
-                stations: widget.stations,
-              ),
-            ),
-          );
-          if (widget.onRefresh != null) {
-            scroll = RefreshIndicator(
-              color: _C.accent,
-              backgroundColor: _C.panel,
-              onRefresh: widget.onRefresh!,
-              child: scroll,
-            );
-          }
-
-          final pinned = _pinned == null ? null : _layout.headers[_pinned!];
           return SafeArea(
             bottom: false,
             child: Column(
@@ -398,64 +377,110 @@ class _KartyPathScreenState extends State<KartyPathScreen>
                   child: widget.header(scale),
                 ),
                 Expanded(
-                  // İtilen başlık üst şeridin altında kesilir; Transform'u
-                  // Stack'in kendi kırpması görmüyor.
-                  child: ClipRect(
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child:
-                              IgnorePointer(ignoring: _arriving, child: scroll),
+                  // Patika alanının boyu düzene girer: ünite en az bu kadar
+                  // uzar ([_PathLayout.compute] `minUnitSpan`).
+                  child: LayoutBuilder(builder: (context, area) {
+                    final units = area.maxHeight / scale;
+                    if ((units - _viewportUnits).abs() > 0.5) {
+                      _viewportUnits = units;
+                      _layout = _computeLayout();
+                      WidgetsBinding.instance
+                          .addPostFrameCallback((_) => _updatePinned());
+                    }
+                    Widget scroll = SingleChildScrollView(
+                      controller: _controller,
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: BouncingScrollPhysics(),
+                      ),
+                      child: AnimatedBuilder(
+                        animation: _arrival,
+                        builder: (context, _) => _KartyPathBody(
+                          data: widget.data,
+                          layout: _layout,
+                          scale: scale,
+                          onContinue: widget.onContinue,
+                          currentNodeKey: widget.currentNodeKey,
+                          hopCurrent: widget.hopCurrent,
+                          onStepTap: _openStep,
+                          arrival: _arrivalState(),
+                          stations: widget.stations,
                         ),
-                        if (pinned != null)
-                          Positioned(
-                            left: 0,
-                            right: 0,
-                            top: 0,
-                            // Gelişte gizlenir, bitince yumuşakça döner.
+                      ),
+                    );
+                    if (widget.onRefresh != null) {
+                      scroll = RefreshIndicator(
+                        color: _C.accent,
+                        backgroundColor: _C.panel,
+                        onRefresh: widget.onRefresh!,
+                        child: scroll,
+                      );
+                    }
+
+                    final pinned =
+                        _pinned == null || _pinned! >= _layout.headers.length
+                            ? null
+                            : _layout.headers[_pinned!];
+                    // İtilen başlık üst şeridin altında kesilir; Transform'u
+                    // Stack'in kendi kırpması görmüyor.
+                    return ClipRect(
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
                             child: IgnorePointer(
-                              ignoring: widget.arrivalUnit != null,
-                              child: AnimatedOpacity(
-                                opacity: widget.arrivalUnit == null ? 1 : 0,
-                                duration: const Duration(milliseconds: 280),
-                                child: AnimatedBuilder(
-                                  animation: _controller,
-                                  builder: (context, child) =>
-                                      Transform.translate(
-                                    offset: Offset(0, _pinnedPush()),
-                                    child: child,
-                                  ),
-                                  child: Padding(
-                                    padding: EdgeInsets.fromLTRB(
-                                        40 * scale, 0, 40 * scale, 18 * scale),
-                                    child: Stack(
-                                      children: [
-                                        // Yol kartın arkasından geçer; yalnız
-                                        // altında kalan kendi başlığı üst
-                                        // köşelerden görünmesin.
-                                        Positioned(
-                                          left: 0,
-                                          right: 0,
-                                          top: 0,
-                                          height: KartyUnitHeader.cornerRadius(
-                                              scale),
-                                          child: const ColoredBox(color: _C.bg),
-                                        ),
-                                        KartyUnitHeader(
-                                          unit: pinned.unit,
-                                          scale: scale,
-                                          onTap: () {},
-                                        ),
-                                      ],
+                                ignoring: _arriving, child: scroll),
+                          ),
+                          if (pinned != null)
+                            Positioned(
+                              left: 0,
+                              right: 0,
+                              top: 0,
+                              // Gelişte gizlenir, bitince yumuşakça döner.
+                              child: IgnorePointer(
+                                ignoring: widget.arrivalUnit != null,
+                                child: AnimatedOpacity(
+                                  opacity: widget.arrivalUnit == null ? 1 : 0,
+                                  duration: const Duration(milliseconds: 280),
+                                  child: AnimatedBuilder(
+                                    animation: _controller,
+                                    builder: (context, child) =>
+                                        Transform.translate(
+                                      offset: Offset(0, _pinnedPush()),
+                                      child: child,
+                                    ),
+                                    child: Padding(
+                                      padding: EdgeInsets.fromLTRB(40 * scale,
+                                          0, 40 * scale, 18 * scale),
+                                      child: Stack(
+                                        children: [
+                                          // Yol kartın arkasından geçer; yalnız
+                                          // altında kalan kendi başlığı üst
+                                          // köşelerden görünmesin.
+                                          Positioned(
+                                            left: 0,
+                                            right: 0,
+                                            top: 0,
+                                            height:
+                                                KartyUnitHeader.cornerRadius(
+                                                    scale),
+                                            child:
+                                                const ColoredBox(color: _C.bg),
+                                          ),
+                                          KartyUnitHeader(
+                                            unit: pinned.unit,
+                                            scale: scale,
+                                            onTap: () {},
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                      ],
-                    ),
-                  ),
+                        ],
+                      ),
+                    );
+                  }),
                 ),
               ],
             ),
@@ -976,10 +1001,80 @@ class _PathLayout {
   static const _captionRoom = 150.0;
   static const _captionClearance = 225.0;
 
-  static const stepGap = 184.0;
+  /// Başlık kartının altından ilk destenin ortasına: kartın altı ile
+  /// destenin üstü arası iPhone 17'de 44 pt (kullanıcı, 15 Kas 2026; 156'da
+  /// 51 pt'ydi). 176 denendi, kullanıcı fazla buldu ("başlık ile ilk deste
+  /// arasındaki boşluğu neden bu kadar fazla yaptın?").
+  static const headerGap = 142.0;
+
+  /// Desteler arası (15 Kas 2026'da 184'ten açıldı, kullanıcı: "patikaların
+  /// aralarını biraz uzatalım").
+  static const stepGap = 210.0;
+
+  /// Kapının (pekiştirme halkası) altından sonraki ünitenin başlığına yol.
+  static const gateTail = 150.0;
   static const nodeClearance = 84.0;
   static const _currentRoom = 120.0;
   static const _pattern = [-15.0, 140.0, 15.0, -125.0, -45.0, 110.0, 20.0];
+
+  /// Kısa ünitede desteler arasına ve son desteden kapıya eklenen pay.
+  ///
+  /// Koşul: ilk deste yapışan başlık kartının altına yarısı girene kadar
+  /// sonraki ünitenin başlığı ekrana girmez; ünite baştan sona görünürken
+  /// ikinci ünite görünmez. Ünitenin başlığı tepedeyken ölçülen kaydırma o
+  /// ana kadar en çok "ilk destenin ortası − kartın boyu" olur; o konumda
+  /// sonraki başlık ekranın dibinde kalmalı.
+  ///
+  /// Önce iki eşik denendi, ikisi de yetmedi (15 Kas 2026, simulator):
+  /// · "kaydırma tepedeyken sonraki başlık ekranın 72 birim altında":
+  ///   liste ~45 pt aşağıda durunca sonraki başlık alttan görünüyordu.
+  /// · "ilk destenin tepesi yapışan başlığa değene kadar": yapışan başlığın
+  ///   altındaki 18 birimlik pay saydam, eşik oraya konunca deste karta
+  ///   değmeden sonraki başlık ~8 pt göründü. Göz karta biraz girmiş desteyi
+  ///   de "ünite baştan sona görünüyor" diye okuyor, bu yüzden yarısı.
+  ///
+  /// Başlık → ilk deste aralığına pay konmaz: ikisini birlikte kaydırır,
+  /// koşula katkısı olmaz; kullanıcı da desteler arasının açılmasını istedi.
+  /// Destesiz ünitede pay başlık → kapı aralığına bölünür, sonraki başlık
+  /// kaydırma tepedeyken ekranın 72 birim altında kalır.
+  static double _extraGap(KartyUnit unit, double viewport) {
+    final natural = _naturalSpan(unit);
+    if (unit.steps.isEmpty) {
+      return math.max(0.0, (viewport + 72 - natural) / 2);
+    }
+    final firstCurrent = unit.steps.first.state == KartyStepState.current;
+    // İlk destenin görünen ortası (yüz + kalınlık bandı; düğümün konumu
+    // yüzün ortası), başlık kartının alt kenarından.
+    final firstBelowCard = headerGap +
+        (firstCurrent ? _currentRoom : 0) +
+        _NodeGeometry(firstCurrent ? currentWidth : nodeWidth).depth / 2;
+    return math.max(
+      0.0,
+      (viewport + firstBelowCard - natural) / unit.steps.length,
+    );
+  }
+
+  /// Ünitenin pay eklenmeden boyu: başlığın tepesinden kapıdan sonraki yolun
+  /// sonuna (sonraki başlığın tepesi). [compute]'taki adımların aynısı.
+  static double _naturalSpan(KartyUnit unit) {
+    var y = KartyUnitHeader.height + headerGap;
+    var previousCurrent = false;
+    for (var i = 0; i < unit.steps.length; i++) {
+      final current = unit.steps[i].state == KartyStepState.current;
+      if (i > 0) {
+        y += stepGap +
+            (current ? _currentRoom : 0) +
+            (previousCurrent ? 26 + _captionRoom : 0);
+      } else if (current) {
+        y += _currentRoom;
+      }
+      previousCurrent = current;
+    }
+    final half = _GateSpot.halfHeightFor(ringOffsetFor(unit.wordCount));
+    final gateCenter =
+        y + 196 + half + (previousCurrent ? 40 + _captionRoom : 0);
+    return gateCenter + half + gateTail;
+  }
 
   _NodeSpot? get current {
     for (final node in nodes) {
@@ -993,9 +1088,18 @@ class _PathLayout {
   int unitIndex(int number) =>
       headers.indexWhere((header) => header.unit.number == number);
 
+  /// [minUnitSpan]: patika alanının boyu (tasarım birimi). Bir ünite baştan
+  /// sona görünürken sonraki ünitenin başlığı ekrana girmez (kullanıcı,
+  /// 15 Kas 2026: iki desteli Ünite 1'in altında Ünite 2'nin başlığı
+  /// görünüyordu). Kısa ünitede eksik boy **desteler arasına** ve son
+  /// desteden kapıya eşit dağılır ([_extraGap]); kapıdan sonraki yol uzamaz.
+  /// İlk denemede pay kapıdan sonraki yola konmuştu, kullanıcı:
+  /// "pekiştirmenin sonrasını uzatmışsın, kötü duruyor; desteler arası
+  /// mesafeyi uzatsan daha iyi olur".
   static _PathLayout compute(
     KartyPathData data, {
     required KartyPathStations stations,
+    double minUnitSpan = 0,
   }) {
     final nodes = <_NodeSpot>[];
     final gates = <_GateSpot>[];
@@ -1012,7 +1116,11 @@ class _PathLayout {
       // Her ünitenin başlığı yolun içinde; kaydırınca üste yapışan da bu.
       if (u == 0) y = 12;
       headers.add(_HeaderSpot(unit: unit, top: y));
-      y += KartyUnitHeader.height + 156;
+      final hasNext = u + 1 < data.units.length;
+      final extra =
+          hasNext && minUnitSpan > 0 ? _extraGap(unit, minUnitSpan) : 0.0;
+      y +=
+          KartyUnitHeader.height + headerGap + (unit.steps.isEmpty ? extra : 0);
 
       final points = <Offset>[];
       var currentIndex = -1;
@@ -1022,6 +1130,7 @@ class _PathLayout {
         final current = step.state == KartyStepState.current;
         if (i > 0) {
           y += stepGap +
+              extra +
               (current ? _currentRoom : 0) +
               (previousCurrent ? 26 + _captionRoom : 0);
         } else if (current) {
@@ -1047,7 +1156,8 @@ class _PathLayout {
       final gateCenter = Offset(
         centerX - 60,
         y +
-            176 +
+            196 +
+            extra +
             _GateSpot.halfHeightFor(offset) +
             (previousCurrent ? 40 + _captionRoom : 0),
       );
@@ -1137,7 +1247,9 @@ class _PathLayout {
       }
 
       previousExit = ringBottom;
-      y = ringBottom.dy + 128;
+      // Kapıdan sonraki ünitenin başlığına sabit yol; kısa ünitede eksik boy
+      // yukarıda desteler arasına dağıtıldı ([_extraGap]).
+      y = ringBottom.dy + gateTail;
     }
 
     return _PathLayout._(
