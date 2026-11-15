@@ -747,7 +747,14 @@ class _GoalSceneCard extends StatelessWidget {
                     children: [
                       for (var i = 0; i < quests.length; i++) ...[
                         if (i > 0) SizedBox(width: 9 * s),
-                        _StepPip(scale: s, done: i < _done),
+                        // Karonun yüzü kalınlık kadar yukarıda: kareler
+                        // satırın değil yüzün ortasına hizalanır.
+                        Padding(
+                          padding: EdgeInsets.only(
+                            bottom: _freezeShown ? _FreezeReward.depth * s : 0,
+                          ),
+                          child: _StepPip(scale: s, done: i < _done),
+                        ),
                       ],
                       if (_freezeShown) ...[
                         SizedBox(width: 12 * s),
@@ -1409,15 +1416,27 @@ class _QuestCoupon extends StatelessWidget {
   }
 
   /// Bekleyen ödül kısık: opak koyu altın bilet ve adet (§5).
-  Widget _waitingStub(double s) => Center(
+  ///
+  /// Bilet ile rozet tek kutu ve rozet biletin sağ altına taşıyor; kutuyu
+  /// ortalamak bilet gövdesini sol üste kaydırıyordu (biletler "yukarı
+  /// kayık" görünüyordu, kullanıcı fark etti). Kutu taşma kadar sağa ve
+  /// aşağı itilir, **gövde** koçanın ortasına gelir (bilet bitti
+  /// penceresindeki optik ortalamanın aynısı).
+  Widget _waitingStub(double s) {
+    const badge = 30.0;
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.only(left: badge * 0.42 * s, top: badge * 0.34 * s),
         child: TicketWithCount(
           scale: s,
           count: quest.rewardTickets,
           ticketWidth: 62,
-          badgeSize: 30,
+          badgeSize: badge,
           dim: true,
         ),
-      );
+      ),
+    );
+  }
 
   /// Hazır ödül: koçanın tamamı dokunulur, bilet kendi basma hareketiyle.
   Widget _readyStub(double s) => Semantics(
@@ -1429,16 +1448,21 @@ class _QuestCoupon extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _ClaimButton(
-                // Testin dokunabilmesi için sabit anahtar: talep gönderme
-                // durumu ancak dokunarak üretilebiliyor ve o durumun
-                // golden'ı olmadığı için iki hata canlıya kadar gitmişti
-                // (bkz. quest_claim_pending_test).
-                key: ValueKey('claim-${quest.questKey}'),
-                scale: s,
-                rewardTickets: quest.rewardTickets,
-                isClaiming: isClaiming,
-                onPressed: onClaim,
+              // Rozet sağa taştığı için kutu ortalanınca bilet "AL"ın soluna
+              // kayıyordu; taşma kadar sağa itilir, gövde yazının üstünde.
+              Padding(
+                padding: EdgeInsets.only(left: 32 * 0.42 * s),
+                child: _ClaimButton(
+                  // Testin dokunabilmesi için sabit anahtar: talep gönderme
+                  // durumu ancak dokunarak üretilebiliyor ve o durumun
+                  // golden'ı olmadığı için iki hata canlıya kadar gitmişti
+                  // (bkz. quest_claim_pending_test).
+                  key: ValueKey('claim-${quest.questKey}'),
+                  scale: s,
+                  rewardTickets: quest.rewardTickets,
+                  isClaiming: isClaiming,
+                  onPressed: onClaim,
+                ),
               ),
               SizedBox(height: 6 * s),
               Text(
@@ -1632,7 +1656,7 @@ class _FreezeReward extends StatefulWidget {
 
   /// Karonun eni (kalınlık dahil boyu da bu). Dokunma hedefi ≈44pt.
   static const boxSize = 74.0;
-  static const _depth = 7.0;
+  static const depth = 7.0;
 
   final double scale;
   final bool ready;
@@ -1730,7 +1754,7 @@ class _FreezeRewardState extends State<_FreezeReward>
   /// Karo: yüz + altında koyu kalınlık; zıplarken ikisi birlikte kalkar.
   Widget _node(double scale, double box) {
     final open = widget.ready || widget.claimed;
-    final depth = _FreezeReward._depth * scale;
+    final depth = _FreezeReward.depth * scale;
     final radius = BorderRadius.circular(box * 0.29);
     return Stack(
       clipBehavior: Clip.none,
