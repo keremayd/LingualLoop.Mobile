@@ -15,6 +15,7 @@ Widget previewPathHeader(
       streakDays: streak,
       playedToday: playedToday,
       tickets: tickets,
+      maxTickets: 15,
     );
 
 KartyPathStation previewArticleStation({

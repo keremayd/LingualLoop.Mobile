@@ -19,6 +19,7 @@ import 'package:lingualloop/ui/widgets/quest_icons.dart';
 import 'package:lingualloop/ui/widgets/quest_reward_celebration.dart';
 import 'package:lingualloop/ui/widgets/streak_freeze_flake.dart';
 import 'package:lingualloop/ui/widgets/surface_gloss.dart';
+import 'package:lingualloop/ui/widgets/ticket_balance.dart';
 import 'package:lingualloop/ui/widgets/ticket_with_count.dart';
 import 'package:provider/provider.dart';
 
@@ -1230,92 +1231,14 @@ class _TicketCounter extends StatelessWidget {
             // "kazanacağın" olduğunu yalnızca konum söylüyordu.
             return Transform.scale(
               scale: bump,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Kalınlık bandı: aşağıdaki ödül biletleriyle aynı dil.
-                  // Bu bilet bir süre ekrandaki **tek düz** bilet kaldı —
-                  // ödüller derinlik, hâle ve hareket kazanırken başlıktaki
-                  // gölgesiz PNG olarak durunca işlenmemiş görünüyordu.
-                  SizedBox(
-                    // Kesir eklenince sayaç genişledi ve geri sayım
-                    // kırpılmaya başladı ("sonra yenile..."). Bilet ve sayı
-                    // küçültülerek yer açıldı; kırpılan metin bilgi kaybıdır.
-                    width: ticketWidth * scale,
-                    height: ticketWidth * scale * 110 / 172 + 6 * scale,
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          left: 0,
-                          top: 6 * scale,
-                          child: ShaderMask(
-                            blendMode: BlendMode.srcIn,
-                            shaderCallback: (rect) => const LinearGradient(
-                              colors: [
-                                _QuestsScreenState._dimGoldColor,
-                                _QuestsScreenState._dimGoldColor,
-                              ],
-                            ).createShader(rect),
-                            child: Image.asset(
-                              'assets/icons/ticket.png',
-                              width: ticketWidth * scale,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 0,
-                          top: 0,
-                          child: Image.asset(
-                            'assets/icons/ticket.png',
-                            // Uçan biletlerin hedefi bu ikon — sayı değil.
-                            key: iconKey,
-                            width: ticketWidth * scale,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(width: 10 * scale),
-                  // Tavan **yazıyla** gösteriliyor: "13/15". Bir tur boyunca
-                  // kesir yerine kap çizmeyi (çubuk, bölmeli kap) denedik,
-                  // hepsi başka sebeplerden elendi — kullanıcı kararıyla
-                  // kesire dönüldü, çünkü tavanın anlaşılması önceliklendi.
-                  //
-                  // Tavandayken **renk değişmiyor**: dolu olmak iyi bir
-                  // durum; aciliyet tonu (§2.10) onu cezaya çevirirdi.
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text(
-                        '${shown.clamp(0, 9999)}',
-                        style: TextStyle(
-                          color: _QuestsScreenState._textColor,
-                          fontFamily: AppTypography.family,
-                          fontSize: 40 * scale,
-                          fontWeight: AppTypography.number,
-                          height: 1,
-                        ),
-                      ),
-                      // Tavan henüz yüklenmediyse kesir hiç çizilmez; "13/0"
-                      // göstermek bakiyeyi yalanlar.
-                      if (maxLives > 0)
-                        Text(
-                          '/$maxLives',
-                          style: TextStyle(
-                            color: _QuestsScreenState._mutedTextColor,
-                            fontFamily: AppTypography.family,
-                            fontSize: 24 * scale,
-                            fontWeight: AppTypography.caption,
-                            height: 1,
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
+              // Bilet, kalınlık bandı ve kesir ana ekranla ortak.
+              child: TicketBalance(
+                scale: scale,
+                count: shown.clamp(0, 9999),
+                max: maxLives,
+                ticketWidth: ticketWidth,
+                numberSize: 40,
+                iconKey: iconKey,
               ),
             );
           },

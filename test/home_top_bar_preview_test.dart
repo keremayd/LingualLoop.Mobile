@@ -34,6 +34,7 @@ void main() {
                     streakDays: 4,
                     playedToday: true,
                     tickets: 15,
+                    maxTickets: 15,
                   ),
                   SizedBox(height: 40),
                   // Bugün oynanmadı: alev beyaz siluet, %55.
@@ -42,6 +43,7 @@ void main() {
                     streakDays: 0,
                     playedToday: false,
                     tickets: 8,
+                    maxTickets: 15,
                   ),
                 ],
               ),
@@ -82,6 +84,7 @@ void main() {
                 streakDays: 4,
                 playedToday: true,
                 tickets: 15,
+                maxTickets: 15,
               ),
             ),
           ),

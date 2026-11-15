@@ -1,6 +1,7 @@
 import 'package:lingualloop/ui/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:lingualloop/ui/widgets/quest_icons.dart';
+import 'package:lingualloop/ui/widgets/ticket_balance.dart';
 
 /// Ana ekranın üst şeridi.
 ///
@@ -12,6 +13,10 @@ import 'package:lingualloop/ui/widgets/quest_icons.dart';
 /// Gösterilenler, her biri bir soruya cevap veriyor:
 ///   * **Seri** (sol uç) — kaç gündür aralıksız ve bugünü kurtardım mı
 ///   * **Bilet** (sağ uç) — oynayabilir miyim (girişin bedeli)
+///
+/// **Bilet Görevler başlığındaki sayaçla aynı** (16 Kas 2026, kullanıcı):
+/// kalınlık bantlı bilet ve "15/15" kesri, ortak [TicketBalance]. Sayı
+/// seri sayısıyla aynı boyda kalır.
 ///
 /// **Lig ve koruma 16 Kasım 2026'da kalktı** (kullanıcı kararı). Seri lig
 /// rozetinin yerine, bilet korumanın yerine geçti. Lig Ligler sekmesinde,
@@ -30,6 +35,7 @@ class HomeTopBar extends StatelessWidget {
     super.key,
     required this.scale,
     required this.tickets,
+    required this.maxTickets,
     required this.streakDays,
     required this.playedToday,
     this.onTicketsTap,
@@ -40,6 +46,9 @@ class HomeTopBar extends StatelessWidget {
   final double scale;
 
   final int tickets;
+
+  /// Bilet tavanı (`maxLives`); yüklenmediyse 0 ve kesir çizilmez.
+  final int maxTickets;
 
   /// Bilet simgesinin yeri: harcanan bilet buradan kalkar.
   final GlobalKey? ticketIconKey;
@@ -53,7 +62,8 @@ class HomeTopBar extends StatelessWidget {
   final bool playedToday;
   final VoidCallback? onStreakTap;
 
-  static const _value = Color(0xFFFFFFFF);
+  /// Şeritteki sayıların boyu: seri ve bilet aynı.
+  static const _numberSize = 38.0;
 
   @override
   Widget build(BuildContext context) {
@@ -61,22 +71,43 @@ class HomeTopBar extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _item(
-          icon: _flame(),
-          value: '$streakDays',
+        _tappable(
           onTap: onStreakTap,
-        ),
-        _item(
-          icon: KeyedSubtree(
-            key: ticketIconKey,
-            child: Image.asset(
-              'assets/icons/ticket.png',
-              width: 66 * scale,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 70 * scale,
+                height: 70 * scale,
+                child: Center(child: _flame()),
+              ),
+              SizedBox(width: 6 * scale),
+              Text(
+                '$streakDays',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontFamily: AppTypography.family,
+                  fontSize: _numberSize * scale,
+                  fontWeight: AppTypography.number,
+                  height: 1,
+                ),
+              ),
+            ],
           ),
-          value: '$tickets',
-          rollingCount: tickets,
+        ),
+        _tappable(
           onTap: onTicketsTap,
+          // Görevler'deki oranlar (bilet 84 : sayı 40) şeridin sayı boyuna
+          // göre: bilet 80.
+          child: TicketBalance(
+            scale: scale,
+            count: tickets,
+            max: maxTickets,
+            ticketWidth: 80,
+            numberSize: _numberSize,
+            iconKey: ticketIconKey,
+            rolling: true,
+          ),
         ),
       ],
     );
@@ -96,93 +127,12 @@ class HomeTopBar extends StatelessWidget {
     return flame;
   }
 
-  Widget _item({
-    required Widget icon,
-    required String value,
-    int? rollingCount,
-    VoidCallback? onTap,
-  }) {
-    final style = TextStyle(
-      color: _value,
-      fontFamily: AppTypography.family,
-      fontSize: 38 * scale,
-      fontWeight: AppTypography.number,
-      height: 1,
-    );
-    final content = Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: 70 * scale,
-          height: 70 * scale,
-          child: Center(child: icon),
-        ),
-        if (value.isNotEmpty) ...[
-          SizedBox(width: 6 * scale),
-          if (rollingCount != null)
-            _RollingCount(value: rollingCount, style: style)
-          else
-            Text(value, style: style),
-        ],
-      ],
-    );
-
-    if (onTap == null) return content;
+  Widget _tappable({required Widget child, VoidCallback? onTap}) {
+    if (onTap == null) return child;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: content,
-    );
-  }
-}
-
-/// Sayı değişince yenisine kayarak döner: azalırken düşer, artarken yükselir.
-/// Bedel yolda yazmadığı için bilet harcandığını bu söylüyor.
-class _RollingCount extends StatefulWidget {
-  const _RollingCount({required this.value, required this.style});
-
-  final int value;
-  final TextStyle style;
-
-  @override
-  State<_RollingCount> createState() => _RollingCountState();
-}
-
-class _RollingCountState extends State<_RollingCount> {
-  bool _falling = true;
-
-  @override
-  void didUpdateWidget(covariant _RollingCount oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.value != oldWidget.value) {
-      _falling = widget.value < oldWidget.value;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 240),
-      switchInCurve: Curves.easeOutCubic,
-      switchOutCurve: Curves.easeInCubic,
-      transitionBuilder: (child, animation) {
-        final incoming = child.key == ValueKey(widget.value);
-        return FadeTransition(
-          opacity: animation,
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: Offset(0, incoming == _falling ? -0.8 : 0.8),
-              end: Offset.zero,
-            ).animate(animation),
-            child: child,
-          ),
-        );
-      },
-      child: Text(
-        '${widget.value}',
-        key: ValueKey(widget.value),
-        style: widget.style,
-      ),
+      child: child,
     );
   }
 }

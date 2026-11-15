@@ -294,6 +294,10 @@ Future<void> _closeGame(WidgetTester tester) async {
   await _settle(tester);
 }
 
+/// Üst şeritteki bilet sayacının resimleri: kalınlık bandı ve yüz
+/// (`TicketBalance`).
+const _counterTickets = 2;
+
 void main() {
   setUpAll(loadPreviewFonts);
 
@@ -377,7 +381,7 @@ void main() {
     expect(home.cards.resets, 1);
     expect(
       find.image(const AssetImage('assets/icons/ticket.png')),
-      findsOneWidget,
+      findsNWidgets(_counterTickets),
     );
   });
 
@@ -429,18 +433,19 @@ void main() {
       (tester) async {
     final home = await _pump(tester);
     final tickets = find.image(const AssetImage('assets/icons/ticket.png'));
-    expect(tickets, findsOneWidget);
-    final counter = tester.getCenter(tickets);
+    expect(tickets, findsNWidgets(_counterTickets));
+    // Sayacın ikinci resmi biletin yüzü (ilki kalınlık bandı).
+    final counter = tester.getCenter(tickets.at(1));
 
     await tester.tap(_currentNode());
     await tester.pump();
     // Sayaç + sahnedeki bilet (kalınlık bandı ve yüz).
-    expect(tickets, findsNWidgets(3));
+    expect(tickets, findsNWidgets(_counterTickets + 2));
     expect((tester.getCenter(tickets.last) - counter).distance, lessThan(8));
 
     await tester.pump(const Duration(milliseconds: 600));
     // Yırtıldı: koçan ve gövde ayrı.
-    expect(tickets, findsNWidgets(5));
+    expect(tickets, findsNWidgets(_counterTickets + 4));
     expect(home.openedRoute, isNull);
 
     await _settle(tester);
@@ -468,7 +473,7 @@ void main() {
     await tester.pump();
     expect(
       find.image(const AssetImage('assets/icons/ticket.png')),
-      findsOneWidget,
+      findsNWidgets(_counterTickets),
     );
 
     await _settle(tester);
@@ -482,7 +487,7 @@ void main() {
     await tester.pump();
     expect(
       find.image(const AssetImage('assets/icons/ticket.png')),
-      findsOneWidget,
+      findsNWidgets(_counterTickets),
     );
   });
 
