@@ -65,6 +65,8 @@ flutter:
     - assets/scenes/gun_100.png
     - assets/scenes/ritmi_koru.png
     - assets/scenes/harika_gidiyorsun.png
+    - assets/scenes/gorev_hedefi.png
+    - assets/scenes/gorev_bitis.png
     - assets/scenes/hedefe_dogru.png
     - assets/scenes/beyni_esnet.png
     - assets/scenes/madalyani_kazan.png

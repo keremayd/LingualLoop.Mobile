@@ -616,8 +616,11 @@ class _QuestsTopBar extends StatelessWidget {
 /// Kuruluş seri penceresindeki sahneli kartla aynı: görsel sola doğru kendi
 /// alfasıyla kartın rengine söner, kart rengi sahneden **ölçülür** (§5
 /// "Güne/duruma özel seri kartları"). Turuncu keyfî değil, sahnenin rengi.
-/// Sahne şimdilik **yer tutucu** (kupa sahnesi); görevlere özel sahne
-/// üretilince `_scene`, [face] ve `_edge` birlikte değişir.
+///
+/// Sahne görevlere özel (15 Kas 2026, `docs/GOREVLER_SAHNE_PROMPT.md`):
+/// altın bandanalı maskot sola, kartın solundaki adımlara ve seri
+/// korumasına doğru koşuyor. Kart "Tüm görevleri bitir" diyor; vaat sonuç
+/// değil eylem (yerini aldığı kupa sahnesi sonucu anlatıyordu).
 class _GoalSceneCard extends StatelessWidget {
   const _GoalSceneCard({
     required this.scale,
@@ -633,12 +636,27 @@ class _GoalSceneCard extends StatelessWidget {
   final bool claimingFreeze;
   final VoidCallback onClaimFreeze;
 
-  /// Kart yüzü ve sağ ucu: kupa sahnesinden ölçüldü
-  /// (`streak_day_scenes.dart`, `harika_gidiyorsun`: %95'te kompozit
-  /// `F2822E`, sahnenin sol kenarı `FD8B36`).
-  static const face = Color(0xFFF2822E);
-  static const _edge = Color(0xFFFD8B36);
-  static const _scene = 'assets/scenes/harika_gidiyorsun.png';
+  /// Kart yüzü ve sağ ucu: sahneden ölçüldü (sol kenar `FC8B31`, sağ
+  /// kenarın ortası `FC7838`). Görsel sola doğru söndüğü için kartın sol
+  /// yarısı sahnenin kendi zemin tonunda; arada dikiş kalmıyor.
+  static const face = Color(0xFFFC8B31);
+  static const _edge = Color(0xFFFC7838);
+  static const _runScene = 'assets/scenes/gorev_hedefi.png';
+
+  /// Beş görev de bitince: maskot bitiş kapısından, şeridi koparıp çıkıyor.
+  /// Koşu sahnesiyle aynı dünya (zemin `FC8E2F`/`FD7A33`, ±3 ton): kart rengi
+  /// ve yerleşim değişmeden sahne değişir. Kapı görselin %53–97'sinde;
+  /// uzun alt yazı sol direğe dayandığı için bitmiş durumun yazısı kısa
+  /// ("Hepsini bitirdin!", "Seri koruması alındı").
+  static const _finishScene = 'assets/scenes/gorev_bitis.png';
+
+  /// Sahnenin kutusu: eni kart boyunun katı ve sağdan taşma (birim).
+  /// Ölçüldü: maskot görselin %54–96'sında (sol yumruk ile toz bulutları).
+  /// Kupa sahnesinin ölçüleriyle (1.78, 40) toz bulutları ve bandananın ucu
+  /// kartın sağ kenarında kırpılıyordu; %8 küçültüp sağa yaslayınca iki
+  /// yanda pay kalıyor, yumruk koruma karosuna değmiyor.
+  static const _sceneWidth = 1.633;
+  static const _sceneOverflow = 5.0;
 
   /// Kartın boyu (tasarım birimi).
   static const height = 300.0;
@@ -649,12 +667,17 @@ class _GoalSceneCard extends StatelessWidget {
 
   bool get _freezeShown => freezeBonus != null && freezeBonus!.total > 0;
 
+  bool get _allDone => quests.isNotEmpty && _done >= quests.length;
+
+  /// Koruma alınmayı bekliyor: alt yazının yerinde çağrı düğmesi durur.
+  bool get _freezeReady =>
+      _freezeShown && freezeBonus!.unlocked && !freezeBonus!.claimed;
+
   String _caption() {
     final head = '$_done/${quests.length} görev';
     final bonus = freezeBonus;
     if (bonus == null || !_freezeShown) return head;
-    if (bonus.claimed) return '$head · seri koruması alındı';
-    if (bonus.unlocked) return '$head · seri koruması hazır';
+    if (bonus.claimed) return 'Seri koruması alındı';
     return '$head · ödül: seri koruması';
   }
 
@@ -682,10 +705,10 @@ class _GoalSceneCard extends StatelessWidget {
             // Sahne sağda; sola doğru kendi alfasıyla söner (seri kartındaki
             // gibi üstüne kart renginde katman konmaz, sınırda çizgi kalır).
             Positioned(
-              right: -40 * s,
+              right: -_sceneOverflow * s,
               top: -6 * s,
               bottom: -6 * s,
-              width: h * 1.78,
+              width: h * _sceneWidth,
               child: ExcludeSemantics(
                 child: ShaderMask(
                   blendMode: BlendMode.dstIn,
@@ -693,10 +716,16 @@ class _GoalSceneCard extends StatelessWidget {
                     colors: [Colors.transparent, Colors.black],
                     stops: [0.0, 0.34],
                   ).createShader(rect),
-                  child: Image.asset(
-                    _scene,
-                    fit: BoxFit.cover,
-                    alignment: Alignment.centerRight,
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 400),
+                    child: Image.asset(
+                      _allDone ? _finishScene : _runScene,
+                      key: ValueKey(_allDone),
+                      fit: BoxFit.cover,
+                      alignment: Alignment.centerRight,
+                      width: double.infinity,
+                      height: double.infinity,
+                    ),
                   ),
                 ),
               ),
@@ -732,7 +761,7 @@ class _GoalSceneCard extends StatelessWidget {
                   ),
                   SizedBox(height: 8 * s),
                   Text(
-                    'Tüm görevleri bitir',
+                    _allDone ? 'Hepsini bitirdin!' : 'Tüm görevleri bitir',
                     maxLines: 1,
                     style: TextStyle(
                       color: Colors.white,
@@ -771,20 +800,81 @@ class _GoalSceneCard extends StatelessWidget {
                     ],
                   ),
                   SizedBox(height: 18 * s),
-                  Text(
-                    _caption(),
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.92),
-                      fontSize: 21 * s,
-                      fontWeight: AppTypography.label,
-                      fontFamily: AppTypography.family,
-                      height: 1.15,
+                  if (_freezeReady)
+                    _FreezeReadyChip(
+                      key: const ValueKey('claim-freeze-chip'),
+                      scale: s,
+                      enabled: !claimingFreeze,
+                      onPressed: onClaimFreeze,
+                    )
+                  else
+                    Text(
+                      _caption(),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.92),
+                        fontSize: 21 * s,
+                        fontWeight: AppTypography.label,
+                        fontFamily: AppTypography.family,
+                        height: 1.15,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "Seri koruması hazır": kartın tek eylem çağrısı. Beyaz alt yazı kartın
+/// geri kalanıyla aynı sesle konuşuyordu (kullanıcı: "farklı bir renk
+/// olsun, dikkat çeksin, haber versin"). Kap koruma karosunun açık
+/// malzemesi (`163258`/`0B2143`), yazı buzun rengi (`StreakFreezeFlake`
+/// yüzü `9BDCF4`): yazı ile yanındaki karo aynı nesneyi gösterir.
+/// Düğme olduğu için basılır; işi karoyla aynı: korumayı alır.
+class _FreezeReadyChip extends StatelessWidget {
+  const _FreezeReadyChip({
+    super.key,
+    required this.scale,
+    required this.enabled,
+    required this.onPressed,
+  });
+
+  final double scale;
+  final bool enabled;
+  final VoidCallback onPressed;
+
+  static const _ice = Color(0xFF9BDCF4);
+
+  @override
+  Widget build(BuildContext context) {
+    final s = scale;
+    return Semantics(
+      button: true,
+      label: 'Seri koruması hazır, al',
+      excludeSemantics: true,
+      child: DepthPressableButton(
+        width: 268 * s,
+        height: 50 * s,
+        radius: 15 * s,
+        shadowOffset: 7 * s,
+        backgroundColor: _QuestsScreenState._stubOpen,
+        shadowColor: _QuestsScreenState._cardBorderColor,
+        fontSize: 21 * s,
+        enabled: enabled,
+        onPressed: onPressed,
+        child: Text(
+          'Seri koruması hazır',
+          maxLines: 1,
+          style: TextStyle(
+            color: _ice,
+            fontSize: 21 * s,
+            fontWeight: AppTypography.number,
+            fontFamily: AppTypography.family,
+            height: 1,
+          ),
         ),
       ),
     );

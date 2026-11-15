@@ -169,6 +169,28 @@ void main() {
     expect(service.freezeClaims, 2);
   });
 
+  testWidgets('Bitince kart bitiş hâline geçer; hazır düğmesi korumayı alır',
+      (tester) async {
+    tester.view.physicalSize = const Size(430, 932);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final service = _FakeQuestService(_Stage.ready);
+    await tester.pumpWidget(_app(service));
+    await tester.pump(const Duration(milliseconds: 120));
+
+    expect(find.text('Hepsini bitirdin!'), findsOneWidget);
+    expect(find.text('Tüm görevleri bitir'), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('claim-freeze-chip')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(service.freezeClaims, 1);
+    expect(find.text('Seri koruması alındı.'), findsOneWidget);
+    // Alındıktan sonra düğme kalkar, yerinde sakin alt yazı.
+    expect(find.byKey(const ValueKey('claim-freeze-chip')), findsNothing);
+    expect(find.text('Seri koruması alındı'), findsOneWidget);
+  });
+
   testWidgets('Önizleme: sürüyor, hazır, alındı', (tester) async {
     const phone = Size(430, 932);
     const gap = 24.0;
