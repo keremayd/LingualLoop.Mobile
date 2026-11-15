@@ -14,10 +14,17 @@ class QuestIcon extends StatelessWidget {
     super.key,
     required this.questKey,
     required this.size,
+    this.muted = false,
   });
 
   final String questKey;
   final double size;
+
+  /// Sönük hâl: aynı katmanlar (bant, gövde, açık bölge, parlama), renk
+  /// uygulamanın sönük mavi-grisi. Üst şeritte bugün oynanmadıysa alev böyle
+  /// çizilir (16 Kas 2026, kullanıcı onayı): düz beyaz silüette iç dil ve
+  /// bant kayboluyor, alev olduğu anlaşılmıyordu.
+  final bool muted;
 
   /// Aynı işi farklı hedefle isteyen görevler aynı simgeyi taşır.
   static const _sharedIcons = {
@@ -31,7 +38,10 @@ class QuestIcon extends StatelessWidget {
     if (questKey == 'article_three') return ArticleLearnedIcon(size: size);
     return CustomPaint(
       size: Size.square(size),
-      painter: _QuestIconPainter(_sharedIcons[questKey] ?? questKey),
+      painter: _QuestIconPainter(
+        _sharedIcons[questKey] ?? questKey,
+        muted: muted,
+      ),
     );
   }
 }
@@ -45,7 +55,18 @@ class _IconPalette {
 }
 
 class _QuestIconPainter extends CustomPainter {
-  const _QuestIconPainter(this.questKey);
+  const _QuestIconPainter(this.questKey, {this.muted = false});
+
+  final bool muted;
+
+  /// Sönük palet: gövde `8FA0B5` (sönük metin; patikada henüz açılmamış
+  /// düğümün simgesi, "henüz değil"), açık bölge ve bant ondan alevin
+  /// oranlarıyla türetildi. Kilitli gri (§2.6) değil.
+  static const _mutedPalette = _IconPalette(
+    Color(0xFFBCC6D3),
+    Color(0xFF8FA0B5),
+    Color(0xFF5A6572),
+  );
 
   final String questKey;
 
@@ -78,7 +99,9 @@ class _QuestIconPainter extends CustomPainter {
     ),
   };
 
-  _IconPalette get _palette => _palettes[questKey] ?? _palettes['checkin']!;
+  _IconPalette get _palette => muted
+      ? _mutedPalette
+      : _palettes[questKey] ?? _palettes['checkin']!;
 
   /// Köşeleri yuvarlatmak için gövde hem doldurulur hem aynı renkle
   /// yuvarlak birleşimli konturlanır.
@@ -246,7 +269,7 @@ class _QuestIconPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _QuestIconPainter oldDelegate) =>
-      oldDelegate.questKey != questKey;
+      oldDelegate.questKey != questKey || oldDelegate.muted != muted;
 }
 
 /// Tamamlanan görev rozeti: görev ikonlarıyla aynı dilde çizilir —

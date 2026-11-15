@@ -57,8 +57,9 @@ class HomeTopBar extends StatelessWidget {
 
   final int streakDays;
 
-  /// Bugün oynanmadıysa alev rengini bırakır (seri kartındaki reçete:
-  /// beyaz siluet, %55) — "alev soluk = uyarı".
+  /// Bugün oynanmadıysa alev sönük mavi-gri çizilir — "alev soluk = uyarı".
+  /// Seri penceresindeki renkli sahne kartlarında beyaz silüet kalıyor; o
+  /// zeminlere göre ölçülmüştü.
   final bool playedToday;
   final VoidCallback? onStreakTap;
 
@@ -113,19 +114,14 @@ class HomeTopBar extends StatelessWidget {
     );
   }
 
-  Widget _flame() {
-    Widget flame = QuestIcon(questKey: 'streak_three', size: 60 * scale);
-    if (streakDays == 0 || !playedToday) {
-      flame = Opacity(
-        opacity: 0.55,
-        child: ColorFiltered(
-          colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-          child: flame,
-        ),
+  // Sönük alev aynı katmanlarla çizilir (16 Kas 2026, kullanıcı onayı):
+  // düz beyaz silüette iç dil ve bant kayboluyor, alev olduğu
+  // anlaşılmıyordu.
+  Widget _flame() => QuestIcon(
+        questKey: 'streak_three',
+        size: 60 * scale,
+        muted: streakDays == 0 || !playedToday,
       );
-    }
-    return flame;
-  }
 
   Widget _tappable({required Widget child, VoidCallback? onTap}) {
     if (onTap == null) return child;
