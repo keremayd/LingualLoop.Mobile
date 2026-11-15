@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:lingualloop/models/karty_path.dart';
 import 'package:lingualloop/ui/app_typography.dart';
 import 'package:lingualloop/ui/widgets/Buttons/app_button_style.dart';
@@ -42,6 +43,7 @@ class KartyPathScreen extends StatefulWidget {
     this.playArrival = false,
     this.onArrivalDone,
     this.arrivalPreview,
+    this.onDocked,
   });
 
   final KartyPathData data;
@@ -71,6 +73,10 @@ class KartyPathScreen extends StatefulWidget {
   final int? arrivalUnit;
   final bool playArrival;
   final VoidCallback? onArrivalDone;
+
+  /// Kaydırma bir ünitenin başlığını mıknatısla tepeye oturttu
+  /// ([_UnitDockPhysics]); ana ekran hafif titreşim verir.
+  final VoidCallback? onDocked;
 
   /// Önizleme: gelişi bu anda (0–1) dondurur ve kamerayı üniteye götürür.
   final double? arrivalPreview;
@@ -276,6 +282,45 @@ class _KartyPathScreenState extends State<KartyPathScreen>
   /// Yapışan başlığın kapladığı yükseklik.
   double get _pinnedHeight => (KartyUnitHeader.height + 18) * _scale;
 
+  /// Ünite başlıklarının tepeye oturduğu kaydırma konumları ([_UnitDockPhysics]).
+  /// İlk ünitenin yeri listenin başı: başlığı orada kendi payıyla durur.
+  ///
+  /// Başlık tepenin altındayken iki durumda oturur (iPhone 17):
+  /// · kartın %65'i (~85 pt) kadar yaklaşmışsa;
+  /// · önceki ünitenin kapısı yapışan kartın altına girmişse (`emptyFrom`),
+  ///   uzaklık ne olursa olsun. O hâlde ekranda önceki üniteden yalnız kartı
+  ///   ve boş yol kalır, iki kart alt alta durur: durulacak yer değil
+  ///   (kullanıcı: "iki ünite de alt alta gözüküyor ama bu saçma zaten").
+  ///   Kapının bir parçası bile görünüyorsa çekmez, kapıya bakılabilsin.
+  /// Tepeyi geçtiyse kartın %35'i (~46 pt) içinde geri çeker; daha ilerisi
+  /// "patikada devam".
+  ///
+  /// Dört turda bulundu (15 Kas 2026, kullanıcı): ~211 pt "çok uzaktan
+  /// çalışıyor"; ~33 pt "çok yakındayken çekiyor sadece"; ~85 pt iki kart alt
+  /// alta kalınca oturmadı ("şöyle bıraktığımda otomatik oturmuyor, asıl
+  /// istediğim burdu"). Uzak çekiş artık yalnız iki kartın alt alta kaldığı
+  /// boş aralıkta.
+  _UnitDocks _unitDocks() => (
+        units: [
+          for (var i = 0; i < _layout.headers.length; i++)
+            i == 0
+                ? (offset: 0.0, emptyFrom: null)
+                : (
+                    offset: _layout.headers[i].top * _scale,
+                    emptyFrom:
+                        (_layout.gates[i - 1].bottom - KartyUnitHeader.height) *
+                            _scale,
+                  ),
+        ],
+        near: KartyUnitHeader.height * 0.65 * _scale,
+        past: KartyUnitHeader.height * 0.35 * _scale,
+      );
+
+  /// Başlık mıknatısla yerine oturdu.
+  void _docked() {
+    if (mounted) widget.onDocked?.call();
+  }
+
   /// Sıradaki ünitenin başlığı üste yaklaşınca yapışan başlığı önünden iter:
   /// ikisi hiçbir kaydırma konumunda üst üste binmez.
   double _pinnedPush() {
@@ -389,8 +434,12 @@ class _KartyPathScreenState extends State<KartyPathScreen>
                     }
                     Widget scroll = SingleChildScrollView(
                       controller: _controller,
-                      physics: const AlwaysScrollableScrollPhysics(
-                        parent: BouncingScrollPhysics(),
+                      physics: _UnitDockPhysics(
+                        docks: _unitDocks,
+                        onSettled: _docked,
+                        parent: const AlwaysScrollableScrollPhysics(
+                          parent: BouncingScrollPhysics(),
+                        ),
                       ),
                       child: AnimatedBuilder(
                         animation: _arrival,
@@ -514,6 +563,130 @@ abstract final class _C {
 // ---------------------------------------------------------------------------
 // Patika
 // ---------------------------------------------------------------------------
+
+/// Bir ünitenin oturma konumu ve önceki ünitenin kapısının yapışan kartın
+/// altına girdiği kaydırma konumu (ilk ünitede yok).
+typedef _UnitDock = ({double offset, double? emptyFrom});
+
+typedef _UnitDocks = ({List<_UnitDock> units, double near, double past});
+
+/// Ünite başlıklarında görünmeyen bir çukur (kullanıcı, 15 Kas 2026: "ünite
+/// 2'ye geldim, kartı tepeye mıknatıs hissiyatıyla yapışmalı; devam edersem
+/// ayrılacak ama geçerken oraya oturmuş hissi olmalı"). Kaydırma bir başlığın
+/// oturduğu yerin hemen yakınında duracaksa — yavaş bırakılınca ya da
+/// savrulma orada bitecekse — liste yayla oraya çekilir; kısa kalan çekilir,
+/// aşan geri döner. Daha uzağa giden kaydırma çukurun üstünden geçer. Yay
+/// bitince [onSettled] (hafif titreşim).
+///
+/// Çukurun genişliği ve neden o kadar: [_KartyPathScreenState._unitDocks].
+///
+/// Yalnız kullanıcının kaydırmasında çalışır. Kameranın `jumpTo`/`animateTo`'su
+/// da sonunda fiziğe sorar; o anda kullanıcı yönü `idle` olduğu için kamera
+/// bıraktığı yerde kalır (açılışta şu anki düğüm ortalanır, gelişte ünite
+/// kendi yerine oturur).
+class _UnitDockPhysics extends ScrollPhysics {
+  const _UnitDockPhysics({
+    required this.docks,
+    required this.onSettled,
+    super.parent,
+  });
+
+  /// Oturma konumları ve çukurun genişliği (piksel): `near` başlık tepenin
+  /// altındayken, `past` tepeyi geçince; `emptyFrom`'dan sonrası (iki kart alt
+  /// alta) her zaman oturur. Her soruşta güncel düzenden okunur (aynı türden
+  /// fizik değişince Scrollable eskisini tutar).
+  final _UnitDocks Function() docks;
+
+  /// Başlık yerine oturdu (yay bitti); kullanıcı yayı keserse çağrılmaz.
+  final VoidCallback onSettled;
+
+  /// Oturma: aşmadan, yumuşak.
+  static final _settle = SpringDescription.withDampingRatio(
+    mass: 0.5,
+    stiffness: 140,
+    ratio: 1,
+  );
+
+  @override
+  _UnitDockPhysics applyTo(ScrollPhysics? ancestor) => _UnitDockPhysics(
+        docks: docks,
+        onSettled: onSettled,
+        parent: buildParent(ancestor),
+      );
+
+  @override
+  Simulation? createBallisticSimulation(
+    ScrollMetrics position,
+    double velocity,
+  ) {
+    final natural = super.createBallisticSimulation(position, velocity);
+    if (position.outOfRange ||
+        position is! ScrollPosition ||
+        position.userScrollDirection == ScrollDirection.idle) {
+      return natural;
+    }
+    // Kaydırmanın kendiliğinden duracağı yer.
+    final end = natural?.x(10) ?? position.pixels;
+    final (:units, :near, :past) = docks();
+    double? target;
+    for (final unit in units) {
+      final dock = unit.offset
+          .clamp(position.minScrollExtent, position.maxScrollExtent)
+          .toDouble();
+      // Eksi: başlık tepenin altında kalacak; artı: tepeyi geçecek.
+      final gap = end - dock;
+      final emptyFrom = unit.emptyFrom;
+      final inside = gap >= 0
+          ? gap <= past
+          : -gap <= near || (emptyFrom != null && end >= emptyFrom);
+      if (inside && (target == null || gap.abs() < (target - end).abs())) {
+        target = dock;
+      }
+    }
+    if (target == null) return natural;
+    final tolerance = toleranceFor(position);
+    if ((target - position.pixels).abs() < tolerance.distance &&
+        velocity.abs() < tolerance.velocity) {
+      return null;
+    }
+    return _SettleSimulation(
+      ScrollSpringSimulation(
+        _settle,
+        position.pixels,
+        target,
+        velocity,
+        tolerance: tolerance,
+      ),
+      onSettled,
+    );
+  }
+}
+
+/// Oturma yayı bittiğinde bir kez haber verir.
+class _SettleSimulation extends Simulation {
+  _SettleSimulation(this._spring, this._onSettled)
+      : super(tolerance: _spring.tolerance);
+
+  final Simulation _spring;
+  final VoidCallback _onSettled;
+  bool _settled = false;
+
+  @override
+  double x(double time) => _spring.x(time);
+
+  @override
+  double dx(double time) => _spring.dx(time);
+
+  @override
+  bool isDone(double time) {
+    final done = _spring.isDone(time);
+    if (done && !_settled) {
+      _settled = true;
+      _onSettled();
+    }
+    return done;
+  }
+}
 
 /// Patikanın kaydırılan gövdesi: taş izler, düğümler, kapılar ve sonraki
 /// ünitelerin başlıkları. Patikada kart görseli ve maskot yok (kullanıcı

@@ -14,6 +14,7 @@ import 'package:lingualloop/providers/QuestsProvider.dart';
 import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
 import 'package:lingualloop/services/KartyService.dart';
 import 'package:lingualloop/services/DailyReminders.dart';
+import 'package:lingualloop/services/GameFeedbackService.dart';
 import 'package:lingualloop/services/UserService.dart';
 import 'package:lingualloop/ui/app_typography.dart';
 import 'package:lingualloop/ui/flows/league_promotion_flow.dart';
@@ -528,6 +529,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       arrivalUnit: _arrivalUnit ?? (pending != _shownUnlock ? pending : null),
       playArrival: _playArrival,
       onArrivalDone: _arrivalDone,
+      onDocked: () => context.read<GameFeedbackService>().docked(),
     );
     if (!kDebugMode) return screen;
     return Stack(

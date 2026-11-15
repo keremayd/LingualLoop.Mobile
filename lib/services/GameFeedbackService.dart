@@ -119,6 +119,9 @@ class GameFeedbackService {
     unawaited(_play(_GameSound.complete));
   }
 
+  /// Patikada ünite başlığı mıknatısla yerine oturdu: hafif titreşim, ses yok.
+  void docked() => _vibrate(HapticFeedback.lightImpact);
+
   Future<void> dispose() async {
     vibrationEnabled.dispose();
     final players = await Future.wait(_players.values);

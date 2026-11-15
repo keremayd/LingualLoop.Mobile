@@ -98,6 +98,23 @@ void main() {
     expect(haptics, ['HapticFeedbackType.lightImpact']);
   });
 
+  test('ünite başlığı oturunca hafif titreşir, ses çalmaz', () async {
+    service(muted: false).docked();
+    await settle();
+
+    expect(log, isEmpty);
+    expect(haptics, ['HapticFeedbackType.lightImpact']);
+  });
+
+  test('titreşim kapalıyken başlık oturunca titreşmez', () async {
+    final feedback = service(muted: false);
+    await feedback.setVibrationEnabled(false);
+    feedback.docked();
+    await settle();
+
+    expect(haptics, isEmpty);
+  });
+
   test('aynı ses ikinci kez yüklenmez', () async {
     final feedback = service(muted: false);
 

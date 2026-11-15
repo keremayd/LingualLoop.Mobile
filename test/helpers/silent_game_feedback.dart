@@ -14,4 +14,7 @@ class SilentGameFeedback extends Fake implements GameFeedbackService {
 
   @override
   void complete() {}
+
+  @override
+  void docked() {}
 }
