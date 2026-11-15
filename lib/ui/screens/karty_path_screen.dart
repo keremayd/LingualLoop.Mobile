@@ -2068,6 +2068,7 @@ class _NodeTile extends StatelessWidget {
     required this.label,
     required this.onTap,
     required this.child,
+    this.glossSpot = true,
   });
 
   final double width;
@@ -2099,7 +2100,10 @@ class _NodeTile extends StatelessWidget {
             children: [
               Positioned.fill(
                 child: CustomPaint(
-                  painter: FaceGlossPainter(radius: geo.radius * s),
+                  painter: FaceGlossPainter(
+                    radius: geo.radius * s,
+                    spot: glossSpot,
+                  ),
                 ),
               ),
               child,
@@ -2120,6 +2124,9 @@ class _ToneIcon extends StatelessWidget {
 
   final _IconTone tone;
   final Widget child;
+
+  /// Sol üstteki çizgi parlaması; yan duraklarda kapalı.
+  final bool glossSpot;
 
   @override
   Widget build(BuildContext context) {
@@ -2191,7 +2198,8 @@ class _DueBadge extends StatelessWidget {
 
 /// Yan durağın karosu: düğümlerle aynı derinlikli karo, içinde durağın
 /// simgesi. Açık durak sıradaki desteler gibi lacivert ama simgesi renkli;
-/// kapalı durak koyu ve simgesi sönük.
+/// kapalı durak koyu ve simgesi sönük. Düğümlerden farkı: sol üstteki çizgi
+/// parlaması yok (16 Kas 2026, kullanıcı).
 class _StationTile extends StatelessWidget {
   const _StationTile({
     required this.station,
@@ -2216,6 +2224,7 @@ class _StationTile extends StatelessWidget {
       depth: open ? _C.panel : _C.base,
       label: open ? label : '$label, ${station.detail}',
       onTap: station.onTap ?? () {},
+      glossSpot: false,
       child:
           _ToneIcon(tone: open ? _IconTone.lit : _IconTone.locked, child: icon),
     );

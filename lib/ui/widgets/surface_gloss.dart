@@ -13,10 +13,18 @@ import 'package:flutter/material.dart';
 /// Ölçü karonun genişliğinden gelir. Büyük karoda parlama düğümünkinden
 /// iri durmasın diye [unitWidth] ile sınırlanabilir.
 class FaceGlossPainter extends CustomPainter {
-  const FaceGlossPainter({required this.radius, this.unitWidth});
+  const FaceGlossPainter({
+    required this.radius,
+    this.unitWidth,
+    this.spot = true,
+  });
 
   final double radius;
   final double? unitWidth;
+
+  /// Sol üstteki çizgi biçimli parlama. Patikanın yan duraklarında yok
+  /// (16 Kas 2026, kullanıcı); üst kenarın cam parlaması her karoda kalır.
+  final bool spot;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -42,6 +50,7 @@ class FaceGlossPainter extends CustomPainter {
         ),
     );
     canvas.restore();
+    if (!spot) return;
     final u = width / 100;
     canvas.save();
     canvas.translate(22 * u, 19 * u);
@@ -58,7 +67,9 @@ class FaceGlossPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant FaceGlossPainter oldDelegate) =>
-      oldDelegate.radius != radius || oldDelegate.unitWidth != unitWidth;
+      oldDelegate.radius != radius ||
+      oldDelegate.unitWidth != unitWidth ||
+      oldDelegate.spot != spot;
 }
 
 /// Kartın **üst** kenarındaki cam parlaması.
