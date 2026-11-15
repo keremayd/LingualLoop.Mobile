@@ -8,17 +8,13 @@ Widget previewPathHeader(
   double scale, {
   int streak = 4,
   bool playedToday = true,
-  int rank = 2,
   int tickets = 12,
 }) =>
     HomeTopBar(
       scale: scale,
-      leagueKey: 'mars',
-      leagueRank: rank,
       streakDays: streak,
       playedToday: playedToday,
       tickets: tickets,
-      freezeCount: 1,
     );
 
 KartyPathStation previewArticleStation({

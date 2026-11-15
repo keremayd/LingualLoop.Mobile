@@ -1,30 +1,22 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lingualloop/ui/widgets/home_top_bar.dart';
 
-/// Ana ekranın üst şeridi: lig · seri · bilet · koruma.
+import 'helpers/preview_fonts.dart';
+
+/// Ana ekranın üst şeridi: solda seri, sağda bilet (16 Kas 2026'dan beri;
+/// lig ve koruma şeritten kalktı).
 ///
 ///   flutter test --update-goldens test/home_top_bar_preview_test.dart
 void main() {
-  setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized();
-    final loader = FontLoader('Inter');
-    final bytes = File(
-      '/Users/kerem.aydin/Desktop/Repos/Lingualloop/LingualLoop.Mobile'
-      '/assets/fonts/Inter-SemiBold.ttf',
-    ).readAsBytesSync();
-    loader.addFont(Future.value(ByteData.view(bytes.buffer)));
-    await loader.load();
-  });
+  setUpAll(loadPreviewFonts);
 
   testWidgets('ust serit', (tester) async {
     const size = Size(750, 300);
     await tester.binding.setSurfaceSize(size);
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
 
     await tester.pumpWidget(
       const MaterialApp(
@@ -39,23 +31,17 @@ void main() {
                 children: [
                   HomeTopBar(
                     scale: 1,
-                    leagueKey: 'kosmoz',
-                    leagueRank: 1,
                     streakDays: 4,
                     playedToday: true,
                     tickets: 15,
-                    freezeCount: 2,
                   ),
                   SizedBox(height: 40),
-                  // Sıralama verisi yoksa rozet sayısız çizilir.
+                  // Bugün oynanmadı: alev beyaz siluet, %55.
                   HomeTopBar(
                     scale: 1,
-                    leagueKey: 'supernova',
-                    leagueRank: null,
                     streakDays: 0,
                     playedToday: false,
                     tickets: 8,
-                    freezeCount: 0,
                   ),
                 ],
               ),
@@ -64,9 +50,7 @@ void main() {
         ),
       ),
     );
-    // PNG ikonlar ilk frame'de henüz decode edilmemiş olabilir; golden
-    // yalnızca sayıları değil gerçek topbarı doğrulamalı.
-    await tester.pumpAndSettle();
+    await precachePreviewImages(tester);
 
     await expectLater(
       find.byType(Column).first,
@@ -75,20 +59,13 @@ void main() {
   });
 
   testWidgets('ust serit - gercek cihaz genisligi', (tester) async {
-    // **Bu test 430 pikselde çiziyor ve bu tesadüf değil.** Üstteki önizleme
-    // 750 piksellik tuval kuruyor, yani tasarım birimi = piksel. Boyuta göre
-    // davranış değiştiren bir çizim (örn. `StreakFreezeFlake`, 46 px altında
-    // sadeleşiyor) orada **gerçek cihazdaki hâlini göstermiyor**: 70 birimlik
-    // ikon 750'lik tuvalde 70 px, 430'luk cihazda 40 px.
-    //
-    // Buz ikonu tam bu yüzden golden'da doğru, cihazda okunmaz çıktı.
-    // §4.4'teki "golden tek kareye bakar" uyarısının kardeşi: **golden farklı
-    // boyutta da çizebilir.**
+    // 430 pikselde ve 3x yoğunlukta çizer: üstteki önizlemede tasarım birimi
+    // = piksel olduğu için boyuta göre sadeleşen çizimler orada cihazdaki
+    // hâliyle görünmez. (Koruma ikonu bu yüzden golden'da doğru, cihazda
+    // okunmaz çıkmıştı; ikon 16 Kas 2026'da şeritten kalktı.)
     const size = Size(430, 200);
     await tester.binding.setSurfaceSize(size);
     tester.view.physicalSize = const Size(1290, 600);
-    // Cihazın gerçek yoğunluğu: 3x. 1x çizilseydi ikonun bu boyutta
-    // okunup okunmadığı görülemezdi.
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.reset);
 
@@ -102,19 +79,16 @@ void main() {
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: HomeTopBar(
                 scale: 430 / 750,
-                leagueKey: 'yildiz',
-                leagueRank: 1,
                 streakDays: 4,
                 playedToday: true,
                 tickets: 15,
-                freezeCount: 2,
               ),
             ),
           ),
         ),
       ),
     );
-    await tester.pump(const Duration(milliseconds: 120));
+    await precachePreviewImages(tester);
 
     await expectLater(
       find.byType(HomeTopBar),

@@ -1,21 +1,21 @@
 import 'package:lingualloop/ui/app_typography.dart';
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/league_badge_mark.dart';
 import 'package:lingualloop/ui/widgets/quest_icons.dart';
-import 'package:lingualloop/ui/widgets/streak_freeze_flake.dart';
 
 /// Ana ekranın üst şeridi.
 ///
 /// Duolingo'nun üst şeridi gibi: kart yok, selamlama yok, avatar yok — sayfa
-/// zemininde yan yana duran **ikon + sayı** çiftleri. Selamlama ve profil
-/// fotoğrafı yer kaplıyordu ama hiçbir karar verdirmiyordu; üst şerit
-/// "şimdi ne yapabilirim" sorusunun cevabı olmalı.
+/// zemininde duran **ikon + sayı** çiftleri. Selamlama ve profil fotoğrafı
+/// yer kaplıyordu ama hiçbir karar verdirmiyordu; üst şerit "şimdi ne
+/// yapabilirim" sorusunun cevabı olmalı.
 ///
 /// Gösterilenler, her biri bir soruya cevap veriyor:
-///   * **Lig** — sıralamada neredeyim (rekabet)
-///   * **Seri** — kaç gündür aralıksız ve bugünü kurtardım mı
-///   * **Bilet** — oynayabilir miyim (girişin bedeli)
-///   * **Koruma** — seri kırılırsa elimde ne var
+///   * **Seri** (sol uç) — kaç gündür aralıksız ve bugünü kurtardım mı
+///   * **Bilet** (sağ uç) — oynayabilir miyim (girişin bedeli)
+///
+/// **Lig ve koruma 16 Kasım 2026'da kalktı** (kullanıcı kararı). Seri lig
+/// rozetinin yerine, bilet korumanın yerine geçti. Lig Ligler sekmesinde,
+/// koruma sayısı profilde görünüyor.
 ///
 /// **Seviye 4 Kasım 2026'da kalktı.** Zorluk puanından türüyordu; puan
 /// emekli olunca (içerik artık Karty Yolu'nda ünitelerle açılıyor) seviye
@@ -29,10 +29,7 @@ class HomeTopBar extends StatelessWidget {
   const HomeTopBar({
     super.key,
     required this.scale,
-    required this.leagueKey,
-    required this.leagueRank,
     required this.tickets,
-    required this.freezeCount,
     required this.streakDays,
     required this.playedToday,
     this.onTicketsTap,
@@ -42,14 +39,7 @@ class HomeTopBar extends StatelessWidget {
 
   final double scale;
 
-  /// Rozetin hangi ligi çizeceği; bilinmezse varsayılan lig kullanılır.
-  final String leagueKey;
-
-  /// Lig içindeki sıra. Veri yoksa rozet sayısız çizilir.
-  final int? leagueRank;
-
   final int tickets;
-  final int freezeCount;
 
   /// Bilet simgesinin yeri: harcanan bilet buradan kalkar.
   final GlobalKey? ticketIconKey;
@@ -67,17 +57,10 @@ class HomeTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final freezeIconSize = 70 * scale;
-
+    // İki uçta: seri eski lig rozetinin, bilet eski korumanın yerinde.
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _item(
-          icon: LeagueBadgeMark(leagueKey: leagueKey, size: 62 * scale),
-          // Nokta bilinçli: "3" bir adet değil, **sıra** demek. Diğer
-          // sayılarla (4 gün, 15 bilet) karışmasın.
-          value: leagueRank == null ? '' : '$leagueRank.',
-        ),
         _item(
           icon: _flame(),
           value: '$streakDays',
@@ -94,21 +77,6 @@ class HomeTopBar extends StatelessWidget {
           value: '$tickets',
           rollingCount: tickets,
           onTap: onTicketsTap,
-        ),
-        _item(
-          // Koruma, genel bir kalkan değil: seri alevinin buzun içinde
-          // güvenle beklemesi.
-          //
-          // Bir dönem `ice-cube.png` kullanılıyordu. Painter'a geçilmesinin
-          // asıl kazancı netlik değil: çizim kaç piksele basılacağını
-          // biliyor, bu boyutta ayrıntıları atlayıp kontrastı yükseltiyor.
-          // PNG küçültülürken aynı ayrıntıları griye çevirip kirletiyordu.
-          //
-          // Profildeki koruma hapı da **aynı** widget'ı kullanıyor; ikisi de
-          // "kaç korumam var" sorusunu cevaplıyor, iki ayrı çizim olmasının
-          // gerekçesi yok.
-          icon: StreakFreezeFlake(size: freezeIconSize),
-          value: '$freezeCount',
         ),
       ],
     );

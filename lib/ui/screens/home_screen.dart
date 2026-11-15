@@ -467,12 +467,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           final data = provider.scoreWithLives;
           return HomeTopBar(
             scale: scale,
-            leagueKey: data?.league?.leagueKey ?? 'kuyruklu',
-            leagueRank: data?.league?.leaderboardRank,
             streakDays: data?.streak ?? 0,
             playedToday: data?.playedToday ?? false,
             tickets: data?.lives ?? 0,
-            freezeCount: data?.freezeCount ?? 0,
             onStreakTap: () => unawaited(showStreakSheet(context)),
             onTicketsTap: () => unawaited(showTicketStatus(
               context,
@@ -654,7 +651,7 @@ class _HomePlaceholder extends StatelessWidget {
   }
 }
 
-/// Soğuk açılışta ana ekranın kendisi, içi boş: üst şeridin dört sayacı,
+/// Soğuk açılışta ana ekranın kendisi, içi boş: üst şeridin iki sayacı,
 /// ünite kartı ve patikanın ilk düğümleri ([KartyPathScreen] yerleşimiyle).
 class _HomeSkeleton extends StatelessWidget {
   const _HomeSkeleton({required this.scale});
@@ -700,7 +697,7 @@ class _HomeSkeleton extends StatelessWidget {
               padding: EdgeInsets.fromLTRB(40 * s, 18 * s, 40 * s, 12 * s),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [counter(), counter(), counter(), counter()],
+                children: [counter(), counter()],
               ),
             ),
             Expanded(

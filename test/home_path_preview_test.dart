@@ -122,7 +122,6 @@ void main() {
     required KartyPathStations stations,
     required int streak,
     required bool playedToday,
-    required int rank,
     required int tickets,
     Widget? overlay,
   }) =>
@@ -153,7 +152,6 @@ void main() {
                           scale,
                           streak: streak,
                           playedToday: playedToday,
-                          rank: rank,
                           tickets: tickets,
                         ),
                       ),
@@ -288,7 +286,6 @@ void main() {
               firstDay,
               streak: 0,
               playedToday: false,
-              rank: 4,
               tickets: 15,
               stations: KartyPathStations(
                 article: previewArticleStation(detail: '2 kelime öğren'),
@@ -303,7 +300,6 @@ void main() {
               midUnit,
               streak: 4,
               playedToday: true,
-              rank: 2,
               tickets: 12,
               stations: KartyPathStations(
                 article: previewArticleStation(
@@ -321,7 +317,6 @@ void main() {
               unitEnd,
               streak: 2,
               playedToday: false,
-              rank: 1,
               tickets: 9,
               stations: KartyPathStations(
                 article: previewArticleStation(
@@ -339,7 +334,6 @@ void main() {
               unitEnd,
               streak: 2,
               playedToday: false,
-              rank: 1,
               tickets: 9,
               stations: KartyPathStations(
                 article: previewArticleStation(
