@@ -1187,6 +1187,23 @@ class _PathLayout {
   /// Kapının (pekiştirme halkası) altından sonraki ünitenin başlığına yol.
   static const gateTail = 150.0;
   static const nodeClearance = 84.0;
+
+  /// Halkasız şu anki düğüm (yalnız tekrar adımı): yol öbür düğümlerdeki
+  /// gibi yüzüne 24 birim kala biter, aşağıda etiketin 24 birim altından
+  /// başlar. Halkanın payları (140 / [_captionClearance]) burada boş kalıp
+  /// yolu uzakta bitiriyordu (kullanıcı, 15 Kas 2026: "tekrar bloğunun
+  /// üstündeki ve altındaki patikalar neden bu kadar uzakta bitiyor?").
+  static double get _ringlessAbove =>
+      _NodeGeometry(currentWidth).faceHeight / 2 + 24;
+
+  static double get _ringlessBelow {
+    final geo = _NodeGeometry(currentWidth);
+    // Etiketin üstü `_KartyPathBody`'deki `captionTop` (halkasız); boyu
+    // [_CenteredLabel]: başlık 28 × 1.1, ara 6, ayrıntı 22 × 1.25.
+    const caption = 28 * 1.1 + 6 + 22 * 1.25;
+    return geo.total - geo.faceHeight / 2 + 14 + caption + 24;
+  }
+
   static const _currentRoom = 120.0;
   static const _pattern = [-15.0, 140.0, 15.0, -125.0, -45.0, 110.0, 20.0];
 
@@ -1364,10 +1381,20 @@ class _PathLayout {
         ));
       }
       // Şu anki düğümün çevresinde kelime halkası var; taşlar ona girmez.
-      // Etiketi altında: aşağı inen iz etiketten sonra başlar.
-      double clearance(int i) => i == currentIndex ? 140 : nodeClearance;
-      double clearanceBelow(int i) =>
-          i == currentIndex ? _captionClearance : nodeClearance;
+      // Etiketi altında: aşağı inen iz etiketten sonra başlar. Halkasız adım
+      // (yalnız tekrar) kendi payını kullanır ([_ringlessAbove]).
+      final ringless =
+          currentIndex >= 0 && unit.steps[currentIndex].newGoal <= 0;
+      double clearance(int i) => i != currentIndex
+          ? nodeClearance
+          : ringless
+              ? _ringlessAbove
+              : 140;
+      double clearanceBelow(int i) => i != currentIndex
+          ? nodeClearance
+          : ringless
+              ? _ringlessBelow
+              : _captionClearance;
       for (var i = 0; i + 1 < points.length; i++) {
         segments.add(_TrailSegment(
           points[i],
