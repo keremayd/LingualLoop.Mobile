@@ -1100,11 +1100,16 @@ class _TrailSegment {
     this.trimEnd = _PathLayout.nodeClearance,
     this.anchorStart = false,
     this.anchorEnd = false,
+    this.hideAbove,
   });
 
   final Offset from;
   final Offset to;
   final _TrailStyle style;
+
+  /// Bu yükseklikten (tasarım birimi) yukarıdaki taşlar çizilmez: ilk
+  /// ünitenin görünmeyen kapıdan gelen yolu kartın üstünde görünmesin.
+  final double? hideAbove;
 
   /// Taşların ait olduğu ünitenin sırası; girişteki taşlar (önceki
   /// kapıdan ilk düğüme) da bu ünitenin.
@@ -1140,6 +1145,9 @@ class _PathLayout {
   final double height;
 
   static const centerX = 375.0;
+
+  /// Kapının (pekiştirme halkası) yatay konumu; her ünitede aynı.
+  static const gateX = centerX - 60;
   static const nodeWidth = 132.0;
   static const currentWidth = 150.0;
   static const gateWidth = 150.0;
@@ -1344,7 +1352,7 @@ class _PathLayout {
 
       final offset = ringOffsetFor(unit.wordCount);
       final gateCenter = Offset(
-        centerX - 60,
+        gateX,
         y +
             196 +
             extra +
@@ -1356,8 +1364,6 @@ class _PathLayout {
       final ringTop = Offset(gateCenter.dx, gate.top);
       final ringBottom = Offset(gateCenter.dx, gate.bottom);
 
-      // Önceki ünitenin halkasından bu ünitenin ilk düğümüne; başlığın
-      // arkasından geçer.
       // Taşın rengi vardığı adımdan: geçilmiş yol (tamamlanan ya da şu anki
       // düğümüne varan) yeşil. Bir tur ünitenin durumuna bağlanmıştı; eski
       // dönemde öğrenilmiş, açık ama güncel olmayan ünitenin yeşil düğümleri
@@ -1370,16 +1376,6 @@ class _PathLayout {
             : _TrailStyle.ahead;
       }
 
-      if (previousExit != null && points.isNotEmpty) {
-        segments.add(_TrailSegment(
-          previousExit,
-          points.first,
-          styleTo(0),
-          unit: unit.number,
-          trimStart: 26,
-          anchorStart: true,
-        ));
-      }
       // Şu anki düğümün çevresinde kelime halkası var; taşlar ona girmez.
       // Etiketi altında: aşağı inen iz etiketten sonra başlar. Halkasız adım
       // (yalnız tekrar) kendi payını kullanır ([_ringlessAbove]).
@@ -1395,6 +1391,30 @@ class _PathLayout {
           : ringless
               ? _ringlessBelow
               : _captionClearance;
+
+      // Önceki ünitenin halkasından bu ünitenin ilk düğümüne; başlığın
+      // arkasından geçer, kartın altından çıkar. İlk ünitenin önünde kapı
+      // yok: yol aynı yerden, başlığın [gateTail] kadar üstündeki görünmeyen
+      // bir kapıdan gelir ve kartın üstüne düşen taşları çizilmez. Böylece
+      // kart ile ilk deste arasındaki yol her ünitede taşı taşına aynı
+      // (kullanıcı, 16 Kas 2026: "100 tane de ünite olabilir, hepsinin aynı
+      // şekilde ilerlemeli patikaları").
+      if (points.isNotEmpty) {
+        final header = headers.last;
+        segments.add(_TrailSegment(
+          previousExit ?? Offset(gateX, header.top - gateTail),
+          points.first,
+          styleTo(0),
+          unit: unit.number,
+          trimStart: 26,
+          trimEnd: clearance(0),
+          anchorStart: true,
+          // Taşın yarısı kartın tepesinden taşmasın: bir taş boyu aşağısı.
+          hideAbove: previousExit == null
+              ? header.top + _PathPainter._stoneLength
+              : null,
+        ));
+      }
       for (var i = 0; i + 1 < points.length; i++) {
         segments.add(_TrailSegment(
           points[i],
@@ -1593,6 +1613,8 @@ class _PathPainter extends CustomPainter {
       for (final metric in path.computeMetrics()) {
         for (final (center, angle) in _stonesAlong(metric, segment)) {
           final y = center.dy / s;
+          final hidden = segment.hideAbove;
+          if (hidden != null && y < hidden) continue;
           final lit = a == null || segment.unit != a.unit || a.reached(y);
           stones.add((
             RRect.fromRectAndRadius(
@@ -2079,6 +2101,9 @@ class _NodeTile extends StatelessWidget {
   final VoidCallback onTap;
   final Widget child;
 
+  /// Sol üstteki çizgi parlaması; yan duraklarda kapalı.
+  final bool glossSpot;
+
   @override
   Widget build(BuildContext context) {
     final geo = _NodeGeometry(width);
@@ -2124,9 +2149,6 @@ class _ToneIcon extends StatelessWidget {
 
   final _IconTone tone;
   final Widget child;
-
-  /// Sol üstteki çizgi parlaması; yan duraklarda kapalı.
-  final bool glossSpot;
 
   @override
   Widget build(BuildContext context) {
