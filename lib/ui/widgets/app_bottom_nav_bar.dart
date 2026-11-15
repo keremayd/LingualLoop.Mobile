@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:lingualloop/ui/widgets/Buttons/app_button_style.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
@@ -30,6 +32,14 @@ class AppBottomNavBar extends StatelessWidget {
     final horizontalRadius = 60 * scale;
     final verticalRadius = 39 * scale;
     final strokeWidth = 8 * scale;
+    // Alt boşluk, alt güvenli alanın (iPhone'da 34 pt) 20 pt eksiği: 14 pt.
+    // Karonun altı böylece ana ekran çizgisinin (alttan 8–13 pt) ve ekranın
+    // yuvarlak köşesinin üstünde kalır. Sabit 12 birimde (6 pt) seçili
+    // karo köşede kesiliyordu ("alt menü çok aşağı sıkışmış gibi"); alanın
+    // tamamı (34 pt) ise menüyü 28 pt uzatıp kocaman yaptı (ikisi de
+    // kullanıcı, 16 Kas 2026). Güvenli alanı olmayan cihazda 12 birim.
+    final bottom =
+        math.max(12 * scale, MediaQuery.paddingOf(context).bottom - 20);
 
     return ClipRRect(
       borderRadius: BorderRadius.only(
@@ -46,12 +56,8 @@ class AppBottomNavBar extends StatelessWidget {
         child: ColoredBox(
           color: _backgroundColor,
           child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              18 * scale,
-              16 * scale,
-              18 * scale,
-              12 * scale,
-            ),
+            padding:
+                EdgeInsets.fromLTRB(18 * scale, 16 * scale, 18 * scale, bottom),
             child: Row(
               children: [
                 _item((size) => NavMark(kind: NavMarkKind.home, size: size), 0,
