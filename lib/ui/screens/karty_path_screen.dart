@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart';
 import 'package:lingualloop/models/karty_path.dart';
 import 'package:lingualloop/ui/app_typography.dart';
 import 'package:lingualloop/ui/widgets/Buttons/app_button_style.dart';
+import 'package:lingualloop/ui/widgets/Buttons/app_icon_control_button.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:lingualloop/ui/widgets/karty_control_glyphs.dart';
 import 'package:lingualloop/ui/widgets/hop_motion.dart';
@@ -152,10 +153,17 @@ class _KartyPathScreenState extends State<KartyPathScreen>
   bool _arriving = false;
   bool _previewPlaced = false;
 
+  /// Şu anki deste ekranda mı: 0 görünüyor, -1 yukarıda kaldı, 1 aşağıda
+  /// kaldı ([_BackToCurrentButton]).
+  int _away = 0;
+
+  /// Okun son baktığı yön; düğme sönerken ok dönmesin.
+  bool _arrowUp = false;
+
   @override
   void initState() {
     super.initState();
-    _controller.addListener(_updatePinned);
+    _controller.addListener(_onScroll);
   }
 
   @override
@@ -167,7 +175,7 @@ class _KartyPathScreenState extends State<KartyPathScreen>
       _layout = _computeLayout();
       final after = _layout.current;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _updatePinned();
+        _onScroll();
         // Deste bitti, şu anki adım ilerledi: eylem ekranda kalsın. Ünite
         // açılışında kamerayı geliş yönetiyor.
         final moved = before?.unit.number != after?.unit.number ||
@@ -183,7 +191,7 @@ class _KartyPathScreenState extends State<KartyPathScreen>
 
   @override
   void dispose() {
-    _controller.removeListener(_updatePinned);
+    _controller.removeListener(_onScroll);
     if (widget.controller == null) _controller.dispose();
     _arrival.dispose();
     super.dispose();
@@ -373,6 +381,56 @@ class _KartyPathScreenState extends State<KartyPathScreen>
     ));
   }
 
+  void _onScroll() {
+    _updatePinned();
+    _updateAway();
+  }
+
+  /// Şu anki destenin karosu (yüz + kalınlık) görünen alanın, yani yapışan
+  /// başlığın altı ile patikanın dibi arasının tamamen dışına çıktıysa
+  /// "desteye dön" düğmesi belirir; ok destenin kaldığı yöne bakar.
+  void _updateAway() {
+    final current = _layout.current;
+    var away = 0;
+    if (current != null && _controller.hasClients) {
+      final position = _controller.position;
+      final geo = _NodeGeometry(current.width);
+      final top =
+          (current.center.dy - geo.faceHeight / 2) * _scale - position.pixels;
+      final bottom = top + geo.total * _scale;
+      if (bottom <= _pinnedHeight) {
+        away = -1;
+      } else if (top >= position.viewportDimension) {
+        away = 1;
+      }
+    }
+    if (away == _away) return;
+    setState(() {
+      _away = away;
+      if (away != 0) _arrowUp = away < 0;
+    });
+  }
+
+  /// "Desteye dön": kamera şu anki desteye, açılıştaki yerine kayar
+  /// ([_currentOffset]). Uzak ünitede daha uzun sürer ama kamera oyalanmaz:
+  /// 0,45–0,9 sn.
+  void _jumpToCurrent() {
+    final target = _currentOffset();
+    if (target == null || !mounted) return;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _controller.jumpTo(target);
+      return;
+    }
+    final distance = (target - _controller.offset).abs() / _scale;
+    unawaited(_controller.animateTo(
+      target,
+      duration: Duration(
+        milliseconds: (300 + distance * 0.2).clamp(450, 900).round(),
+      ),
+      curve: Curves.easeInOutCubic,
+    ));
+  }
+
   void _openStep(KartyUnit unit, KartyStep step) {
     showModalBottomSheet<void>(
       context: context,
@@ -430,7 +488,7 @@ class _KartyPathScreenState extends State<KartyPathScreen>
                       _viewportUnits = units;
                       _layout = _computeLayout();
                       WidgetsBinding.instance
-                          .addPostFrameCallback((_) => _updatePinned());
+                          .addPostFrameCallback((_) => _onScroll());
                     }
                     Widget scroll = SingleChildScrollView(
                       controller: _controller,
@@ -526,6 +584,19 @@ class _KartyPathScreenState extends State<KartyPathScreen>
                                 ),
                               ),
                             ),
+                          Positioned(
+                            right: 40 * scale,
+                            bottom: 40 * scale,
+                            child: _BackToCurrentButton(
+                              // Gelişte kamerayı geliş yönetiyor.
+                              visible: _away != 0 &&
+                                  widget.arrivalUnit == null &&
+                                  !_arriving,
+                              up: _arrowUp,
+                              scale: scale,
+                              onPressed: _jumpToCurrent,
+                            ),
+                          ),
                         ],
                       ),
                     );
@@ -535,6 +606,61 @@ class _KartyPathScreenState extends State<KartyPathScreen>
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// Şu anki desteye dönüş (16 Kas 2026): patika kaydırılıp deste ekrandan
+/// çıkınca sağ altta belirir, ok destenin kaldığı yöne bakar; dokununca
+/// kamera desteye kayar. Duolingo'da patikadan uzaklaşınca beliren oklu
+/// düğmenin karşılığı. İçerik 24 üniteye çıkınca geçmişe kaydıran kullanıcı
+/// şu anki desteye ve yan duraklara buradan döner.
+///
+/// Malzeme uygulamanın ikon kontrolü ([AppIconControlButton]; Karty'nin
+/// duraklatması, giriş ekranlarının geri düğmesi), ok kontrol gliflerinin
+/// geri oku. Görünmezken dokunuşa ve ekran okuyucuya kapalı.
+class _BackToCurrentButton extends StatelessWidget {
+  const _BackToCurrentButton({
+    required this.visible,
+    required this.up,
+    required this.scale,
+    required this.onPressed,
+  });
+
+  final bool visible;
+
+  /// Deste yukarıda kaldı: ok yukarı bakar.
+  final bool up;
+  final double scale;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      ignoring: !visible,
+      child: AnimatedOpacity(
+        key: const ValueKey('back-to-current'),
+        opacity: visible ? 1 : 0,
+        duration: const Duration(milliseconds: 200),
+        child: AnimatedSlide(
+          offset: visible ? Offset.zero : const Offset(0, 0.3),
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOutCubic,
+          child: AppIconControlButton(
+            scale: scale,
+            label: 'Bulunduğun desteye dön',
+            onPressed: onPressed,
+            // Geri oku sola bakar: çeyrek tur yukarı, üç çeyrek aşağı.
+            child: RotatedBox(
+              quarterTurns: up ? 1 : 3,
+              child: KartyControlMark(
+                glyph: KartyControlGlyph.back,
+                size: 50.25 * scale,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

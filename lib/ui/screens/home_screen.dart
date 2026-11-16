@@ -533,11 +533,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return Stack(
       children: [
         screen,
+        // Solda: sağ altta "desteye dön" düğmesi beliriyor.
         Positioned(
-          right: 16,
+          left: 16,
           bottom: 24,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _DebugButton(label: 'SERİ', onTap: _debugNextScene),
               const SizedBox(height: 10),
