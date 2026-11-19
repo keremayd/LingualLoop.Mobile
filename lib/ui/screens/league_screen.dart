@@ -1,3 +1,4 @@
+import 'package:lingualloop/l10n/l10n.dart';
 import 'package:lingualloop/ui/app_typography.dart';
 import 'package:lingualloop/ui/widgets/app_shape_style.dart';
 import 'dart:ui' as ui;
@@ -38,7 +39,7 @@ class _LeagueScreenState extends State<LeagueScreen>
   static const _accentColor = Color(0xFF1CB1F5);
 
   // Sıra ve adlar lig rozetinin ortak tablosunda (oyun özeti de kullanıyor).
-  static const _leagueNames = LeagueVisuals.names;
+  String _leagueName(String key) => LeagueVisuals.nameOf(key, context.l10n);
   static const _leagueKeys = LeagueVisuals.order;
 
   bool _isRefreshing = false;
@@ -174,10 +175,10 @@ class _LeagueScreenState extends State<LeagueScreen>
           promotion: LeaguePromotionResponse(
             fromRank: fromIndex + 1,
             fromLeagueKey: fromKey,
-            fromLeagueName: _leagueNames[fromKey]!,
+            fromLeagueName: _leagueName(fromKey),
             toRank: toIndex + 1,
             toLeagueKey: toKey,
-            toLeagueName: _leagueNames[toKey]!,
+            toLeagueName: _leagueName(toKey),
           ),
           // Tasarım simülasyonu gerçek terfi kaydını kapatmaz.
           onContinue: () async => true,
@@ -258,12 +259,11 @@ class _LeagueScreenState extends State<LeagueScreen>
                         league: league,
                         leagueKeys: _leagueKeys,
                         controller: _stripController!,
-                        displayedName:
-                            _leagueNames[_leagueKeys[_centeredIndex]] ?? '',
+                        displayedName: _leagueName(_leagueKeys[_centeredIndex]),
                         nextLeagueKey: nextLeagueKey,
                         nextLeagueName: nextLeagueKey == null
                             ? null
-                            : _leagueNames[nextLeagueKey],
+                            : _leagueName(nextLeagueKey),
                         onInfoPressed: league == null
                             ? null
                             : () => showLeagueInfoPopup(
@@ -271,7 +271,7 @@ class _LeagueScreenState extends State<LeagueScreen>
                                   league: league,
                                   nextLeagueName: league.rank <
                                           _leagueKeys.length
-                                      ? _leagueNames[_leagueKeys[league.rank]]
+                                      ? _leagueName(_leagueKeys[league.rank])
                                       : null,
                                 ),
                         onCenteredChanged: (index) {
@@ -314,7 +314,9 @@ class _LeagueScreenState extends State<LeagueScreen>
       if (league != null && entries.length <= 1)
         _LeagueSoloScene(
           scale: scale,
-          leagueName: _leagueNames[league.leagueKey] ?? league.leagueName,
+          leagueName: _leagueName(league.leagueKey).isEmpty
+              ? league.leagueName
+              : _leagueName(league.leagueKey),
         ),
     ];
   }

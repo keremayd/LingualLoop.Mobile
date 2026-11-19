@@ -1,0 +1,20 @@
+{
+  "@@locale": "sq",
+
+  "leagueMerkur": "Mërkuri",
+  "leagueAytasi": "Guri i Hënës",
+  "leagueYildiz": "Ylli",
+  "leagueKuyruklu": "Kometa",
+  "leagueMars": "Marsi",
+  "leagueUranus": "Urani",
+  "leagueSaturn": "Saturni",
+  "leagueNebula": "Mjegullnaja",
+  "leagueKosmoz": "Kozmosi",
+  "leagueSupernova": "Supernova",
+  "leaguePulsar": "Pulsari",
+
+  "pathDeck": "Pako {number}",
+  "pathReview": "Përsëritje",
+  "pathUnlockHint": "Hapet kur përforcohet {percent}% e Njësisë {unit}",
+  "unitUnlockReason": "E përforcove {percent}% të Njësisë {unit}."
+}

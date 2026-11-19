@@ -1,3 +1,4 @@
+import 'package:lingualloop/l10n/l10n.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'dart:io';
@@ -820,7 +821,7 @@ class _KartyQuizScreenState extends State<KartyQuizScreen> {
     final next = LeagueVisuals.order[league.rank];
     return KartyLeagueNote(
       nextLeagueKey: next,
-      nextLeagueName: LeagueVisuals.names[next] ?? '',
+      nextLeagueName: LeagueVisuals.nameOf(next, context.l10n),
       pointsLeft: left,
     );
   }

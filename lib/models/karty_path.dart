@@ -1,3 +1,4 @@
+import 'package:lingualloop/l10n/l10n.dart';
 import 'package:flutter/widgets.dart';
 import 'package:lingualloop/models/responses/KartyPathResponse.dart';
 import 'package:lingualloop/services/cached_signed_image.dart';
@@ -30,8 +31,10 @@ class KartyPathData {
   factory KartyPathData.fromResponse(
     KartyPathResponse response, {
     ImageProvider Function(String url)? image,
+    AppLocalizations? l10n,
   }) {
     final picture = image ?? CachedSignedImage.new;
+    final text = l10n ?? turkishLocalizations;
     KartyStepState stepState(String state) => switch (state) {
           'done' => KartyStepState.done,
           'current' => KartyStepState.current,
@@ -57,15 +60,22 @@ class KartyPathData {
         emblem: unit.emblemUrl == null ? null : picture(unit.emblemUrl!),
         unlockHint: previous == null
             ? null
-            : 'Ünite ${previous.number}${genitive(previous.number)} '
-                '%${(unit.unlockGoal * 100).round()}\'i pekişince açılır',
+            : text.pathUnlockHint(
+                previous.number,
+                genitive(previous.number),
+                (unit.unlockGoal * 100).round(),
+              ),
         steps: [
           for (final step in unit.steps)
             KartyStep(
               state: stepState(step.state),
               deck: step.deck,
-              label: step.deck == null ? 'Tekrar' : 'Deste ${step.deck}',
-              title: step.deck == null ? 'Tekrar' : 'Deste ${step.deck}',
+              label: step.deck == null
+                  ? text.pathReview
+                  : text.pathDeck(step.deck!),
+              title: step.deck == null
+                  ? text.pathReview
+                  : text.pathDeck(step.deck!),
               newCount: step.newCount,
               newGoal: step.newGoal,
               reviewCount: step.reviewCount,
@@ -97,7 +107,8 @@ class KartyPathData {
           );
   }
 
-  /// Sayının ilgi hâli eki: 1'in, 2'nin, 3'ün, 6'nın, 10'un.
+  /// Sayının Türkçe ilgi hâli eki: 1'in, 2'nin, 3'ün, 6'nın, 10'un. Yalnız
+  /// Türkçe metin kullanır; başka dilin şablonu yok sayar.
   static String genitive(int n) {
     const byLastDigit = [
       '',
@@ -140,9 +151,11 @@ class KartyUnitUnlock {
 
   /// Kapının kuralı, patikadaki kilit cümlesiyle ("Ünite 1'in %80'i
   /// pekişince açılır") aynı dilde.
-  String get reason =>
-      'Ünite ${completed.number}${KartyPathData.genitive(completed.number)} '
-      '%${(completed.unlockGoal * 100).round()}\'ini pekiştirdin.';
+  String reasonIn(AppLocalizations l10n) => l10n.unitUnlockReason(
+        completed.number,
+        KartyPathData.genitive(completed.number),
+        (completed.unlockGoal * 100).round(),
+      );
 }
 
 class KartyUnit {

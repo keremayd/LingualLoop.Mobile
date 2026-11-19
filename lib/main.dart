@@ -1,3 +1,5 @@
+import 'package:lingualloop/l10n/app_language.dart';
+import 'package:lingualloop/l10n/l10n.dart';
 import 'package:lingualloop/models/karty_session.dart';
 import 'package:lingualloop/ui/app_typography.dart';
 import 'dart:io';
@@ -67,10 +69,12 @@ Future<void> main() async {
     );
   });
   final savedUser = await AuthService.restoreSession();
+  final language = await AppLanguage.load();
   await DailyReminders.init();
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider<AppLanguage>.value(value: language),
         Provider<AuthService>(
           create: (context) {
             final dio = Dio(
@@ -198,6 +202,10 @@ class MyApp extends StatelessWidget {
       navigatorKey: navigatorKey,
       navigatorObservers: [routeObserver],
       title: 'Lingual Loop',
+      // Arayüzün dili kullanıcının ana dili (Türkçe, Arnavutça).
+      locale: context.watch<AppLanguage>().locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       initialRoute: initialRoute,
       routes: {
         '/signin': (context) => LoginScreen(),

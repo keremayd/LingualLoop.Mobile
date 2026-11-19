@@ -1,3 +1,4 @@
+import 'package:lingualloop/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 class LeagueBadgeMark extends StatelessWidget {
@@ -67,19 +68,21 @@ class LeagueVisuals {
     'pulsar',
   ];
 
-  static const names = <String, String>{
-    'merkur': 'Merkür',
-    'aytasi': 'Aytaşı',
-    'yildiz': 'Yıldız',
-    'kuyruklu': 'Kuyruklu',
-    'mars': 'Mars',
-    'uranus': 'Uranüs',
-    'saturn': 'Satürn',
-    'nebula': 'Nebula',
-    'kosmoz': 'Kosmoz',
-    'supernova': 'Supernova',
-    'pulsar': 'Pulsar',
-  };
+  /// Ligin adı, ekranın dilinde (`lib/l10n`). Bilinmeyen anahtar boş döner.
+  static String nameOf(String key, AppLocalizations l10n) => switch (key) {
+        'merkur' => l10n.leagueMerkur,
+        'aytasi' => l10n.leagueAytasi,
+        'yildiz' => l10n.leagueYildiz,
+        'kuyruklu' => l10n.leagueKuyruklu,
+        'mars' => l10n.leagueMars,
+        'uranus' => l10n.leagueUranus,
+        'saturn' => l10n.leagueSaturn,
+        'nebula' => l10n.leagueNebula,
+        'kosmoz' => l10n.leagueKosmoz,
+        'supernova' => l10n.leagueSupernova,
+        'pulsar' => l10n.leaguePulsar,
+        _ => '',
+      };
 
   static const _palettes = <String, LeagueBadgePalette>{
     'merkur': LeagueBadgePalette(

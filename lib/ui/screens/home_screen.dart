@@ -1,3 +1,4 @@
+import 'package:lingualloop/l10n/l10n.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart' show kDebugMode;
@@ -68,6 +69,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int? _shownUnlock;
 
   KartyPathResponse? _source;
+
+  String? _sourceLocale;
   KartyPathData? _data;
 
   /// Debug: `SERİ` düğmesinin sıradaki sahnesi.
@@ -413,9 +416,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   /// Aynı yanıt her yeniden çizimde yeniden çevrilmesin: yerleşim buna bağlı.
   KartyPathData _dataFor(KartyPathResponse response) {
-    if (!identical(_source, response)) {
+    final l10n = context.l10n;
+    if (!identical(_source, response) || _sourceLocale != l10n.localeName) {
       _source = response;
-      _data = KartyPathData.fromResponse(response);
+      _sourceLocale = l10n.localeName;
+      _data = KartyPathData.fromResponse(response, l10n: l10n);
     }
     return _data!;
   }

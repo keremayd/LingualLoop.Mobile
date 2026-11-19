@@ -1,0 +1,9 @@
+# Arayüz metinleri (16 Kas 2026): ana dil Türkçe ve Arnavutça.
+# Kaynak Türkçe; her anahtar önce app_tr.arb'ye yazılır.
+# Üretim: `flutter gen-l10n` (flutter pub get / run de üretir).
+arb-dir: lib/l10n
+template-arb-file: app_tr.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getter: false
+untranslated-messages-file: build/l10n_eksik_ceviriler.json

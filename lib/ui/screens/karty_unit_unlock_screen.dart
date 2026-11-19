@@ -1,3 +1,4 @@
+import 'package:lingualloop/l10n/l10n.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -218,7 +219,7 @@ class KartyUnitUnlockScene extends StatelessWidget {
                       progress: _phase(t, 0.70, 0.90, Curves.easeOutCubic),
                       distance: 36 * s,
                       child: Text(
-                        '${unlock.reason}\n'
+                        '${unlock.reasonIn(context.l10n)}\n'
                         '${unit.wordCount} yeni kelime seni bekliyor.',
                         textAlign: TextAlign.center,
                         style: TextStyle(

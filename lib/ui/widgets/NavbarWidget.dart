@@ -1,3 +1,4 @@
+import 'package:lingualloop/l10n/app_language.dart';
 import 'package:flutter/material.dart';
 import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
 import 'package:lingualloop/services/UserService.dart';
@@ -52,6 +53,7 @@ class _NavbarWidgetState extends State<NavbarWidget>
     NavbarWidget.requestedTab.addListener(_applyRequestedTab);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _recordDailyActivity();
+      _syncLanguage();
     });
   }
 
@@ -73,6 +75,14 @@ class _NavbarWidgetState extends State<NavbarWidget>
     if (state == AppLifecycleState.resumed) {
       _recordDailyActivity();
     }
+  }
+
+  /// Ana dilin kaydı; sonuç beklenmez, düşerse sonraki açılışta yine denenir.
+  Future<void> _syncLanguage() async {
+    try {
+      await Provider.of<UserService>(context, listen: false)
+          .syncNativeLanguage(AppLanguage.current);
+    } catch (_) {}
   }
 
   /// Aynı anda iki karar penceresi açılmasın: `initState` ile

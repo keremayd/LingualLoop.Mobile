@@ -22,6 +22,25 @@ class UserService {
 
   UserService(this._dio);
 
+  /// Ana dili sunucuya kaydeder (`user_settings`; hangi dilden kaç
+  /// kullanıcı geldiği oradan sayılıyor). İçeriğin dilini bu kayıt değil her
+  /// istekteki `Accept-Language` belirler. Dil değişmedikçe bir kez gider.
+  Future<void> syncNativeLanguage(String code) async {
+    final userId = await _storage.read(key: 'userId');
+    if (userId == null || userId.isEmpty) return;
+
+    final cacheKey = 'nativeLanguageSynced_$userId';
+    if (await _storage.read(key: cacheKey) == code) return;
+
+    final response = await _dio.put(
+      'users/$userId/language',
+      data: {'nativeLanguage': code},
+    );
+    if (response.statusCode == 200) {
+      await _storage.write(key: cacheKey, value: code);
+    }
+  }
+
   Future<ApiResponse<DailyActivityResponse>?> recordDailyActivity() async {
     final userId = await _storage.read(key: 'userId');
     if (userId == null || userId.isEmpty) {

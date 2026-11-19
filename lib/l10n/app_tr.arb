@@ -1,0 +1,41 @@
+{
+  "@@locale": "tr",
+
+  "leagueMerkur": "Merkür",
+  "leagueAytasi": "Aytaşı",
+  "leagueYildiz": "Yıldız",
+  "leagueKuyruklu": "Kuyruklu",
+  "leagueMars": "Mars",
+  "leagueUranus": "Uranüs",
+  "leagueSaturn": "Satürn",
+  "leagueNebula": "Nebula",
+  "leagueKosmoz": "Kosmoz",
+  "leagueSupernova": "Supernova",
+  "leaguePulsar": "Pulsar",
+
+  "pathDeck": "Deste {number}",
+  "@pathDeck": {
+    "description": "Patikadaki deste düğmesinin adı.",
+    "placeholders": { "number": { "type": "int" } }
+  },
+  "pathReview": "Tekrar",
+  "@pathReview": { "description": "Açık bütün desteler bitince patikadaki yalnız tekrar adımı." },
+  "pathUnlockHint": "Ünite {unit}{unitSuffix} %{percent}'i pekişince açılır",
+  "@pathUnlockHint": {
+    "description": "Kilitli ünitenin başlığında. unitSuffix Türkçe ilgi hâli eki (1'in, 2'nin); başka dil kullanmaz.",
+    "placeholders": {
+      "unit": { "type": "int" },
+      "unitSuffix": { "type": "String" },
+      "percent": { "type": "int" }
+    }
+  },
+  "unitUnlockReason": "Ünite {unit}{unitSuffix} %{percent}'ini pekiştirdin.",
+  "@unitUnlockReason": {
+    "description": "Ünite açılış kutlamasında, kilidi açan önceki ünite. unitSuffix yalnız Türkçede.",
+    "placeholders": {
+      "unit": { "type": "int" },
+      "unitSuffix": { "type": "String" },
+      "percent": { "type": "int" }
+    }
+  }
+}

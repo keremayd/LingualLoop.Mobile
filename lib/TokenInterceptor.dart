@@ -1,3 +1,4 @@
+import 'package:lingualloop/l10n/app_language.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:lingualloop/Utils/AppNotifier.dart';
@@ -29,6 +30,8 @@ class TokenInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
+    // Sunucu ünite adını, kart anlamını ve görev başlığını bu dilde döner.
+    options.headers['Accept-Language'] = AppLanguage.current;
     if (!options.path.startsWith('authentication/')) {
       final accessToken = await _storage.read(key: 'accessToken');
       if (accessToken != null) {
