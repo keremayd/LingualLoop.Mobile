@@ -42,6 +42,7 @@ void main() {
             'state': 'current',
             'deck': 2,
             'newCount': 3,
+            'learnedCount': 2,
             'newGoal': 8,
             'reviewCount': 5,
             'dueCount': 0,
@@ -110,12 +111,15 @@ void main() {
     expect(current.state, KartyStepState.current);
     expect(current.label, 'Deste 2');
     expect(current.newCount, 3);
+    expect(current.learnedCount, 2);
     expect(current.reviewCount, 5);
 
     final upcoming = first.steps[2];
     expect(upcoming.state, KartyStepState.upcoming);
     expect(upcoming.label, 'Deste 3');
     expect(upcoming.upcoming, hasLength(2));
+    // Eski sunucu göndermez: 0.
+    expect(upcoming.learnedCount, 0);
 
     final locked = data.units[1];
     expect(locked.state, KartyUnitState.locked);

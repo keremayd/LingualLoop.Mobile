@@ -81,6 +81,7 @@ KartyPathResponse _path({int? pendingUnlock}) => KartyPathResponse.fromJson({
               'state': 'done',
               'deck': 1,
               'newCount': 8,
+              'learnedCount': 8,
               'newGoal': 8,
               'reviewCount': 0,
               'dueCount': 0,
@@ -91,6 +92,7 @@ KartyPathResponse _path({int? pendingUnlock}) => KartyPathResponse.fromJson({
               'state': 'current',
               'deck': 2,
               'newCount': 3,
+              'learnedCount': 2,
               'newGoal': 8,
               'reviewCount': 5,
               'dueCount': 0,
@@ -307,7 +309,8 @@ void main() {
     expect(find.text('8 kart'), findsOneWidget);
     expect(find.text('Rövanş'), findsOneWidget);
     expect(find.text('6 kart'), findsOneWidget);
-    expect(find.text('3/8 yeni · 5 tekrar'), findsOneWidget);
+    // Etiket tanışılanı (3) değil doğru bilineni (2) sayar: deste onunla biter.
+    expect(find.text('2/8 yeni · 5 tekrar'), findsOneWidget);
   });
 
   testWidgets('kapalı durak nedenini yazar ve açılmaz', (tester) async {

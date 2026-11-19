@@ -77,6 +77,7 @@ class KartyPathData {
                   ? text.pathReview
                   : text.pathDeck(step.deck!),
               newCount: step.newCount,
+              learnedCount: step.learnedCount,
               newGoal: step.newGoal,
               reviewCount: step.reviewCount,
               dueCount: step.dueCount,
@@ -205,6 +206,7 @@ class KartyStep {
     this.label = '',
     this.title = '',
     this.newCount = 0,
+    this.learnedCount = 0,
     this.newGoal = 8,
     this.reviewCount = 0,
     this.dueCount = 0,
@@ -223,6 +225,12 @@ class KartyStep {
 
   /// Bu destede tanışılan kelime / destenin büyüklüğü (3/8).
   final int newCount;
+
+  /// Bu destede en az bir kez doğru bilinen kelime. Deste bu sayı
+  /// [newGoal]'e varınca biter; kelime halkası ve "3/8 yeni" bunu gösterir.
+  /// Tanışılan sayılınca, tanışılıp yanlış bilinen kelimelerle halka dolup
+  /// deste açılmıyordu (19 Kas 2026, kullanıcı).
+  final int learnedCount;
   final int newGoal;
 
   /// Şu anki adımda: oyunun önce soracağı, vadesi gelmiş tekrar sayısı.

@@ -81,6 +81,7 @@ void main() {
           label: 'Deste 3',
           title: 'Deste 3',
           newCount: 3,
+          learnedCount: 3,
           reviewCount: 5,
         ),
         KartyStep(

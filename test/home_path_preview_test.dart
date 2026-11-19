@@ -83,6 +83,7 @@ void main() {
             deck: 2,
             label: 'Deste 2',
             newCount: 3,
+            learnedCount: 3,
             reviewCount: 5,
           ),
           KartyStep(state: KartyStepState.upcoming, deck: 3, label: 'Deste 3'),

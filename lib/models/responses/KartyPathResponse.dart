@@ -66,6 +66,11 @@ class KartyPathStepDto {
   /// Ünite içindeki deste numarası (1'den); yalnız tekrar adımında null.
   final int? deck;
   final int newCount;
+
+  /// Destede en az bir kez doğru bilinen kelime: deste bu sayı destenin
+  /// büyüklüğüne varınca biter. Eski sunucu göndermez, 0 okunur.
+  @JsonKey(defaultValue: 0)
+  final int learnedCount;
   final int newGoal;
   final int reviewCount;
   final int dueCount;
@@ -78,6 +83,7 @@ class KartyPathStepDto {
     required this.state,
     this.deck,
     required this.newCount,
+    required this.learnedCount,
     required this.newGoal,
     required this.reviewCount,
     required this.dueCount,

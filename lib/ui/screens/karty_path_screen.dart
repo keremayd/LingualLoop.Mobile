@@ -1042,7 +1042,7 @@ class _KartyPathBody extends StatelessWidget {
         if (step.newGoal == 0) {
           return step.reviewCount > 0 ? reviews : 'Pratik';
         }
-        final fresh = '${step.newCount}/${step.newGoal} yeni';
+        final fresh = '${step.learnedCount}/${step.newGoal} yeni';
         return step.reviewCount > 0 ? '$fresh · $reviews' : fresh;
       case KartyStepState.upcoming:
         return '${step.newGoal} yeni kelime';
@@ -1999,7 +1999,8 @@ class _PathPainter extends CustomPainter {
   }
 
   /// Şu anki düğümü saran 8 parçalı halka: her parça destenin bir
-  /// kelimesi. Tanışılanlar mavi.
+  /// kelimesi. En az bir kez doğru bilinenler mavi: halka dolunca deste biter
+  /// (tanışılanı sayınca yanlış bilinenlerle dolup deste açılmıyordu).
   void _paintWordRing(Canvas canvas, _NodeSpot node) {
     final s = scale;
     final step = node.step;
@@ -2025,7 +2026,7 @@ class _PathPainter extends CustomPainter {
       canvas.drawPath(
         piece,
         Paint()
-          ..color = i < step.newCount ? _C.accent : _C.raised
+          ..color = i < step.learnedCount ? _C.accent : _C.raised
           ..style = PaintingStyle.stroke
           ..strokeWidth = _NodeGeometry.ringStroke * s
           ..strokeCap = StrokeCap.round,
@@ -2791,7 +2792,7 @@ class _SheetHeader extends StatelessWidget {
           '$consolidated\'${_suffix(consolidated)} pekişti',
       KartyStepState.current => step.newGoal == 0
           ? '${step.reviewCount} tekrar'
-          : '${step.newCount}/${step.newGoal} yeni kelime · ${step.reviewCount} tekrar',
+          : '${step.learnedCount}/${step.newGoal} yeni kelime · ${step.reviewCount} tekrar',
       _ => '${step.newGoal} yeni kelime',
     };
 
