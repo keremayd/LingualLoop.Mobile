@@ -1175,8 +1175,7 @@ class _GateSpot {
   final KartyUnit unit;
   final Offset center;
 
-  /// Halkanın kapı düğümünden uzaklığı; ünitenin kelime sayısından
-  /// ([_PathLayout.ringOffsetFor]).
+  /// Halkanın kapı düğümünden uzaklığı ([_PathLayout.ringOffset]).
   final double offset;
 
   static const _geo = _NodeGeometry(_PathLayout.gateWidth);
@@ -1218,6 +1217,35 @@ Path _clockwiseFromTop(Rect rect, double radius) {
     ..lineTo(rect.left, rect.top + radius)
     ..arcToPoint(Offset(rect.left + radius, rect.top), radius: r)
     ..close();
+}
+
+/// Pekiştirme halkasında hedef çentiğine kadarki taş: hedefe varmak için
+/// yanması gereken son taşın ardı (%80'de 16 taşın 13'ü).
+@visibleForTesting
+int kartyRingGoalStones({required double goal, required int stones}) =>
+    (goal * stones).ceil().clamp(1, stones);
+
+/// Pekiştirme halkasında yanan taş. Taşlar kelime sayısından bağımsız
+/// (halka hep yoldaki taşlarla, bkz. [_PathLayout.ringSpacing]); pekişen
+/// kelimenin oranı çentiğe göre bölünür: çentiğe kadarki taşlar hedefin,
+/// sonrakiler kalanın payı. İlk pekişen kelimede bir taş yanar, çentiğe
+/// ancak hedefe ulaşınca (kapı onaya dönerken) varılır, halka ancak bütün
+/// kelimeler pekişince dolar.
+@visibleForTesting
+int kartyRingLitStones({
+  required double ratio,
+  required double goal,
+  required int stones,
+}) {
+  final needed = kartyRingGoalStones(goal: goal, stones: stones);
+  if (ratio <= 0) return 0;
+  if (ratio >= 1) return stones;
+  if (ratio < goal) {
+    return math.min(needed - 1, math.max(1, (ratio / goal * needed).round()));
+  }
+  final after =
+      needed + ((ratio - goal) / (1 - goal) * (stones - needed)).round();
+  return math.max(needed, math.min(stones - 1, after));
 }
 
 class _HeaderSpot {
@@ -1292,26 +1320,17 @@ class _PathLayout {
   static const gateWidth = 150.0;
 
   /// Pekiştirme halkası kapıyı sarar: yol tepeden halkaya girer, kapıyı
-  /// dolaşır ve alttan çıkar. Her taş ünitenin bir kelimesi. Halka düğümün
-  /// biçimini izler: eş merkezli yuvarlatılmış dikdörtgen (12 Kas 2026,
-  /// kullanıcı; daire, düğmenin biçimiyle uyuşmuyordu). 16 kelimeye kadar
-  /// düğümün dışından 30 birim geçer, taşlar düğüme ~20 birim kalır; kelime
-  /// çoğaldıkça taş aralığı yoldakine yakın kalacak kadar açılır, 44'ü
-  /// geçmez — ötesinde taşlar orantılı küçülür (bkz. `_PathPainter._paintRing`).
-  /// Bir tur halka 160 birimlik noktalardı; kapıdan uzak, yoldan kopuk
-  /// okunuyordu (5 Kas 2026).
-  static const ringOffsetMin = 30.0;
-  static const ringOffsetMax = 44.0;
+  /// dolaşır ve alttan çıkar. Halka düğümün biçimini izler: eş merkezli
+  /// yuvarlatılmış dikdörtgen (12 Kas 2026, kullanıcı; daire, düğmenin
+  /// biçimiyle uyuşmuyordu). Düğümün dışından 30 birim geçer, taşlar düğüme
+  /// ~20 birim kalır. Taşlar yoldakinin aynısı, aralık 46'ya en yakın (16
+  /// taş); pekişen kelimenin oranı kadarı yanar (bkz. [kartyRingLitStones]).
+  /// Bir dönem her taş bir kelimeydi: halka 44'ten öteye büyüyemediği için
+  /// 24 kelimede taşlar dörtte bir küçülüp inceliyordu (19 Kas 2026,
+  /// kullanıcı: "patika gibi değil"). Bir tur da halka 160 birimlik
+  /// noktalardı; kapıdan uzak, yoldan kopuk okunuyordu (5 Kas 2026).
+  static const ringOffset = 30.0;
   static const ringSpacing = 46.0;
-
-  static double ringOffsetFor(int words) {
-    const geo = _NodeGeometry(gateWidth);
-    // Düğümün çizgisinin boyu; dışa doğru her birimde 2π uzar.
-    final outline =
-        2 * (gateWidth + geo.total) - (8 - 2 * math.pi) * geo.radius;
-    return ((words * ringSpacing - outline) / (2 * math.pi))
-        .clamp(ringOffsetMin, ringOffsetMax);
-  }
 
   /// Yan duraklar: şu anki düğümün merkezinden bu kadar sağda ve solda;
   /// arada iki taşlık yan yol kalır. Düğümün etiketi altına iner, altındaki
@@ -1433,7 +1452,7 @@ class _PathLayout {
       }
       previousCurrent = current;
     }
-    final half = _GateSpot.halfHeightFor(ringOffsetFor(unit.wordCount));
+    final half = _GateSpot.halfHeightFor(ringOffset);
     final gateCenter =
         y + 196 + half + (previousCurrent ? 40 + _captionRoom : 0);
     return gateCenter + half + gateTail;
@@ -1516,7 +1535,7 @@ class _PathLayout {
         previousCurrent = current;
       }
 
-      final offset = ringOffsetFor(unit.wordCount);
+      const offset = ringOffset;
       final gateCenter = Offset(
         gateX,
         y +
@@ -1882,32 +1901,35 @@ class _PathPainter extends CustomPainter {
     }
   }
 
-  /// Kapı halkası: tepeden saat yönünde, kelime başına bir taş. Taşlar
-  /// yoldakilerle aynı kapsül ve halkaya teğet; iz kapıya girip onu
-  /// dolaşıyor gibi okunur. Pekişen kelime kadar taş yeşil yanar.
+  /// Halkanın taş sayısı: aralık [_PathLayout.ringSpacing]'e en yakın.
+  static int _ringStones(ui.PathMetric metric, double s) =>
+      math.max(1, (metric.length / s / _PathLayout.ringSpacing).round());
+
+  /// Kapı halkası: tepeden saat yönünde, yoldaki taşlar yoldaki gibi
+  /// aralıklı. Taşlar halkaya teğet; iz kapıya girip onu dolaşıyor gibi
+  /// okunur. Pekişen kelimenin oranı kadar taş yeşil yanar.
   void _paintRing(Canvas canvas, _GateSpot gate, {bool locked = false}) {
     final s = scale;
     final unit = gate.unit;
-    final n = math.max(1, unit.wordCount);
     final metric = gate.ring(s).computeMetrics().first;
+    final n = _ringStones(metric, s);
     final spacing = metric.length / n;
-    // Halka büyüyemeyince taş yoldakinin oranlarıyla küçülür: boy aralığın
-    // %65'i, en boyun %70'i, kalınlık bandı enle birlikte. 16 kelimede taş
-    // yoldakiyle aynı.
-    final length = math.min(_stoneLength, spacing / s * 0.65);
-    final width = length * _stoneWidth / _stoneLength;
-    final band = _stoneDepth * width / _stoneWidth;
     final stone = RRect.fromRectAndRadius(
       Rect.fromCenter(
         center: Offset.zero,
-        width: length * s,
-        height: width * s,
+        width: _stoneLength * s,
+        height: _stoneWidth * s,
       ),
-      Radius.circular(width * s / 2),
+      Radius.circular(_stoneWidth * s / 2),
+    );
+    final lit = kartyRingLitStones(
+      ratio: unit.consolidatedRatio,
+      goal: unit.unlockGoal,
+      stones: n,
     );
     _TrailStyle style(int i) => locked || unit.state == KartyUnitState.locked
         ? _TrailStyle.locked
-        : i < unit.consolidatedCount
+        : i < lit
             ? _TrailStyle.done
             : _TrailStyle.ahead;
     final places = [
@@ -1921,7 +1943,7 @@ class _PathPainter extends CustomPainter {
         canvas.save();
         canvas.translate(
           place.position.dx,
-          place.position.dy + (pass == 0 ? band * s : 0),
+          place.position.dy + (pass == 0 ? _stoneDepth * s : 0),
         );
         canvas.rotate(math.atan2(place.vector.dy, place.vector.dx));
         canvas.drawRRect(stone, Paint()..color = pass == 0 ? depth : face);
@@ -1933,13 +1955,13 @@ class _PathPainter extends CustomPainter {
   /// Ünite hedefinin çentiği ve yüzdesi (halkanın dışında).
   ///
   /// Çentik iki taşın arasına düşer: hedefe varmak için yanması gereken son
-  /// taşın hemen ardına (16 kelimede %80 → 13. taştan sonra).
+  /// taşın hemen ardına (%80 → 16 taşın 13.'sünden sonra).
   void _paintGoalMark(Canvas canvas, _GateSpot gate) {
     final s = scale;
     final unit = gate.unit;
-    final n = math.max(1, unit.wordCount);
-    final needed = (unit.unlockGoal * n).ceil().clamp(1, n);
     final metric = gate.ring(s).computeMetrics().first;
+    final n = _ringStones(metric, s);
+    final needed = kartyRingGoalStones(goal: unit.unlockGoal, stones: n);
     final place = metric.getTangentForOffset(metric.length * needed / n);
     if (place == null) return;
     // Çizgi saat yönünde döndüğü için dışarısı gidiş yönünün solu.
