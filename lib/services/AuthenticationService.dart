@@ -46,6 +46,20 @@ class AuthService {
         nonce: hashedNonce,
       );
 
+  /// Hesap silmede Apple'ın onayı: Apple penceresi bir kez daha açılır ve
+  /// sunucunun Apple'daki izni geri alacağı tek kullanımlık yetki kodu döner.
+  /// Pencere kapatılırsa ya da Apple onay vermezse null.
+  Future<String?> requestAppleAuthorizationCode() async {
+    try {
+      final credential = await _appleCredential(
+        sha256.convert(utf8.encode(_rawNonce())).toString(),
+      );
+      return credential.authorizationCode;
+    } on SignInWithAppleException {
+      return null;
+    }
+  }
+
   /// Apple'a giden nonce'un açık hâli. Apple özetini token'a gömer, sunucu
   /// açık hâlin özetiyle karşılaştırır: token başka bir girişten alınıp
   /// tekrar kullanılamaz.

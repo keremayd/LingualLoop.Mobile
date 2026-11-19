@@ -1,6 +1,8 @@
 {
   "@@locale": "sq",
 
+  "accountDeletionAppleCanceled": "Miratimi i Apple nuk u mor, llogaria nuk u fshi.",
+
   "leagueMerkur": "Mërkuri",
   "leagueAytasi": "Guri i Hënës",
   "leagueYildiz": "Ylli",

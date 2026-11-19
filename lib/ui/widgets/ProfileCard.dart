@@ -8,7 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:lingualloop/Utils/AppNotifier.dart';
 import 'package:lingualloop/services/AuthenticationService.dart';
 import 'package:lingualloop/services/UserService.dart';
+import 'package:lingualloop/services/account_deletion.dart';
 import 'package:lingualloop/services/subscription_management.dart';
+import 'package:lingualloop/ui/widgets/Buttons/auth_social_button.dart';
 import 'package:lingualloop/ui/screens/legal_document_screen.dart';
 import 'package:lingualloop/ui/widgets/ProfilePhoto.dart';
 import 'package:lingualloop/ui/widgets/settings_sheet.dart';
@@ -161,9 +163,17 @@ class ProfileCard extends StatelessWidget {
       case SettingsAction.signOut:
         await AuthService(Dio()).signOut(context);
       case SettingsAction.deleteAccount:
+        final users = context.read<UserService>();
         final deleted = await confirmAccountDeletion(
           context,
-          delete: context.read<UserService>().deleteAccount,
+          // Apple ile bağlı hesapta arada Apple penceresi açılır; Android'de
+          // Apple penceresi yok, sunucu izni geri almadan siler.
+          delete: () => deleteAccountWithAppleConsent(
+            delete: users.deleteAccount,
+            appleAuthorizationCode:
+                AuthService(Dio()).requestAppleAuthorizationCode,
+            appleAvailable: appleSignInShown,
+          ),
         );
         if (deleted && context.mounted) {
           await AuthService(Dio()).endDeletedAccount(context);

@@ -9,6 +9,10 @@ class AppLocalizationsSq extends AppLocalizations {
   AppLocalizationsSq([String locale = 'sq']) : super(locale);
 
   @override
+  String get accountDeletionAppleCanceled =>
+      'Miratimi i Apple nuk u mor, llogaria nuk u fshi.';
+
+  @override
   String get leagueMerkur => 'Mërkuri';
 
   @override

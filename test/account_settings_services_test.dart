@@ -11,6 +11,7 @@ import 'package:lingualloop/services/AuthenticationService.dart';
 import 'package:lingualloop/services/GameFeedbackService.dart';
 import 'package:lingualloop/services/PronunciationService.dart';
 import 'package:lingualloop/services/UserService.dart';
+import 'package:lingualloop/services/account_deletion.dart';
 import 'package:provider/provider.dart';
 
 /// İsteği saklar, verilen durum ve gövdeyle döner.
@@ -55,23 +56,42 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => FlutterSecureStorage.setMockInitialValues({'userId': 'u-1'}));
 
-  test('Silinen hesapta true döner, istek oturumdaki kullanıcıya gider',
+  test('Silinen hesapta "silindi" döner, istek oturumdaki kullanıcıya gider',
       () async {
     final server = _Server(200, {
       'data': {'deleted': true}
     });
-    expect(await _service(server).deleteAccount(), isTrue);
+    expect(await _service(server).deleteAccount(),
+        AccountDeletionResult.deleted);
     expect(server.requests.single.method, 'DELETE');
     expect(server.requests.single.path, 'users/u-1/account');
+    // Apple kodu yoksa gövde de yok: eski sunucu aynen çalışır.
+    expect(server.requests.single.data, isNull);
   });
 
-  test('Reddedilen silme false: boş gövdeli 403 ve hata gövdeli 500',
-      () async {
-    expect(await _service(_Server(403, null)).deleteAccount(), isFalse);
+  test('Reddedilen silme: boş gövdeli 403 ve hata gövdeli 500', () async {
+    expect(await _service(_Server(403, null)).deleteAccount(),
+        AccountDeletionResult.failed);
     expect(
       await _service(_Server(500, {'errorCode': 'E4000'})).deleteAccount(),
-      isFalse,
+      AccountDeletionResult.failed,
     );
+  });
+
+  test('Apple ile bağlı hesapta sunucu Apple onayı ister (E4130)', () async {
+    final server = _Server(428, {'errorCode': 'E4130'});
+    expect(await _service(server).deleteAccount(),
+        AccountDeletionResult.appleConsentRequired);
+  });
+
+  test('Apple kodu ve Android işareti gövdede gider', () async {
+    final server = _Server(200, {
+      'data': {'deleted': true}
+    });
+    await _service(server).deleteAccount(appleAuthorizationCode: 'kod');
+    await _service(server).deleteAccount(skipAppleRevocation: true);
+    expect(server.requests[0].data, {'appleAuthorizationCode': 'kod'});
+    expect(server.requests[1].data, {'skipAppleRevocation': true});
   });
 
   testWidgets('Silinen hesaptan sonra hoş geldin ekranı açılır, oturum biter',

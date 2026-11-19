@@ -10,6 +10,7 @@ import 'package:lingualloop/models/responses/ScoreWithLivesResponse.dart';
 import 'package:lingualloop/models/responses/UpdateLivesResponse.dart';
 import 'package:lingualloop/models/responses/UpdateScoreResponse.dart';
 import 'package:lingualloop/models/responses/AcknowledgeLeaguePromotionResponse.dart';
+import 'package:lingualloop/services/account_deletion.dart';
 import 'package:provider/provider.dart';
 
 import '../models/ApiResponse.dart';
@@ -164,21 +165,44 @@ class UserService {
     );
   }
 
-  /// Hesabı ve bütün verisini sunucuda kalıcı olarak siler. Silindiyse
-  /// `true`, sunucu reddettiyse `false`; bağlantı yoksa hata fırlatır.
-  Future<bool> deleteAccount() async {
+  /// Apple ile bağlı hesap silinirken sunucunun Apple onayı istemesi.
+  static const appleConsentRequiredErrorCode = 'E4130';
+
+  /// Hesabı ve bütün verisini sunucuda kalıcı olarak siler; bağlantı yoksa
+  /// hata fırlatır. Apple ile bağlı hesapta sunucu önce Apple'ın yetki
+  /// kodunu ister ([AccountDeletionResult.appleConsentRequired]); kod
+  /// [appleAuthorizationCode] ile gider. Akış `deleteAccountWithAppleConsent`.
+  Future<AccountDeletionResult> deleteAccount({
+    String? appleAuthorizationCode,
+    bool skipAppleRevocation = false,
+  }) async {
     final userId = await _storage.read(key: 'userId');
     if (userId == null || userId.isEmpty) {
       throw StateError('Kullanıcı oturumu bulunamadı.');
     }
-    final response = await _dio.delete('users/$userId/account');
+    final payload = {
+      if (appleAuthorizationCode != null)
+        'appleAuthorizationCode': appleAuthorizationCode,
+      if (skipAppleRevocation) 'skipAppleRevocation': true,
+    };
+    final response = await _dio.delete(
+      'users/$userId/account',
+      data: payload.isEmpty ? null : payload,
+    );
     // 403, 404 ve 500 de yanıt olarak döner (TokenInterceptor); gövde boş
     // olabilir.
     final body = response.data;
     final data = body is Map<String, dynamic> ? body['data'] : null;
-    return response.statusCode == 200 &&
+    if (response.statusCode == 200 &&
         data is Map<String, dynamic> &&
-        data['deleted'] == true;
+        data['deleted'] == true) {
+      return AccountDeletionResult.deleted;
+    }
+    if (body is Map<String, dynamic> &&
+        body['errorCode'] == appleConsentRequiredErrorCode) {
+      return AccountDeletionResult.appleConsentRequired;
+    }
+    return AccountDeletionResult.failed;
   }
 
   /// [point] cevabın **yönü**: doğruda `1`, yanlışta `-1`. Boost çarpanı

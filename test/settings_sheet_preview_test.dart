@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lingualloop/services/account_deletion.dart';
 import 'package:lingualloop/ui/screens/legal_document_screen.dart';
 import 'package:lingualloop/ui/widgets/settings_sheet.dart';
 
@@ -80,10 +81,11 @@ void main() {
     tester.view.physicalSize = const Size(402, 874);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    final answers = <Future<bool> Function()>[
-      () async => false,
+    final answers = <Future<AccountDeletionResult> Function()>[
+      () async => AccountDeletionResult.failed,
       () async => throw const SocketException('yok'),
-      () async => true,
+      () async => AccountDeletionResult.appleConsentCanceled,
+      () async => AccountDeletionResult.deleted,
     ];
     var calls = 0;
     bool? result;
@@ -115,13 +117,19 @@ void main() {
     );
     expect(result, isNull);
 
+    // Apple ile bağlı hesapta Apple penceresi kapatıldı.
+    await tester.tap(find.text('HESABIMI SİL'));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('Apple onayı alınamadı, hesap silinmedi.'), findsOneWidget);
+    expect(result, isNull);
+
     await tester.tap(find.text('HESABIMI SİL'));
     // İlk kare kapanış animasyonunu başlatır, ikincisi bitirir.
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(result, isTrue);
     expect(find.byType(AccountDeletionCard), findsNothing);
-    expect(calls, 3);
+    expect(calls, 4);
     expect(tester.takeException(), isNull);
   });
 
@@ -130,7 +138,7 @@ void main() {
     tester.view.physicalSize = const Size(402, 874);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    final pending = <Future<bool>>[];
+    final pending = <Future<AccountDeletionResult>>[];
     bool? result;
     await tester.pumpWidget(MaterialApp(
       home: Builder(
@@ -140,9 +148,9 @@ void main() {
               context,
               delete: () => pending.isEmpty
                   ? (pending..add(Future.delayed(const Duration(seconds: 1),
-                          () => false)))
+                          () => AccountDeletionResult.failed)))
                       .first
-                  : Future.value(false),
+                  : Future.value(AccountDeletionResult.failed),
             ),
             child: const Text('aç'),
           ),

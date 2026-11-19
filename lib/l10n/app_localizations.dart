@@ -98,6 +98,12 @@ abstract class AppLocalizations {
     Locale('tr')
   ];
 
+  /// Hesap silme penceresinde: Apple ile bağlı hesapta Apple penceresi kapatıldı ya da onay vermedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Apple onayı alınamadı, hesap silinmedi.'**
+  String get accountDeletionAppleCanceled;
+
   /// No description provided for @leagueMerkur.
   ///
   /// In tr, this message translates to:

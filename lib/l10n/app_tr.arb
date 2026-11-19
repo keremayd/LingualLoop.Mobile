@@ -1,6 +1,9 @@
 {
   "@@locale": "tr",
 
+  "accountDeletionAppleCanceled": "Apple onayı alınamadı, hesap silinmedi.",
+  "@accountDeletionAppleCanceled": { "description": "Hesap silme penceresinde: Apple ile bağlı hesapta Apple penceresi kapatıldı ya da onay vermedi." },
+
   "leagueMerkur": "Merkür",
   "leagueAytasi": "Aytaşı",
   "leagueYildiz": "Yıldız",

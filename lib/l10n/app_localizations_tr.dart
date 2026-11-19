@@ -9,6 +9,10 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
+  String get accountDeletionAppleCanceled =>
+      'Apple onayı alınamadı, hesap silinmedi.';
+
+  @override
   String get leagueMerkur => 'Merkür';
 
   @override

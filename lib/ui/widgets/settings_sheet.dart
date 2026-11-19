@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:lingualloop/l10n/l10n.dart';
 import 'package:lingualloop/services/GameFeedbackService.dart';
 import 'package:lingualloop/services/PronunciationService.dart';
+import 'package:lingualloop/services/account_deletion.dart';
 import 'package:lingualloop/ui/app_typography.dart';
 import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:lingualloop/ui/widgets/Buttons/secondary_action_button.dart';
@@ -314,11 +316,13 @@ class _ToggleMark extends StatelessWidget {
   }
 }
 
-/// Hesap silme onayı. [delete] sunucuya gider; bitene kadar pencere
-/// kapanmaz, olmazsa hata kartta yazar. Hesap silindiyse `true` döner.
+/// Hesap silme onayı. [delete] sunucuya gider (Apple ile bağlı hesapta
+/// arada Apple penceresi açılır, bkz. `deleteAccountWithAppleConsent`);
+/// bitene kadar pencere kapanmaz, olmazsa hata kartta yazar. Hesap
+/// silindiyse `true` döner.
 Future<bool> confirmAccountDeletion(
   BuildContext context, {
-  required Future<bool> Function() delete,
+  required Future<AccountDeletionResult> Function() delete,
 }) async =>
     await showDialog<bool>(
       context: context,
@@ -330,7 +334,7 @@ Future<bool> confirmAccountDeletion(
 class _AccountDeletionDialog extends StatefulWidget {
   const _AccountDeletionDialog({required this.delete});
 
-  final Future<bool> Function() delete;
+  final Future<AccountDeletionResult> Function() delete;
 
   @override
   State<_AccountDeletionDialog> createState() => _AccountDeletionDialogState();
@@ -345,23 +349,25 @@ class _AccountDeletionDialogState extends State<_AccountDeletionDialog> {
       _busy = true;
       _error = null;
     });
-    bool deleted;
-    String? error;
+    AccountDeletionResult? result;
     try {
-      deleted = await widget.delete();
-      if (!deleted) error = 'Hesap silinemedi. Tekrar dene.';
+      result = await widget.delete();
     } catch (_) {
-      deleted = false;
-      error = 'Bağlantı kurulamadı. İnternetini kontrol edip tekrar dene.';
+      result = null;
     }
     if (!mounted) return;
-    if (deleted) {
+    if (result == AccountDeletionResult.deleted) {
       Navigator.of(context).pop(true);
       return;
     }
     setState(() {
       _busy = false;
-      _error = error;
+      _error = switch (result) {
+        null => 'Bağlantı kurulamadı. İnternetini kontrol edip tekrar dene.',
+        AccountDeletionResult.appleConsentCanceled =>
+          context.l10n.accountDeletionAppleCanceled,
+        _ => 'Hesap silinemedi. Tekrar dene.',
+      };
     });
   }
 
