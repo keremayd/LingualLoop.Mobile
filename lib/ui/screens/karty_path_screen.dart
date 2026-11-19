@@ -1322,14 +1322,37 @@ class _PathLayout {
   static const gateTail = 150.0;
   static const nodeClearance = 84.0;
 
-  /// Halkasız şu anki düğüm (yalnız tekrar adımı): yol öbür düğümlerdeki
-  /// gibi yüzüne 24 birim kala biter, aşağıda etiketin 24 birim altından
-  /// başlar. Halkanın payları (140 / [_captionClearance]) burada boş kalıp
-  /// yolu uzakta bitiriyordu (kullanıcı, 15 Kas 2026: "tekrar bloğunun
-  /// üstündeki ve altındaki patikalar neden bu kadar uzakta bitiyor?").
-  static double get _ringlessAbove =>
-      _NodeGeometry(currentWidth).faceHeight / 2 + 24;
+  /// Yol düğüme öbür düğümlerdeki kadar kala biter: sıradan destede
+  /// [nodeClearance] yüzün ~24 birim üstü.
+  static double get _trailGap =>
+      nodeClearance - _NodeGeometry(nodeWidth).faceHeight / 2;
 
+  /// Şu anki düğümün tepesi (kelime halkası varsa halkanın dış kenarı)
+  /// yüzünün ortasından bu kadar yukarıda.
+  static double _currentReach(bool ringed) =>
+      _NodeGeometry(currentWidth).faceHeight / 2 +
+      (ringed ? _NodeGeometry.ringGap + _NodeGeometry.ringStroke / 2 : 0);
+
+  /// Şu anki düğüme gelen yol, öbür düğümlerdeki gibi tepesine (halkasına)
+  /// ~24 birim kala biter. Halkalı düğümde pay 140'tı, yol halkanın ~50
+  /// birim üstünde bitiyordu (kullanıcı, 18 Kas 2026: "patika neden
+  /// desteden çok uzakta bitiyor?"); halkasız adımda 15 Kas'ta aynı sebeple
+  /// düzeltilmişti ("tekrar bloğunun üstündeki ve altındaki patikalar neden
+  /// bu kadar uzakta bitiyor?").
+  static double _currentAbove(bool ringed) => _currentReach(ringed) + _trailGap;
+
+  /// Ünitenin ilk destesi şu anki düğümse sıradan bir ilk desteden yalnız
+  /// halkası kadar aşağıda durur: halkanın tepesi sıradan destenin yüzünün
+  /// tepesine gelir, karttan inen yol da her ünitede aynı yerde biter
+  /// (kullanıcı, 18 Kas 2026: "her ünitenin patika izleri aynı olmalı").
+  /// Önceden ilk deste de [_currentRoom] alıyordu; Ünite 1'in ilk destesi
+  /// karttan 120 birim uzak duruyor, Ünite 2'ninki yakın duruyordu.
+  static double _firstCurrentRoom(bool ringed) =>
+      _currentReach(ringed) - _NodeGeometry(nodeWidth).faceHeight / 2;
+
+  /// Halkasız şu anki düğümün (yalnız tekrar adımı) altındaki iz etiketin
+  /// 24 birim altından başlar. Halkanın payı ([_captionClearance]) burada
+  /// boş kalıp yolu uzakta başlatıyordu (kullanıcı, 15 Kas 2026).
   static double get _ringlessBelow {
     final geo = _NodeGeometry(currentWidth);
     // Etiketin üstü `_KartyPathBody`'deki `captionTop` (halkasız); boyu
@@ -1338,8 +1361,10 @@ class _PathLayout {
     return geo.total - geo.faceHeight / 2 + 14 + caption + 24;
   }
 
+  /// Şu anki düğüm ünitenin ilk destesi değilse önceki düğümle arasına
+  /// eklenen pay; ilk destede [_firstCurrentRoom].
   static const _currentRoom = 120.0;
-  static const _pattern = [-15.0, 140.0, 15.0, -125.0, -45.0, 110.0, 20.0];
+  static const _pattern = [0.0, 140.0, 15.0, -125.0, -45.0, 110.0, 20.0];
 
   /// Kısa ünitede desteler arasına ve son desteden kapıya eklenen pay.
   ///
@@ -1366,11 +1391,12 @@ class _PathLayout {
     if (unit.steps.isEmpty) {
       return math.max(0.0, (viewport + 72 - natural) / 2);
     }
-    final firstCurrent = unit.steps.first.state == KartyStepState.current;
+    final first = unit.steps.first;
+    final firstCurrent = first.state == KartyStepState.current;
     // İlk destenin görünen ortası (yüz + kalınlık bandı; düğümün konumu
     // yüzün ortası), başlık kartının alt kenarından.
     final firstBelowCard = headerGap +
-        (firstCurrent ? _currentRoom : 0) +
+        (firstCurrent ? _firstCurrentRoom(first.newGoal > 0) : 0) +
         _NodeGeometry(firstCurrent ? currentWidth : nodeWidth).depth / 2;
     return math.max(
       0.0,
@@ -1390,7 +1416,7 @@ class _PathLayout {
             (current ? _currentRoom : 0) +
             (previousCurrent ? 26 + _captionRoom : 0);
       } else if (current) {
-        y += _currentRoom;
+        y += _firstCurrentRoom(unit.steps[i].newGoal > 0);
       }
       previousCurrent = current;
     }
@@ -1458,9 +1484,10 @@ class _PathLayout {
               (current ? _currentRoom : 0) +
               (previousCurrent ? 26 + _captionRoom : 0);
         } else if (current) {
-          y += _currentRoom;
+          y += _firstCurrentRoom(step.newGoal > 0);
         }
-        // Şu anki düğüm ortada: iki yanında durak var.
+        // Şu anki düğüm ortada: iki yanında durak var. İlk deste de ortada
+        // ([_pattern] sıfırla başlar): karttan inen yol her ünitede aynı.
         final x = current ? centerX : centerX + _pattern[i % _pattern.length];
         final center = Offset(x, y);
         // Etiket geniş tarafta: düğüm sağa kıvrıldıysa solunda.
@@ -1502,16 +1529,14 @@ class _PathLayout {
             : _TrailStyle.ahead;
       }
 
-      // Şu anki düğümün çevresinde kelime halkası var; taşlar ona girmez.
-      // Etiketi altında: aşağı inen iz etiketten sonra başlar. Halkasız adım
-      // (yalnız tekrar) kendi payını kullanır ([_ringlessAbove]).
+      // Şu anki düğümün çevresinde kelime halkası var; gelen iz halkaya
+      // öbür düğümlerdeki kadar kala biter ([_currentAbove]). Etiketi
+      // altında: aşağı inen iz etiketten sonra başlar. Halkasız adım (yalnız
+      // tekrar) kendi payını kullanır ([_ringlessBelow]).
       final ringless =
           currentIndex >= 0 && unit.steps[currentIndex].newGoal <= 0;
-      double clearance(int i) => i != currentIndex
-          ? nodeClearance
-          : ringless
-              ? _ringlessAbove
-              : 140;
+      double clearance(int i) =>
+          i != currentIndex ? nodeClearance : _currentAbove(!ringless);
       double clearanceBelow(int i) => i != currentIndex
           ? nodeClearance
           : ringless
@@ -1527,13 +1552,19 @@ class _PathLayout {
       // şekilde ilerlemeli patikaları").
       if (points.isNotEmpty) {
         final header = headers.last;
+        // Yol sıradan bir ilk destenin ortasına varır: ilk deste şu anki
+        // düğüm olsa da (halkası kadar aşağıda) eğri ve taşlar aynı kalır.
+        final landing = Offset(
+          points.first.dx,
+          header.top + KartyUnitHeader.height + headerGap,
+        );
         segments.add(_TrailSegment(
           previousExit ?? Offset(gateX, header.top - gateTail),
-          points.first,
+          landing,
           styleTo(0),
           unit: unit.number,
           trimStart: 26,
-          trimEnd: clearance(0),
+          trimEnd: nodeClearance,
           anchorStart: true,
           // Taşın yarısı kartın tepesinden taşmasın: bir taş boyu aşağısı.
           hideAbove: previousExit == null
