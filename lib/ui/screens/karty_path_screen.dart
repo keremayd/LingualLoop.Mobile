@@ -1072,6 +1072,11 @@ class _KartyPathBody extends StatelessWidget {
     final locked = unit.state == KartyUnitState.locked || (closing && pop <= 0);
     final ready =
         unit.consolidatedRatio >= unit.unlockGoal && (!opening || pop >= 0.5);
+    // Kapıya ünitenin desteleri bitince varılır; o zamana kadar sıradaki
+    // desteler gibi kilitli (kullanıcı, 19 Kas 2026). Halka ve etiket
+    // ilerlemeyi göstermeyi sürdürür; hedefe desteler bitmeden ulaşılırsa
+    // kapı doğrudan onaya döner.
+    final waiting = !locked && !ready && !_decksDone(unit);
     final bump = pop >= 1 ? 1.0 : 1 + 0.16 * math.sin(math.pi * pop);
 
     return [
@@ -1083,6 +1088,7 @@ class _KartyPathBody extends StatelessWidget {
           _GateNode(
             ready: ready,
             dimmed: locked,
+            waiting: waiting,
             scale: s,
             onTap: () {},
           ),
@@ -1096,14 +1102,21 @@ class _KartyPathBody extends StatelessWidget {
           child: _NodeLabel(
             title: 'Pekiştirme',
             detail: '${unit.consolidatedCount}/${unit.wordCount} kelime',
-            // Bitmiş destenin etiketiyle aynı ton: açık başlık, sönük ayrıntı.
-            state: KartyStepState.done,
+            // Varılmamış kapı sıradaki deste gibi sönük başlıklı; varılmış
+            // kapı bitmiş deste gibi açık başlık, sönük ayrıntı.
+            state: waiting ? KartyStepState.upcoming : KartyStepState.done,
             alignRight: false,
             scale: s,
           ),
         ),
     ];
   }
+
+  /// Ünitenin bütün desteleri bitti (kalan adım yalnız tekrar, [KartyStep.deck]
+  /// null): patika kapıya vardı.
+  static bool _decksDone(KartyUnit unit) => unit.steps.every(
+        (step) => step.deck == null || step.state == KartyStepState.done,
+      );
 }
 
 /// Düğüm karosunun ölçüleri: `AppIconControlButton` oranları (yüz genişliği
@@ -2111,16 +2124,21 @@ class _PathNode extends StatelessWidget {
         _ => 'Sıradaki deste',
       },
       onTap: onTap,
-      child: _ToneIcon(
-        tone: lit
-            ? _IconTone.lit
-            : dimmed
-                ? _IconTone.locked
-                : _IconTone.muted,
-        child: QuestIcon(questKey: 'correct_five', size: width * 0.56 * scale),
-      ),
+      // Sırası gelmemiş deste şimşek yerine kilit taşır (19 Kas 2026,
+      // kullanıcı): ünite başlığındaki kilidin aynısı. Kilitli ünitede
+      // patikayla birlikte söner.
+      child: lit
+          ? QuestIcon(questKey: 'correct_five', size: width * 0.56 * scale)
+          : _ToneIcon(
+              tone: dimmed ? _IconTone.muted : _IconTone.lit,
+              child: KartyLockMark(size: width * _lockShare * scale),
+            ),
     );
   }
+
+  /// Kilidin düğüm genişliğine oranı: kilit şimşekten kütleli, aynı boyda
+  /// ağır durur.
+  static const _lockShare = 0.5;
 }
 
 /// Bugün henüz oynanmadıysa şu anki düğüm, Görevler'deki alınabilir ödülle
@@ -2205,18 +2223,20 @@ class _GateNode extends StatelessWidget {
     required this.dimmed,
     required this.scale,
     required this.onTap,
+    this.waiting = false,
   });
 
   final bool ready;
   final bool dimmed;
+
+  /// Ünitenin desteleri bitmedi: kapıya henüz varılmadı.
+  final bool waiting;
   final double scale;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     const width = _PathLayout.gateWidth;
-    // Hedefe ulaşan kapı geçilen düğümler gibi yeşile döner; yeşil dönüş oku
-    // yeşil yüzde kaybolacağı için yerine beyaz onay.
     return _NodeTile(
       width: width,
       scale: scale,
@@ -2224,16 +2244,23 @@ class _GateNode extends StatelessWidget {
       depth: ready ? _C.greenDepth : (dimmed ? _C.base : _C.panel),
       label: ready ? 'Ünite sonu, hedefe ulaşıldı' : 'Ünite sonu, pekiştirme',
       onTap: onTap,
+      // Hedefe ulaşan kapı geçilen düğümler gibi yeşile döner; yeşil dönüş oku
+      // yeşil yüzde kaybolacağı için yerine beyaz onay.
       child: ready
           ? KartyControlMark(
               glyph: KartyControlGlyph.check,
               size: width * 0.42 * scale,
             )
-          : _ToneIcon(
-              tone: dimmed ? _IconTone.locked : _IconTone.lit,
-              child:
-                  QuestIcon(questKey: 'review_two', size: width * 0.6 * scale),
-            ),
+          // Varılmamış kapı destelerdeki gibi yalnız kilit taşır (kullanıcı,
+          // 19 Kas 2026); kilitli ünitede patikayla birlikte söner.
+          : dimmed || waiting
+              ? _ToneIcon(
+                  tone: dimmed ? _IconTone.muted : _IconTone.lit,
+                  child: KartyLockMark(
+                    size: width * _PathNode._lockShare * scale,
+                  ),
+                )
+              : QuestIcon(questKey: 'review_two', size: width * 0.6 * scale),
     );
   }
 }
@@ -2299,8 +2326,9 @@ class _NodeTile extends StatelessWidget {
 
 enum _IconTone { lit, muted, locked }
 
-/// Henüz açılmamış düğümde aynı şimşek, lacivert yüzde sönük tonda.
-/// İki tonlu yapı korunur: beyaz `8FA0B5`'e, krem gölge orantılı iner.
+/// Simgeyi lacivert yüzde söndürür, tonlar orantılı iner (iki tonlu yapı
+/// korunur): kilitli ünitenin destelerindeki ve kapısındaki kilit (`muted`),
+/// kapalı durağın simgesi (`locked`).
 class _ToneIcon extends StatelessWidget {
   const _ToneIcon({required this.tone, required this.child});
 
