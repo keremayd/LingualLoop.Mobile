@@ -40,5 +40,26 @@
       "unitSuffix": { "type": "String" },
       "percent": { "type": "int" }
     }
-  }
+  },
+  "leagueMemberReport": "Bildir",
+  "@leagueMemberReport": {"description": "Sıralamada başka birine dokununca: kişiyi bildir (App Store 1.2)."},
+  "leagueMemberBlock": "Engelle",
+  "@leagueMemberBlock": {"description": "Sıralamada başka birine dokununca: kişiyi engelle; onay düğmesi de bu."},
+  "leagueMemberCancel": "Vazgeç",
+  "@leagueMemberCancel": {"description": "Bildir/engelle penceresini kapatır."},
+  "leagueReportTitle": "Neden bildiriyorsun?",
+  "@leagueReportTitle": {"description": "Bildirim sebebi seçimi başlığı."},
+  "leagueReportReasonName": "Uygunsuz ad",
+  "leagueReportReasonPhoto": "Uygunsuz fotoğraf",
+  "leagueReportReasonOther": "Başka bir sebep",
+  "leagueReportSent": "Bildirimin alındı, incelenecek.",
+  "@leagueReportSent": {"description": "Bildirim gönderilince çıkan mesaj."},
+  "leagueBlockTitle": "{name} engellensin mi?",
+  "@leagueBlockTitle": {"description": "Engel onayı başlığı.", "placeholders": {"name": {"type": "String"}}},
+  "leagueBlockBody": "Sıralamada artık birbirinizi görmezsiniz.",
+  "leagueBlockDone": "{name} engellendi.",
+  "@leagueBlockDone": {"description": "Engel kaydedilince çıkan mesaj.", "placeholders": {"name": {"type": "String"}}},
+  "leagueModerationFailed": "Gönderilemedi. Bağlantını kontrol edip tekrar dene.",
+  "leagueMemberOptions": "{name} için seçenekler",
+  "@leagueMemberOptions": {"description": "Ekran okuyucu: sıralamadaki satıra dokununca seçenekler açılır.", "placeholders": {"name": {"type": "String"}}}
 }

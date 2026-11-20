@@ -62,4 +62,51 @@ class AppLocalizationsSq extends AppLocalizations {
   String unitUnlockReason(int unit, String unitSuffix, int percent) {
     return 'E përforcove $percent% të Njësisë $unit.';
   }
+
+  @override
+  String get leagueMemberReport => 'Raporto';
+
+  @override
+  String get leagueMemberBlock => 'Blloko';
+
+  @override
+  String get leagueMemberCancel => 'Anulo';
+
+  @override
+  String get leagueReportTitle => 'Pse po e raporton?';
+
+  @override
+  String get leagueReportReasonName => 'Emër i papërshtatshëm';
+
+  @override
+  String get leagueReportReasonPhoto => 'Foto e papërshtatshme';
+
+  @override
+  String get leagueReportReasonOther => 'Arsye tjetër';
+
+  @override
+  String get leagueReportSent => 'Raportimi u mor dhe do të shqyrtohet.';
+
+  @override
+  String leagueBlockTitle(String name) {
+    return 'Të bllokohet $name?';
+  }
+
+  @override
+  String get leagueBlockBody =>
+      'Nuk do ta shihni më njëri-tjetrin në renditje.';
+
+  @override
+  String leagueBlockDone(String name) {
+    return '$name u bllokua.';
+  }
+
+  @override
+  String get leagueModerationFailed =>
+      'Nuk u dërgua. Kontrollo lidhjen dhe provo sërish.';
+
+  @override
+  String leagueMemberOptions(String name) {
+    return 'Opsione për $name';
+  }
 }

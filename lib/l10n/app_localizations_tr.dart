@@ -62,4 +62,50 @@ class AppLocalizationsTr extends AppLocalizations {
   String unitUnlockReason(int unit, String unitSuffix, int percent) {
     return 'Ünite $unit$unitSuffix %$percent\'ini pekiştirdin.';
   }
+
+  @override
+  String get leagueMemberReport => 'Bildir';
+
+  @override
+  String get leagueMemberBlock => 'Engelle';
+
+  @override
+  String get leagueMemberCancel => 'Vazgeç';
+
+  @override
+  String get leagueReportTitle => 'Neden bildiriyorsun?';
+
+  @override
+  String get leagueReportReasonName => 'Uygunsuz ad';
+
+  @override
+  String get leagueReportReasonPhoto => 'Uygunsuz fotoğraf';
+
+  @override
+  String get leagueReportReasonOther => 'Başka bir sebep';
+
+  @override
+  String get leagueReportSent => 'Bildirimin alındı, incelenecek.';
+
+  @override
+  String leagueBlockTitle(String name) {
+    return '$name engellensin mi?';
+  }
+
+  @override
+  String get leagueBlockBody => 'Sıralamada artık birbirinizi görmezsiniz.';
+
+  @override
+  String leagueBlockDone(String name) {
+    return '$name engellendi.';
+  }
+
+  @override
+  String get leagueModerationFailed =>
+      'Gönderilemedi. Bağlantını kontrol edip tekrar dene.';
+
+  @override
+  String leagueMemberOptions(String name) {
+    return '$name için seçenekler';
+  }
 }

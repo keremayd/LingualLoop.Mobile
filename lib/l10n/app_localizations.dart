@@ -193,6 +193,84 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Ünite {unit}{unitSuffix} %{percent}\'ini pekiştirdin.'**
   String unitUnlockReason(int unit, String unitSuffix, int percent);
+
+  /// Sıralamada başka birine dokununca: kişiyi bildir (App Store 1.2).
+  ///
+  /// In tr, this message translates to:
+  /// **'Bildir'**
+  String get leagueMemberReport;
+
+  /// Sıralamada başka birine dokununca: kişiyi engelle; onay düğmesi de bu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Engelle'**
+  String get leagueMemberBlock;
+
+  /// Bildir/engelle penceresini kapatır.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vazgeç'**
+  String get leagueMemberCancel;
+
+  /// Bildirim sebebi seçimi başlığı.
+  ///
+  /// In tr, this message translates to:
+  /// **'Neden bildiriyorsun?'**
+  String get leagueReportTitle;
+
+  /// No description provided for @leagueReportReasonName.
+  ///
+  /// In tr, this message translates to:
+  /// **'Uygunsuz ad'**
+  String get leagueReportReasonName;
+
+  /// No description provided for @leagueReportReasonPhoto.
+  ///
+  /// In tr, this message translates to:
+  /// **'Uygunsuz fotoğraf'**
+  String get leagueReportReasonPhoto;
+
+  /// No description provided for @leagueReportReasonOther.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başka bir sebep'**
+  String get leagueReportReasonOther;
+
+  /// Bildirim gönderilince çıkan mesaj.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bildirimin alındı, incelenecek.'**
+  String get leagueReportSent;
+
+  /// Engel onayı başlığı.
+  ///
+  /// In tr, this message translates to:
+  /// **'{name} engellensin mi?'**
+  String leagueBlockTitle(String name);
+
+  /// No description provided for @leagueBlockBody.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sıralamada artık birbirinizi görmezsiniz.'**
+  String get leagueBlockBody;
+
+  /// Engel kaydedilince çıkan mesaj.
+  ///
+  /// In tr, this message translates to:
+  /// **'{name} engellendi.'**
+  String leagueBlockDone(String name);
+
+  /// No description provided for @leagueModerationFailed.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderilemedi. Bağlantını kontrol edip tekrar dene.'**
+  String get leagueModerationFailed;
+
+  /// Ekran okuyucu: sıralamadaki satıra dokununca seçenekler açılır.
+  ///
+  /// In tr, this message translates to:
+  /// **'{name} için seçenekler'**
+  String leagueMemberOptions(String name);
 }
 
 class _AppLocalizationsDelegate

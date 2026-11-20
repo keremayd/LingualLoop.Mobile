@@ -14,6 +14,8 @@ import 'package:stelinda/ui/widgets/Buttons/app_icon_control_button.dart';
 import 'package:stelinda/ui/widgets/countdown_pill.dart';
 import 'package:stelinda/ui/widgets/Popups/league_info_popup.dart';
 import 'package:stelinda/ui/widgets/league_badge_mark.dart';
+import 'package:stelinda/ui/widgets/league_member_sheet.dart';
+import 'package:stelinda/Utils/AppNotifier.dart';
 import 'package:stelinda/ui/flows/league_promotion_flow.dart';
 import 'package:stelinda/ui/screens/league_promotion_screen.dart';
 import 'package:provider/provider.dart';
@@ -155,6 +157,32 @@ class _LeagueScreenState extends State<LeagueScreen>
         _isShowingPromotion = false;
       }
     });
+  }
+
+  /// Sıralamada başka birine dokununca: bildir ya da engelle (App Store 1.2).
+  Future<void> _openMember(LeagueLeaderboardEntry entry) async {
+    final action = await showLeagueMemberSheet(context, name: entry.displayName);
+    if (action == null || !mounted) return;
+    final users = context.read<UserService>();
+    final l10n = context.l10n;
+    try {
+      switch (action) {
+        case LeagueMemberReport(:final reason):
+          final sent = await users.reportUser(entry.userId, reason);
+          AppNotifier.showMessage(
+              sent ? l10n.leagueReportSent : l10n.leagueModerationFailed);
+        case LeagueMemberBlock():
+          final blocked = await users.blockUser(entry.userId);
+          if (!blocked) {
+            AppNotifier.showMessage(l10n.leagueModerationFailed);
+            return;
+          }
+          AppNotifier.showMessage(l10n.leagueBlockDone(entry.displayName));
+          if (mounted) await _refreshLeague();
+      }
+    } catch (_) {
+      AppNotifier.showMessage(l10n.leagueModerationFailed);
+    }
   }
 
   Future<void> _previewLeaguePromotion() async {
@@ -305,7 +333,17 @@ class _LeagueScreenState extends State<LeagueScreen>
             26 * scale,
             24 * scale,
           ),
-          child: _LeaderboardRow(scale: scale, entry: entry),
+          child: entry.isCurrentUser
+              ? _LeaderboardRow(scale: scale, entry: entry)
+              : Semantics(
+                  button: true,
+                  label: context.l10n.leagueMemberOptions(entry.displayName),
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => _openMember(entry),
+                    child: _LeaderboardRow(scale: scale, entry: entry),
+                  ),
+                ),
         ),
       // Sıralama yalnız **aynı lig bandındaki** kullanıcıları gösteriyor;
       // kullanıcı az olduğu sürece çoğu zaman tek kişi kalınıyor ve ekranın

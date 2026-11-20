@@ -18,5 +18,18 @@
   "pathDeck": "Pako {number}",
   "pathReview": "Përsëritje",
   "pathUnlockHint": "Hapet kur përforcohet {percent}% e Njësisë {unit}",
-  "unitUnlockReason": "E përforcove {percent}% të Njësisë {unit}."
+  "unitUnlockReason": "E përforcove {percent}% të Njësisë {unit}.",
+  "leagueMemberReport": "Raporto",
+  "leagueMemberBlock": "Blloko",
+  "leagueMemberCancel": "Anulo",
+  "leagueReportTitle": "Pse po e raporton?",
+  "leagueReportReasonName": "Emër i papërshtatshëm",
+  "leagueReportReasonPhoto": "Foto e papërshtatshme",
+  "leagueReportReasonOther": "Arsye tjetër",
+  "leagueReportSent": "Raportimi u mor dhe do të shqyrtohet.",
+  "leagueBlockTitle": "Të bllokohet {name}?",
+  "leagueBlockBody": "Nuk do ta shihni më njëri-tjetrin në renditje.",
+  "leagueBlockDone": "{name} u bllokua.",
+  "leagueModerationFailed": "Nuk u dërgua. Kontrollo lidhjen dhe provo sërish.",
+  "leagueMemberOptions": "Opsione për {name}"
 }

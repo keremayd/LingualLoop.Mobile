@@ -172,6 +172,37 @@ class UserService {
   /// hata fırlatır. Apple ile bağlı hesapta sunucu önce Apple'ın yetki
   /// kodunu ister ([AccountDeletionResult.appleConsentRequired]); kod
   /// [appleAuthorizationCode] ile gider. Akış `deleteAccountWithAppleConsent`.
+  /// Sıralamadaki birini engeller (App Store 1.2). Sunucu engeli iki yönlü
+  /// uygular: ikisi de birbirini sıralamada görmez.
+  Future<bool> blockUser(String blockedUserId) async {
+    final userId = await _storage.read(key: 'userId');
+    if (userId == null || userId.isEmpty) return false;
+    final response = await _dio.post(
+      'users/$userId/blocks',
+      data: {'blockedUserId': blockedUserId},
+    );
+    final data = response.data is Map ? response.data['data'] : null;
+    return response.statusCode == 200 && data is Map && data['blocked'] == true;
+  }
+
+  /// Sıralamadaki birini bildirir; sebep name, photo ya da other.
+  Future<bool> reportUser(String reportedUserId, String reason) async {
+    final userId = await _storage.read(key: 'userId');
+    if (userId == null || userId.isEmpty) return false;
+    final response = await _dio.post(
+      'users/$userId/reports',
+      data: {
+        'reportedUserId': reportedUserId,
+        'reason': reason,
+        'context': 'league',
+      },
+    );
+    final data = response.data is Map ? response.data['data'] : null;
+    return response.statusCode == 200 &&
+        data is Map &&
+        data['reported'] == true;
+  }
+
   Future<AccountDeletionResult> deleteAccount({
     String? appleAuthorizationCode,
     bool skipAppleRevocation = false,
