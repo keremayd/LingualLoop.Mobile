@@ -50,10 +50,10 @@ final RouteObserver<ModalRoute<void>> routeObserver =
 
 String get apiBaseUrl {
   if (Platform.isAndroid) {
-    return 'http://10.0.2.2:5213/ll-api/';
+    return 'http://10.0.2.2:5213/api/';
   }
 
-  return 'http://localhost:5214/ll-api/';
+  return 'http://localhost:5214/api/';
 }
 
 Future<void> main() async {

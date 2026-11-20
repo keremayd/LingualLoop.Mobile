@@ -62,7 +62,7 @@ Map<String, String> _session() => {
     };
 
 Dio _dioWith(int Function(RequestOptions) status, {required Dio retry}) {
-  final dio = Dio(BaseOptions(baseUrl: 'http://localhost/ll-api/'));
+  final dio = Dio(BaseOptions(baseUrl: 'http://localhost/api/'));
   dio.httpClientAdapter = _Adapter(status);
   dio.interceptors.add(TokenInterceptor(AuthService(dio), retryClient: retry));
   return dio;

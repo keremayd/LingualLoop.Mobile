@@ -74,7 +74,7 @@ void main() {
   testWidgets('Apple kimliği nonce ile sunucuya gider, oturum açılır',
       (tester) async {
     final server = _Server();
-    final dio = Dio(BaseOptions(baseUrl: 'http://localhost/ll-api/'))
+    final dio = Dio(BaseOptions(baseUrl: 'http://localhost/api/'))
       ..httpClientAdapter = server;
     String? nonceToApple;
     final auth = AuthService(dio, appleCredential: (hashedNonce) async {
@@ -110,7 +110,7 @@ void main() {
 
   testWidgets('Apple penceresi kapatılınca sunucuya gidilmez', (tester) async {
     final server = _Server();
-    final dio = Dio(BaseOptions(baseUrl: 'http://localhost/ll-api/'))
+    final dio = Dio(BaseOptions(baseUrl: 'http://localhost/api/'))
       ..httpClientAdapter = server;
     final auth = AuthService(dio,
         appleCredential: (_) async => throw const SignInWithAppleAuthorizationException(

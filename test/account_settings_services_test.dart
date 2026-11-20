@@ -42,7 +42,7 @@ class _Server implements HttpClientAdapter {
 /// `TokenInterceptor` 401 dışındaki hataları yanıt olarak döndürüyor; burada
 /// aynısını `validateStatus` yapıyor.
 UserService _service(_Server server) => UserService(Dio(BaseOptions(
-      baseUrl: 'http://localhost/ll-api/',
+      baseUrl: 'http://localhost/api/',
       validateStatus: (_) => true,
     ))
       ..httpClientAdapter = server);

@@ -87,7 +87,7 @@ void main() {
     FlutterSecureStorage.setMockInitialValues(
         {'accessToken': 'eski', 'refreshToken': 'yenileme'});
     final adapter = _ExpiredTokenAdapter();
-    final dio = Dio(BaseOptions(baseUrl: 'http://localhost/ll-api/'))
+    final dio = Dio(BaseOptions(baseUrl: 'http://localhost/api/'))
       ..httpClientAdapter = adapter;
     final retry = Dio()..httpClientAdapter = adapter;
     dio.interceptors
@@ -106,7 +106,7 @@ void main() {
 
   test('oturum anahtarı her isteğe interceptor\'dan eklenir', () async {
     FlutterSecureStorage.setMockInitialValues({'accessToken': 'anahtar'});
-    final dio = Dio(BaseOptions(baseUrl: 'http://localhost/ll-api/'));
+    final dio = Dio(BaseOptions(baseUrl: 'http://localhost/api/'));
     final adapter = _RecordingAdapter();
     dio.httpClientAdapter = adapter;
     dio.interceptors.add(TokenInterceptor(AuthService(dio)));
@@ -120,7 +120,7 @@ void main() {
 
   test('giriş, kayıt ve yenileme isteğine anahtar eklenmez', () async {
     FlutterSecureStorage.setMockInitialValues({'accessToken': 'anahtar'});
-    final dio = Dio(BaseOptions(baseUrl: 'http://localhost/ll-api/'));
+    final dio = Dio(BaseOptions(baseUrl: 'http://localhost/api/'));
     final adapter = _RecordingAdapter();
     dio.httpClientAdapter = adapter;
     dio.interceptors.add(TokenInterceptor(AuthService(dio)));
@@ -135,7 +135,7 @@ void main() {
   });
 
   test('yanlış girişin 401 yanıtı token yenilemeye gönderilmez', () async {
-    final dio = Dio(BaseOptions(baseUrl: 'http://localhost/ll-api/'));
+    final dio = Dio(BaseOptions(baseUrl: 'http://localhost/api/'));
     dio.httpClientAdapter = _UnauthorizedAdapter();
     dio.interceptors.add(TokenInterceptor(AuthService(dio)));
 
