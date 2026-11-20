@@ -9,6 +9,15 @@ enum AuthSocialProvider { google, apple }
 /// sunucu ayarı gerekiyor, App Store şartı da iOS için.
 bool get appleSignInShown => defaultTargetPlatform == TargetPlatform.iOS;
 
+/// Google Cloud'daki iOS OAuth istemcisinin kimliği. iOS'ta Google ile giriş
+/// bu kimlikle çalışır; Info.plist'e de tersine çevrilmiş kimlik URL şeması
+/// olarak eklenmeli. Boşken iOS'ta Google düğmesi gösterilmez: yarım kalmış
+/// bir giriş yolu App Store incelemesinde takılır.
+const kGoogleIosClientId = '';
+
+bool get googleSignInShown =>
+    defaultTargetPlatform != TargetPlatform.iOS || kGoogleIosClientId.isNotEmpty;
+
 class AuthSocialButton extends StatelessWidget {
   const AuthSocialButton({
     super.key,
@@ -33,9 +42,9 @@ class AuthSocialButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final assetPath = provider == AuthSocialProvider.google
-        ? 'assets/icons/google-logo.png'
-        : 'assets/icons/apple-logo.png';
+    final apple = provider == AuthSocialProvider.apple;
+    final assetPath =
+        apple ? 'assets/icons/apple-logo.png' : 'assets/icons/google-logo.png';
 
     return Semantics(
       label: label,
@@ -44,8 +53,11 @@ class AuthSocialButton extends StatelessWidget {
         height: size,
         radius: radius,
         shadowOffset: 0,
-        backgroundColor: const Color(0xFF163258),
-        shadowColor: const Color(0xFF0B2143),
+        // Apple'ın kuralı: Apple ile giriş düğmesi siyah zeminde beyaz logo
+        // (ya da tersi). Palet dışı; kullanıcı onayıyla (21 Kas 2026).
+        backgroundColor:
+            apple ? const Color(0xFF000000) : const Color(0xFF163258),
+        shadowColor: apple ? const Color(0xFF000000) : const Color(0xFF0B2143),
         fontSize: 0,
         enabled: enabled,
         onPressed: onPressed,
@@ -62,9 +74,7 @@ class AuthSocialButton extends StatelessWidget {
                 width: iconSize,
                 height: iconSize,
                 fit: BoxFit.contain,
-                color: provider == AuthSocialProvider.apple
-                    ? const Color(0xFFE9EEF5)
-                    : null,
+                color: apple ? const Color(0xFFFFFFFF) : null,
               ),
       ),
     );

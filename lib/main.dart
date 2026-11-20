@@ -6,7 +6,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'
-    show LicenseRegistry, LicenseEntryWithLineBreaks;
+    show LicenseRegistry, LicenseEntryWithLineBreaks, kReleaseMode;
 import 'package:flutter/services.dart' show SystemUiOverlayStyle, rootBundle;
 import 'package:stelinda/providers/BadgeProvider.dart';
 import 'package:stelinda/providers/ArticlePracticeProvider.dart';
@@ -48,7 +48,19 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 final RouteObserver<ModalRoute<void>> routeObserver =
     RouteObserver<ModalRoute<void>>();
 
+/// Sunucu adresi. Yayın derlemesi canlı sunucuya gider, geliştirme derlemesi
+/// yerel sunucuya; `--dart-define=API_BASE_URL=...` ikisini de ezer (ör.
+/// geliştirmede canlı sunucuyu denemek).
+const _apiBaseUrlOverride = String.fromEnvironment('API_BASE_URL');
+
+/// Canlı sunucunun adresi (Cloud Run). Yayına alınınca yazılır.
+const productionApiBaseUrl = '';
+
 String get apiBaseUrl {
+  if (_apiBaseUrlOverride.isNotEmpty) return _apiBaseUrlOverride;
+  if (kReleaseMode && productionApiBaseUrl.isNotEmpty) {
+    return productionApiBaseUrl;
+  }
   if (Platform.isAndroid) {
     return 'http://10.0.2.2:5213/api/';
   }

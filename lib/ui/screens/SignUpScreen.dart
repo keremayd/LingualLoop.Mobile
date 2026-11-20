@@ -471,8 +471,9 @@ class _SignUpScreenState extends State<SignUpScreen>
                         ),
                       ),
                     ),
+                    if (googleSignInShown)
                     Positioned(
-                      // Apple yokken Google iki düğmenin ortasına oturur.
+                      // Yalnız biri gösterilince iki düğmenin ortasına oturur.
                       left: (appleSignInShown ? 211 : 297.5) * scale,
                       top: 1030 * scale + errorOffset,
                       child: AuthSocialButton(
@@ -488,7 +489,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                     ),
                     if (appleSignInShown)
                       Positioned(
-                        left: 384 * scale,
+                        left: (googleSignInShown ? 384 : 297.5) * scale,
                         top: 1030 * scale + errorOffset,
                         child: AuthSocialButton(
                           provider: AuthSocialProvider.apple,

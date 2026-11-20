@@ -43,7 +43,12 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
 
   Future<void> _pickImageAndUpload() async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    // Konum gibi üst veriler gerekmiyor; böylece iOS fotoğraf erişimi izni
+    // sormaz, seçici yalnız seçilen fotoğrafı verir.
+    final pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      requestFullMetadata: false,
+    );
 
     if (pickedFile == null) return;
 

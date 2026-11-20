@@ -19,10 +19,26 @@ import 'package:provider/provider.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:crypto/crypto.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:stelinda/ui/widgets/Buttons/auth_social_button.dart'
+    show kGoogleIosClientId;
 
 
 import '../models/User.dart';
 import '../ui/screens/login_screen.dart';
+
+/// `TokenInterceptor` 401 dışındaki hataları yanıt olarak döndürüyor; hata
+/// koduna göre mesaj gösteren ekranlar (kayıt: e-posta zaten kayıtlı, şifre
+/// kuralı) hatayı ancak `DioError` olarak görebiliyor. Başarısız yanıtı
+/// yeniden hataya çevirir.
+void ensureSuccess(Response response) {
+  final status = response.statusCode ?? 0;
+  if (status >= 200 && status < 300) return;
+  throw DioError(
+    requestOptions: response.requestOptions,
+    response: response,
+    type: DioErrorType.response,
+  );
+}
 
 /// Apple'ın giriş penceresini açar; verilen nonce özeti token'a gömülür.
 typedef AppleCredentialRequest = Future<AuthorizationCredentialAppleID>
@@ -205,6 +221,11 @@ class AuthService {
         'openid',
       ],
       serverClientId: '719006594337-6sdf908onisvp355mrpls5jecr4ssake.apps.googleusercontent.com', // Buraya web istemci kimliğini girin
+      // iOS'ta Google kendi istemci kimliğini ister (Android'de paket adı ve
+      // SHA-1 yeter).
+      clientId: Platform.isIOS && kGoogleIosClientId.isNotEmpty
+          ? kGoogleIosClientId
+          : null,
     );
 
     final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
@@ -359,6 +380,7 @@ class AuthService {
         contentType: "multipart/form-data",
       ),
     );
+    ensureSuccess(response);
 
     return ApiResponse<Map<String, dynamic>>.fromJson(
       response.data,
