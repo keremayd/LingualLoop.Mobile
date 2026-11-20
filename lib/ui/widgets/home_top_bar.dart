@@ -36,6 +36,7 @@ class HomeTopBar extends StatelessWidget {
     required this.scale,
     required this.tickets,
     required this.maxTickets,
+    this.ticketsUnlimited = false,
     required this.streakDays,
     required this.playedToday,
     this.onTicketsTap,
@@ -49,6 +50,9 @@ class HomeTopBar extends StatelessWidget {
 
   /// Bilet tavanı (`maxLives`); yüklenmediyse 0 ve kesir çizilmez.
   final int maxTickets;
+
+  /// Premium üye: bilet sayacı ∞.
+  final bool ticketsUnlimited;
 
   /// Bilet simgesinin yeri: harcanan bilet buradan kalkar.
   final GlobalKey? ticketIconKey;
@@ -104,6 +108,7 @@ class HomeTopBar extends StatelessWidget {
             scale: scale,
             count: tickets,
             max: maxTickets,
+            unlimited: ticketsUnlimited,
             ticketWidth: 80,
             numberSize: _numberSize,
             iconKey: ticketIconKey,

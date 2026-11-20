@@ -172,6 +172,19 @@ class UserService {
   /// hata fırlatır. Apple ile bağlı hesapta sunucu önce Apple'ın yetki
   /// kodunu ister ([AccountDeletionResult.appleConsentRequired]); kod
   /// [appleAuthorizationCode] ile gider. Akış `deleteAccountWithAppleConsent`.
+  /// App Store işlemini (StoreKit 2 JWS) sunucuya doğrulatır; premium
+  /// etkinse true.
+  Future<bool> verifyApplePurchase(String signedTransaction) async {
+    final response = await _dio.post(
+      'premium/apple',
+      data: {'signedTransaction': signedTransaction},
+    );
+    final data = response.data is Map ? response.data['data'] : null;
+    return response.statusCode == 200 &&
+        data is Map &&
+        data['isPremium'] == true;
+  }
+
   /// Sıralamadaki birini engeller (App Store 1.2). Sunucu engeli iki yönlü
   /// uygular: ikisi de birbirini sıralamada görmez.
   Future<bool> blockUser(String blockedUserId) async {

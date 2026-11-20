@@ -271,6 +271,72 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'{name} için seçenekler'**
   String leagueMemberOptions(String name);
+
+  /// Premium ürünleri App Store'dan alınamayınca.
+  ///
+  /// In tr, this message translates to:
+  /// **'Mağazaya şu an ulaşılamıyor. Biraz sonra tekrar dene.'**
+  String get premiumStoreUnavailable;
+
+  /// No description provided for @premiumWelcome.
+  ///
+  /// In tr, this message translates to:
+  /// **'Premium\'a hoş geldin! Biletlerin artık sınırsız.'**
+  String get premiumWelcome;
+
+  /// No description provided for @premiumPurchaseFailed.
+  ///
+  /// In tr, this message translates to:
+  /// **'Satın alma tamamlanamadı. Tekrar dene.'**
+  String get premiumPurchaseFailed;
+
+  /// Ask to Buy gibi onay bekleyen satın alma.
+  ///
+  /// In tr, this message translates to:
+  /// **'Satın alma onay bekliyor; onaylanınca Premium açılır.'**
+  String get premiumPurchasePending;
+
+  /// No description provided for @premiumNothingToRestore.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geri yüklenecek etkin bir abonelik bulunamadı.'**
+  String get premiumNothingToRestore;
+
+  /// No description provided for @premiumActiveTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Premium üyeliğin aktif'**
+  String get premiumActiveTitle;
+
+  /// No description provided for @premiumActiveBody.
+  ///
+  /// In tr, this message translates to:
+  /// **'Biletlerin sınırsız, seri korumaların her hafta ikiye dolar.'**
+  String get premiumActiveBody;
+
+  /// No description provided for @premiumManage.
+  ///
+  /// In tr, this message translates to:
+  /// **'ABONELİĞİ YÖNET'**
+  String get premiumManage;
+
+  /// No description provided for @premiumActiveClose.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapat'**
+  String get premiumActiveClose;
+
+  /// No description provided for @premiumManageFailed.
+  ///
+  /// In tr, this message translates to:
+  /// **'Abonelik sayfası açılamadı. Tekrar dene.'**
+  String get premiumManageFailed;
+
+  /// Ekran okuyucu: premium üyenin bilet sayacı (∞).
+  ///
+  /// In tr, this message translates to:
+  /// **'Sınırsız bilet'**
+  String get ticketsUnlimited;
 }
 
 class _AppLocalizationsDelegate

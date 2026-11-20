@@ -50,6 +50,12 @@ class ScoreWithLivesResponse {
   @JsonKey(defaultValue: <DailyActivityDay>[])
   List<DailyActivityDay> streakWeek;
 
+  /// Premium üyenin bileti sınırsız; sunucu oyuna girerken bilet düşmez.
+  @JsonKey(defaultValue: false)
+  bool isPremium;
+
+  DateTime? premiumUntil;
+
   ScoreWithLivesResponse({
     required this.score,
     required this.experience,
@@ -62,6 +68,8 @@ class ScoreWithLivesResponse {
     this.freezeCount = 0,
     this.playedToday = false,
     this.streakWeek = const <DailyActivityDay>[],
+    this.isPremium = false,
+    this.premiumUntil,
   });
 
   factory ScoreWithLivesResponse.fromJson(Map<String, dynamic> json) =>

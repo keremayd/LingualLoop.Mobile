@@ -61,5 +61,19 @@
   "@leagueBlockDone": {"description": "Engel kaydedilince çıkan mesaj.", "placeholders": {"name": {"type": "String"}}},
   "leagueModerationFailed": "Gönderilemedi. Bağlantını kontrol edip tekrar dene.",
   "leagueMemberOptions": "{name} için seçenekler",
-  "@leagueMemberOptions": {"description": "Ekran okuyucu: sıralamadaki satıra dokununca seçenekler açılır.", "placeholders": {"name": {"type": "String"}}}
+  "@leagueMemberOptions": {"description": "Ekran okuyucu: sıralamadaki satıra dokununca seçenekler açılır.", "placeholders": {"name": {"type": "String"}}},
+  "premiumStoreUnavailable": "Mağazaya şu an ulaşılamıyor. Biraz sonra tekrar dene.",
+  "@premiumStoreUnavailable": {"description": "Premium ürünleri App Store'dan alınamayınca."},
+  "premiumWelcome": "Premium'a hoş geldin! Biletlerin artık sınırsız.",
+  "premiumPurchaseFailed": "Satın alma tamamlanamadı. Tekrar dene.",
+  "premiumPurchasePending": "Satın alma onay bekliyor; onaylanınca Premium açılır.",
+  "@premiumPurchasePending": {"description": "Ask to Buy gibi onay bekleyen satın alma."},
+  "premiumNothingToRestore": "Geri yüklenecek etkin bir abonelik bulunamadı.",
+  "premiumActiveTitle": "Premium üyeliğin aktif",
+  "premiumActiveBody": "Biletlerin sınırsız, seri korumaların her hafta ikiye dolar.",
+  "premiumManage": "ABONELİĞİ YÖNET",
+  "premiumActiveClose": "Kapat",
+  "premiumManageFailed": "Abonelik sayfası açılamadı. Tekrar dene.",
+  "ticketsUnlimited": "Sınırsız bilet",
+  "@ticketsUnlimited": {"description": "Ekran okuyucu: premium üyenin bilet sayacı (∞)."}
 }

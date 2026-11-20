@@ -108,4 +108,42 @@ class AppLocalizationsTr extends AppLocalizations {
   String leagueMemberOptions(String name) {
     return '$name için seçenekler';
   }
+
+  @override
+  String get premiumStoreUnavailable =>
+      'Mağazaya şu an ulaşılamıyor. Biraz sonra tekrar dene.';
+
+  @override
+  String get premiumWelcome =>
+      'Premium\'a hoş geldin! Biletlerin artık sınırsız.';
+
+  @override
+  String get premiumPurchaseFailed => 'Satın alma tamamlanamadı. Tekrar dene.';
+
+  @override
+  String get premiumPurchasePending =>
+      'Satın alma onay bekliyor; onaylanınca Premium açılır.';
+
+  @override
+  String get premiumNothingToRestore =>
+      'Geri yüklenecek etkin bir abonelik bulunamadı.';
+
+  @override
+  String get premiumActiveTitle => 'Premium üyeliğin aktif';
+
+  @override
+  String get premiumActiveBody =>
+      'Biletlerin sınırsız, seri korumaların her hafta ikiye dolar.';
+
+  @override
+  String get premiumManage => 'ABONELİĞİ YÖNET';
+
+  @override
+  String get premiumActiveClose => 'Kapat';
+
+  @override
+  String get premiumManageFailed => 'Abonelik sayfası açılamadı. Tekrar dene.';
+
+  @override
+  String get ticketsUnlimited => 'Sınırsız bilet';
 }

@@ -8,6 +8,8 @@ import 'package:stelinda/providers/ProfileLearningStatsProvider.dart';
 import 'package:stelinda/providers/QuestsProvider.dart';
 import 'package:stelinda/providers/ScoreWithLivesProvider.dart';
 import 'package:stelinda/services/UserService.dart';
+import 'package:stelinda/services/premium_store.dart';
+import 'package:stelinda/ui/widgets/premium_active_sheet.dart';
 import 'package:stelinda/ui/screens/premium_screen.dart';
 import 'package:stelinda/ui/widgets/Popups/out_of_tickets_popup.dart';
 import 'package:stelinda/ui/widgets/ticket_spend_scene.dart';
@@ -34,8 +36,12 @@ Future<bool> spendTicketForGame(
   // Sayaç dokunur dokunmaz düşer ve sahne başlar, sunucu beklenmez;
   // reddedilirse sahne kalkar, sayaç geri gelir.
   final before = scoreProvider.scoreWithLives?.lives ?? 0;
-  final entrance = before > 0 ? playEntrance() : null;
-  if (before > 0) scoreProvider.setLives(before - 1);
+  // Premium üyenin bileti sınırsız: sahne yok, sayaç düşmez; sunucu da
+  // bilet harcamaz (süresi bittiyse harcar, sayaç yanıttan düzelir).
+  final premium = scoreProvider.scoreWithLives?.isPremium ?? false;
+  final spends = !premium && before > 0;
+  final entrance = spends ? playEntrance() : null;
+  if (spends) scoreProvider.setLives(before - 1);
 
   final ApiResponse<UpdateLivesResponse> apiResponse;
   try {
@@ -96,9 +102,11 @@ Future<bool> spendTicketForGame(
     reviewAvailable: reviewAvailable,
     onGoToReview: onGoToReview,
     onGoToQuests: onGoToQuests,
-    onGoPremium: () {
-      if (context.mounted) PremiumScreen.open(context);
-    },
+    onGoPremium: PremiumStore.supported
+        ? () {
+            if (context.mounted) PremiumScreen.open(context);
+          }
+        : null,
   );
   return false;
 }
@@ -114,6 +122,9 @@ Future<void> showTicketStatus(
 }) {
   final userService = Provider.of<UserService>(context, listen: false);
   final scoreProvider = context.read<ScoreWithLivesProvider>();
+  if (scoreProvider.scoreWithLives?.isPremium ?? false) {
+    return showPremiumActiveSheet(context);
+  }
   final questsProvider = context.read<QuestsProvider>();
   final profileStatsProvider = context.read<ProfileLearningStatsProvider>();
 
@@ -147,8 +158,10 @@ Future<void> showTicketStatus(
     },
     onGoToReview: onGoToReview,
     onGoToQuests: onGoToQuests,
-    onGoPremium: () {
-      if (context.mounted) PremiumScreen.open(context);
-    },
+    onGoPremium: PremiumStore.supported
+        ? () {
+            if (context.mounted) PremiumScreen.open(context);
+          }
+        : null,
   );
 }

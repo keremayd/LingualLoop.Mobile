@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:stelinda/ui/widgets/Buttons/app_button_style.dart';
 import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/services/premium_store.dart';
 import 'package:stelinda/ui/widgets/nav_marks.dart';
 import 'package:stelinda/ui/widgets/premium_ticket_mark.dart';
 import 'package:stelinda/ui/widgets/quest_flag_mark.dart';
@@ -67,8 +68,9 @@ class AppBottomNavBar extends StatelessWidget {
                     (size) => QuestFlagMark(size: size), 1, 'Görevler', scale),
                 // Bilet kare değil (en/boy 1,56): kare ikonlarla aynı ağırlıkta
                 // dursun diye biraz geniş.
-                _item((size) => PremiumTicketMark(width: size * 1.2), 4,
-                    'Premium', scale),
+                if (PremiumStore.supported)
+                  _item((size) => PremiumTicketMark(width: size * 1.2), 4,
+                      'Premium', scale),
                 _item((size) => NavMark(kind: NavMarkKind.profile, size: size),
                     3, 'Profil', scale),
               ],

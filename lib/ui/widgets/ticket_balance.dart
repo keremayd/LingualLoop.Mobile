@@ -1,3 +1,4 @@
+import 'package:stelinda/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:stelinda/ui/app_typography.dart';
 
@@ -19,6 +20,7 @@ class TicketBalance extends StatelessWidget {
     required this.numberSize,
     this.iconKey,
     this.rolling = false,
+    this.unlimited = false,
   });
 
   final double scale;
@@ -45,6 +47,9 @@ class TicketBalance extends StatelessWidget {
   /// Sayı değişince yenisine kayarak döner: azalırken düşer, artarken
   /// yükselir. Ana ekranda bedel yolda yazmadığı için harcamayı bu söylüyor.
   final bool rolling;
+
+  /// Premium üye: sayı yerine ∞, tavan yazılmaz.
+  final bool unlimited;
 
   /// Kalınlık bandı: §2.6 `yildiz` taşının koyusu, ödül biletlerinin
   /// sönük tonu (§5 "Sönükten parlağa").
@@ -105,11 +110,15 @@ class TicketBalance extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           children: [
-            if (rolling)
+            if (unlimited)
+              Text('∞',
+                  style: number,
+                  semanticsLabel: context.l10n.ticketsUnlimited)
+            else if (rolling)
               _RollingCount(value: count, style: number)
             else
               Text('$count', style: number),
-            if (max > 0)
+            if (max > 0 && !unlimited)
               Text(
                 '/$max',
                 style: TextStyle(

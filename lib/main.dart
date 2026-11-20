@@ -39,6 +39,7 @@ import 'package:stelinda/ui/widgets/NavbarWidget.dart';
 import 'ui/screens/login_screen.dart';
 import 'package:dio/dio.dart';
 import 'TokenInterceptor.dart';
+import 'package:stelinda/services/premium_store.dart';
 import 'package:provider/provider.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -113,6 +114,28 @@ Future<void> main() async {
             final dio = context.read<Dio>();
             return UserService(dio);
           },
+        ),
+        // Satın almalar uygulama açılır açılmaz dinlenir: yarım kalan ya da
+        // yenilenen işlemler de sunucuya gider.
+        Provider<PremiumStore>(
+          lazy: false,
+          create: (context) {
+            final store = PremiumStore(
+              verify: context.read<UserService>().verifyApplePurchase,
+            )..start();
+            store.results
+                .where((result) => result == PremiumPurchaseResult.success)
+                .listen((_) {
+              final current = navigatorKey.currentContext;
+              if (current == null) return;
+              current
+                  .read<UserService>()
+                  .scoreWithLivesById(current)
+                  .then((_) {}, onError: (_) {});
+            });
+            return store;
+          },
+          dispose: (_, store) => store.dispose(),
         ),
         // Telaffuz oynatıcısı uygulama ömrü boyunca tek: her ekranda yenisi
         // kurulsaydı sesler çakışır ve bellekte oynatıcı birikirdi.

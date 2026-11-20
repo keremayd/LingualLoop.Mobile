@@ -31,5 +31,16 @@
   "leagueBlockBody": "Nuk do ta shihni më njëri-tjetrin në renditje.",
   "leagueBlockDone": "{name} u bllokua.",
   "leagueModerationFailed": "Nuk u dërgua. Kontrollo lidhjen dhe provo sërish.",
-  "leagueMemberOptions": "Opsione për {name}"
+  "leagueMemberOptions": "Opsione për {name}",
+  "premiumStoreUnavailable": "Dyqani nuk arrihet tani. Provo sërish pak më vonë.",
+  "premiumWelcome": "Mirë se erdhe në Premium! Biletat e tua tani janë të pakufizuara.",
+  "premiumPurchaseFailed": "Blerja nuk u përfundua. Provo sërish.",
+  "premiumPurchasePending": "Blerja pret miratim; Premium hapet pasi të miratohet.",
+  "premiumNothingToRestore": "Nuk u gjet asnjë abonim aktiv për t'u rikthyer.",
+  "premiumActiveTitle": "Anëtarësimi Premium është aktiv",
+  "premiumActiveBody": "Biletat janë të pakufizuara, mbrojtjet e serisë mbushen në dy çdo javë.",
+  "premiumManage": "MENAXHO ABONIMIN",
+  "premiumActiveClose": "Mbyll",
+  "premiumManageFailed": "Faqja e abonimit nuk u hap. Provo sërish.",
+  "ticketsUnlimited": "Bileta të pakufizuara"
 }

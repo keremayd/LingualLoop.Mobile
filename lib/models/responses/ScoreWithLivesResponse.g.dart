@@ -28,6 +28,10 @@ ScoreWithLivesResponse _$ScoreWithLivesResponseFromJson(
               ?.map((e) => DailyActivityDay.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      isPremium: json['isPremium'] as bool? ?? false,
+      premiumUntil: json['premiumUntil'] == null
+          ? null
+          : DateTime.parse(json['premiumUntil'] as String),
     );
 
 Map<String, dynamic> _$ScoreWithLivesResponseToJson(
@@ -44,4 +48,6 @@ Map<String, dynamic> _$ScoreWithLivesResponseToJson(
       'freezeCount': instance.freezeCount,
       'playedToday': instance.playedToday,
       'streakWeek': instance.streakWeek,
+      'isPremium': instance.isPremium,
+      'premiumUntil': instance.premiumUntil?.toIso8601String(),
     };

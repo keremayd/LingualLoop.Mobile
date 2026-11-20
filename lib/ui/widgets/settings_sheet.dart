@@ -4,6 +4,7 @@ import 'package:stelinda/l10n/l10n.dart';
 import 'package:stelinda/services/GameFeedbackService.dart';
 import 'package:stelinda/services/PronunciationService.dart';
 import 'package:stelinda/services/account_deletion.dart';
+import 'package:stelinda/services/premium_store.dart';
 import 'package:stelinda/ui/app_typography.dart';
 import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:stelinda/ui/widgets/Buttons/secondary_action_button.dart';
@@ -180,9 +181,11 @@ class SettingsSheetPanel extends StatelessWidget {
                   row('Gizlilik politikası', SettingsAction.privacy,
                       opens: true),
                   SizedBox(height: 40 * s),
-                  row('Aboneliği yönet', SettingsAction.manageSubscription,
-                      opens: true),
-                  SizedBox(height: 18 * s),
+                  if (PremiumStore.supported) ...[
+                    row('Aboneliği yönet', SettingsAction.manageSubscription,
+                        opens: true),
+                    SizedBox(height: 18 * s),
+                  ],
                   row('Çıkış yap', SettingsAction.signOut),
                   SizedBox(height: 18 * s),
                   // Kalıcı eylem düğme yüzü almaz, en altta kırmızı bağlantıdır;

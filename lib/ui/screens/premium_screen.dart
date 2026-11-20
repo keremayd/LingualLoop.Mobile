@@ -1,5 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:stelinda/Utils/AppNotifier.dart';
+import 'package:stelinda/l10n/l10n.dart';
+import 'package:stelinda/providers/ScoreWithLivesProvider.dart';
+import 'package:stelinda/services/premium_store.dart';
+import 'package:stelinda/ui/widgets/premium_active_sheet.dart';
 import 'package:stelinda/ui/app_typography.dart';
 import 'package:stelinda/ui/screens/legal_document_screen.dart';
 import 'package:stelinda/ui/widgets/Buttons/app_button_style.dart';
@@ -77,28 +84,73 @@ class PremiumScreen extends StatefulWidget {
   /// Premium akışını tam ekran açar: alt menüdeki ∞ bilet ve bilet bitti
   /// penceresi. Alt menü ekranın altında kalır; çarpı kullanıcıyı kaldığı
   /// ekrana döndürür. Seri koruması girişi (`PremiumEntry.streak`) sonra.
-  /// Mağaza bağlantısı (Apple Developer onayı, StoreKit) gelene kadar fiyatlar
-  /// yer tutucu, satın alma ve geri yükleme yalnız haber verir.
+  /// Fiyatlar App Store'dan gelir (`PremiumStore`); mağazaya ulaşılamazsa
+  /// ekran açılmaz. Premium üyeye satış ekranı yerine üyelik penceresi açılır.
+  /// Satın alma ya da geri yükleme sunucuda doğrulanınca ekran kapanır.
   static Future<void> open(
     BuildContext context, {
     PremiumEntry entry = PremiumEntry.tickets,
-  }) {
-    void soon() => AppNotifier.showMessage(
-          'Satın alma yakında açılacak.',
-          color: const Color(0xFF163258),
-        );
-    return Navigator.of(context).push(MaterialPageRoute<void>(
+  }) async {
+    if (context.read<ScoreWithLivesProvider>().scoreWithLives?.isPremium ??
+        false) {
+      await showPremiumActiveSheet(context);
+      return;
+    }
+    final store = context.read<PremiumStore>();
+    final l10n = context.l10n;
+    final offer = await store.loadOffer();
+    if (!context.mounted) return;
+    if (offer == null) {
+      AppNotifier.showMessage(l10n.premiumStoreUnavailable);
+      return;
+    }
+
+    final navigator = Navigator.of(context);
+    Timer? restoreWait;
+    late final MaterialPageRoute<void> route;
+    final results = store.results.listen((result) {
+      restoreWait?.cancel();
+      switch (result) {
+        case PremiumPurchaseResult.success:
+          if (route.isCurrent) {
+            navigator.pop();
+          } else if (route.isActive) {
+            navigator.removeRoute(route);
+          }
+          AppNotifier.showMessage(l10n.premiumWelcome);
+        case PremiumPurchaseResult.failed:
+          AppNotifier.showMessage(l10n.premiumPurchaseFailed);
+        case PremiumPurchaseResult.pending:
+          AppNotifier.showMessage(l10n.premiumPurchasePending);
+        case PremiumPurchaseResult.canceled:
+          break;
+      }
+    });
+    route = MaterialPageRoute<void>(
       fullscreenDialog: true,
       builder: (context) => PremiumScreen(
-        offer: placeholderOffer,
+        offer: offer,
         entry: entry,
-        onPurchase: (_) => soon(),
-        onRestore: soon,
+        onPurchase: (plan) async {
+          if (!await store.buy(plan)) {
+            AppNotifier.showMessage(l10n.premiumPurchaseFailed);
+          }
+        },
+        onRestore: () async {
+          await store.restore();
+          // Etkin abonelik yoksa StoreKit hiçbir şey döndürmez.
+          restoreWait?.cancel();
+          restoreWait = Timer(const Duration(seconds: 8),
+              () => AppNotifier.showMessage(l10n.premiumNothingToRestore));
+        },
         onTerms: () => LegalDocumentScreen.open(context, LegalDocument.terms),
         onPrivacy: () =>
             LegalDocumentScreen.open(context, LegalDocument.privacy),
       ),
-    ));
+    );
+    await navigator.push(route);
+    restoreWait?.cancel();
+    await results.cancel();
   }
 
   /// Yer tutucu fiyatlar. Gerçekleri App Store Connect'ten, mağazanın
@@ -211,10 +263,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
                                       'Planını seç',
                                       style: _title(s, Colors.white),
                                     ),
-                                    Text(
-                                      '${offer.trialDays} gün ücretsiz',
-                                      style: _title(s, _green),
-                                    ),
+                                    if (offer.trialDays > 0)
+                                      Text(
+                                        '${offer.trialDays} gün ücretsiz',
+                                        style: _title(s, _green),
+                                      ),
                                     SizedBox(height: 10 * s),
                                     CustomPaint(
                                       size: Size(width, 300 * s),
@@ -345,7 +398,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
         SizedBox(height: 18 * s),
         _primaryButton(
           s,
-          text: '${offer.trialDays} GÜN ÜCRETSİZ DENE',
+          text: offer.trialDays > 0
+              ? '${offer.trialDays} GÜN ÜCRETSİZ DENE'
+              : 'PREMIUM\'A GEÇ',
           onPressed: () => widget.onPurchase(_plan),
         ),
         SizedBox(height: 16 * s),
@@ -356,9 +411,12 @@ class _PremiumScreenState extends State<PremiumScreen> {
               TextSpan(
                 // Abonelik adı satın alma adımında görünür kalır
                 // (App Store 3.1.2): başlıkta artık ürün adı yok.
-                text: 'Stelinda Premium: ${offer.trialDays} gün ücretsiz, '
-                    'ardından $renewal. Abonelik, deneme süresi ya da dönem '
-                    'bitmeden en az 24 saat önce iptal edilmezse ',
+                text: offer.trialDays > 0
+                    ? 'Stelinda Premium: ${offer.trialDays} gün ücretsiz, '
+                        'ardından $renewal. Abonelik, deneme süresi ya da '
+                        'dönem bitmeden en az 24 saat önce iptal edilmezse '
+                    : 'Stelinda Premium: $renewal. Abonelik, dönem bitmeden '
+                        'en az 24 saat önce iptal edilmezse ',
               ),
               TextSpan(
                 text: 'otomatik olarak yenilenir',

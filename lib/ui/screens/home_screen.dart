@@ -476,6 +476,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             playedToday: data?.playedToday ?? false,
             tickets: data?.lives ?? 0,
             maxTickets: data?.maxLives ?? 0,
+            ticketsUnlimited: data?.isPremium ?? false,
             onStreakTap: () => unawaited(showStreakSheet(context)),
             onTicketsTap: () => unawaited(showTicketStatus(
               context,

@@ -109,4 +109,42 @@ class AppLocalizationsSq extends AppLocalizations {
   String leagueMemberOptions(String name) {
     return 'Opsione për $name';
   }
+
+  @override
+  String get premiumStoreUnavailable =>
+      'Dyqani nuk arrihet tani. Provo sërish pak më vonë.';
+
+  @override
+  String get premiumWelcome =>
+      'Mirë se erdhe në Premium! Biletat e tua tani janë të pakufizuara.';
+
+  @override
+  String get premiumPurchaseFailed => 'Blerja nuk u përfundua. Provo sërish.';
+
+  @override
+  String get premiumPurchasePending =>
+      'Blerja pret miratim; Premium hapet pasi të miratohet.';
+
+  @override
+  String get premiumNothingToRestore =>
+      'Nuk u gjet asnjë abonim aktiv për t\'u rikthyer.';
+
+  @override
+  String get premiumActiveTitle => 'Anëtarësimi Premium është aktiv';
+
+  @override
+  String get premiumActiveBody =>
+      'Biletat janë të pakufizuara, mbrojtjet e serisë mbushen në dy çdo javë.';
+
+  @override
+  String get premiumManage => 'MENAXHO ABONIMIN';
+
+  @override
+  String get premiumActiveClose => 'Mbyll';
+
+  @override
+  String get premiumManageFailed => 'Faqja e abonimit nuk u hap. Provo sërish.';
+
+  @override
+  String get ticketsUnlimited => 'Bileta të pakufizuara';
 }

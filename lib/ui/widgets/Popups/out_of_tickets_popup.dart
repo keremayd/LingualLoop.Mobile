@@ -35,7 +35,7 @@ Future<void> showOutOfTicketsPopup(
   required Future<bool> Function() onRefreshTickets,
   required VoidCallback onGoToReview,
   required VoidCallback onGoToQuests,
-  required VoidCallback onGoPremium,
+  VoidCallback? onGoPremium,
   int? questTickets,
   bool reviewAvailable = true,
 }) {
@@ -55,10 +55,12 @@ Future<void> showOutOfTicketsPopup(
         Navigator.of(context).pop();
         onGoToQuests();
       },
-      onGoPremium: () {
-        Navigator.of(context).pop();
-        onGoPremium();
-      },
+      onGoPremium: onGoPremium == null
+          ? null
+          : () {
+              Navigator.of(context).pop();
+              onGoPremium();
+            },
     ),
   );
 }
@@ -91,7 +93,7 @@ Future<void> showTicketStatusPopup(
   required Future<bool> Function() onRefreshTickets,
   required VoidCallback onGoToReview,
   required VoidCallback onGoToQuests,
-  required VoidCallback onGoPremium,
+  VoidCallback? onGoPremium,
 }) {
   return _showTicketsDialog(
     context,
@@ -116,10 +118,12 @@ Future<void> showTicketStatusPopup(
             Navigator.of(context).pop();
             onGoToQuests();
           },
-          onGoPremium: () {
-            Navigator.of(context).pop();
-            onGoPremium();
-          },
+          onGoPremium: onGoPremium == null
+              ? null
+              : () {
+                  Navigator.of(context).pop();
+                  onGoPremium();
+                },
         );
       },
     ),
@@ -154,7 +158,7 @@ class OutOfTicketsCard extends StatefulWidget {
     required this.onTicketsReady,
     required this.onGoToReview,
     required this.onGoToQuests,
-    required this.onGoPremium,
+    this.onGoPremium,
     this.questTickets,
     this.reviewAvailable = true,
     this.balance,
@@ -178,7 +182,8 @@ class OutOfTicketsCard extends StatefulWidget {
 
   final VoidCallback onGoToReview;
   final VoidCallback onGoToQuests;
-  final VoidCallback onGoPremium;
+  /// Null ise premium düğmesi yok (satın almanın olmadığı platform).
+  final VoidCallback? onGoPremium;
 
   @override
   State<OutOfTicketsCard> createState() => _OutOfTicketsCardState();
@@ -422,6 +427,7 @@ class _OutOfTicketsCardState extends State<OutOfTicketsCard>
               ),
               SizedBox(height: 24 * scale),
             ],
+            if (widget.onGoPremium != null)
             DepthPressableButton(
               width: _contentWidth * scale,
               height: 120 * scale,
@@ -431,7 +437,7 @@ class _OutOfTicketsCardState extends State<OutOfTicketsCard>
               shadowColor: _accentDeep,
               fontSize: 28 * scale,
               fontWeight: AppTypography.action,
-              onPressed: widget.onGoPremium,
+              onPressed: widget.onGoPremium!,
               // Duolingo'nun premium dili iridescent olsa da tüm yüzeyi
               // gökkuşağı yapmak metin kontrastını ve Karty'nin kaplama
               // dilini bozar. Renk premium bilette, eylem accent yüzeyde.
