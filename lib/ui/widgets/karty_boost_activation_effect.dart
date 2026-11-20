@@ -1,9 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/karty_boost_palette.dart';
+import 'package:stelinda/ui/widgets/karty_boost_palette.dart';
 import 'package:flutter/services.dart';
-import 'package:lingualloop/ui/widgets/karty_boost_bolt_mark.dart';
+import 'package:stelinda/ui/widgets/karty_boost_bolt_mark.dart';
 
 /// A single physical gesture: wind up, collide, release, then bank the energy.
 /// The quiz pauses while [KartyBoostActivationEffectState.play] is pending.

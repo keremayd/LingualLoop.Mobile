@@ -3,10 +3,10 @@ import 'helpers/preview_fonts.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/services/AuthenticationService.dart';
-import 'package:lingualloop/ui/screens/SignUpScreen.dart';
-import 'package:lingualloop/ui/screens/login_screen.dart';
-import 'package:lingualloop/ui/widgets/Buttons/auth_back_button.dart';
+import 'package:stelinda/services/AuthenticationService.dart';
+import 'package:stelinda/ui/screens/SignUpScreen.dart';
+import 'package:stelinda/ui/screens/login_screen.dart';
+import 'package:stelinda/ui/widgets/Buttons/auth_back_button.dart';
 import 'package:provider/provider.dart';
 
 /// Giriş ve kayıt ekranları yan yana — gerçek cihaz ölçüsünde (430×932).

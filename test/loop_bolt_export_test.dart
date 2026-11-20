@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/mascot_mark.dart';
+import 'package:stelinda/ui/widgets/mascot_mark.dart';
 
 /// Loop şimşeğini tek başına, büyük ve koyu lacivert zeminde dışa aktarır.
 ///

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/premium_ticket_mark.dart';
+import 'package:stelinda/ui/widgets/premium_ticket_mark.dart';
 
 /// Silueti dogrulama: ust siradaki yan yana, alt siradaki **ust uste**.
 /// Ust uste binen durumda kenarda altin gorunuyorsa siluet tutmuyor demektir.

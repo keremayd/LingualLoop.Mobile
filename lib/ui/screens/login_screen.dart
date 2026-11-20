@@ -1,13 +1,13 @@
-import 'package:lingualloop/ui/app_typography.dart';
+import 'package:stelinda/ui/app_typography.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:lingualloop/main.dart';
-import 'package:lingualloop/ui/widgets/Buttons/app_icon_control_button.dart';
-import 'package:lingualloop/ui/widgets/Buttons/auth_back_button.dart';
-import 'package:lingualloop/ui/widgets/Buttons/auth_social_button.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/main.dart';
+import 'package:stelinda/ui/widgets/Buttons/app_icon_control_button.dart';
+import 'package:stelinda/ui/widgets/Buttons/auth_back_button.dart';
+import 'package:stelinda/ui/widgets/Buttons/auth_social_button.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:provider/provider.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart'
     show SignInWithAppleException;

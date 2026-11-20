@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:lingualloop/models/responses/DailyActivityResponse.dart';
-import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
-import 'package:lingualloop/ui/widgets/NavbarWidget.dart';
-import 'package:lingualloop/ui/widgets/Popups/streak_at_risk_popup.dart';
-import 'package:lingualloop/ui/widgets/streak_day_card.dart';
-import 'package:lingualloop/ui/widgets/streak_day_scenes.dart';
+import 'package:stelinda/models/responses/DailyActivityResponse.dart';
+import 'package:stelinda/providers/ScoreWithLivesProvider.dart';
+import 'package:stelinda/ui/widgets/NavbarWidget.dart';
+import 'package:stelinda/ui/widgets/Popups/streak_at_risk_popup.dart';
+import 'package:stelinda/ui/widgets/streak_day_card.dart';
+import 'package:stelinda/ui/widgets/streak_day_scenes.dart';
 import 'package:provider/provider.dart';
 
 /// Seri penceresi: üst şeritteki aleve dokununca ve günün ilk oyunundan

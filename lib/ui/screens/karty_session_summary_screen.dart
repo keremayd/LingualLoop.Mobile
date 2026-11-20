@@ -3,18 +3,18 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:lingualloop/models/karty_path.dart';
-import 'package:lingualloop/models/karty_session_summary.dart';
-import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
-import 'package:lingualloop/ui/widgets/Buttons/secondary_action_button.dart';
-import 'package:lingualloop/ui/widgets/app_shape_style.dart';
-import 'package:lingualloop/ui/widgets/karty_unit_header.dart';
-import 'package:lingualloop/ui/widgets/karty_unit_marks.dart';
-import 'package:lingualloop/ui/widgets/league_badge_mark.dart';
-import 'package:lingualloop/ui/widgets/no_top_border_painter.dart';
-import 'package:lingualloop/ui/widgets/points_star_icon.dart';
-import 'package:lingualloop/ui/widgets/quest_icons.dart';
+import 'package:stelinda/models/karty_path.dart';
+import 'package:stelinda/models/karty_session_summary.dart';
+import 'package:stelinda/ui/app_typography.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/widgets/Buttons/secondary_action_button.dart';
+import 'package:stelinda/ui/widgets/app_shape_style.dart';
+import 'package:stelinda/ui/widgets/karty_unit_header.dart';
+import 'package:stelinda/ui/widgets/karty_unit_marks.dart';
+import 'package:stelinda/ui/widgets/league_badge_mark.dart';
+import 'package:stelinda/ui/widgets/no_top_border_painter.dart';
+import 'package:stelinda/ui/widgets/points_star_icon.dart';
+import 'package:stelinda/ui/widgets/quest_icons.dart';
 
 /// Özetten çıkış: patikaya dönmek ya da aynı oturumda pratiğe devam etmek.
 enum KartySummaryChoice { path, practice }

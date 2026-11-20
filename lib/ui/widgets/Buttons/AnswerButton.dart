@@ -1,4 +1,4 @@
-import 'package:lingualloop/ui/app_typography.dart';
+import 'package:stelinda/ui/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'depth_pressable_button.dart';
 

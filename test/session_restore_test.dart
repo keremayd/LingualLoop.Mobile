@@ -4,9 +4,9 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/TokenInterceptor.dart';
-import 'package:lingualloop/services/AuthenticationService.dart';
-import 'package:lingualloop/services/FileService.dart';
+import 'package:stelinda/TokenInterceptor.dart';
+import 'package:stelinda/services/AuthenticationService.dart';
+import 'package:stelinda/services/FileService.dart';
 
 class _Files extends LocalFileService {
   @override

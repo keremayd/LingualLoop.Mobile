@@ -1,5 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'package:lingualloop/models/Question.dart';
+import 'package:stelinda/models/Question.dart';
 
 part 'Answer.g.dart';
 

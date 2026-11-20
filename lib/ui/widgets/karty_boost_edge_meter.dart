@@ -2,9 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/karty_boost_palette.dart';
-import 'package:lingualloop/ui/widgets/karty_boost_bolt_mark.dart';
-import 'package:lingualloop/ui/widgets/karty_boost_button_affordance.dart';
+import 'package:stelinda/ui/widgets/karty_boost_palette.dart';
+import 'package:stelinda/ui/widgets/karty_boost_bolt_mark.dart';
+import 'package:stelinda/ui/widgets/karty_boost_button_affordance.dart';
 
 /// Boost'un kart üzerindeki tek kalıcı göstergesi.
 ///

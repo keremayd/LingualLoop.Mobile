@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/streak_freeze_flake.dart';
+import 'package:stelinda/ui/widgets/streak_freeze_flake.dart';
 
 /// Seri koruma ikonu — büyük ve küçük boyutta birlikte (§7/7).
 void main() {

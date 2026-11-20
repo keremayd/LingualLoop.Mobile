@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:lingualloop/models/responses/DailyActivityResponse.dart';
-import 'package:lingualloop/models/responses/ProfileLearningStatsResponse.dart';
-import 'package:lingualloop/services/UserService.dart';
+import 'package:stelinda/models/responses/DailyActivityResponse.dart';
+import 'package:stelinda/models/responses/ProfileLearningStatsResponse.dart';
+import 'package:stelinda/services/UserService.dart';
 import 'package:provider/provider.dart';
 
 class ProfileLearningStatsProvider with ChangeNotifier {

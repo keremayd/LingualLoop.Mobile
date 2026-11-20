@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
 
 enum AuthSocialProvider { google, apple }
 

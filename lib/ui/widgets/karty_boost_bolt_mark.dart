@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/karty_boost_palette.dart';
+import 'package:stelinda/ui/widgets/karty_boost_palette.dart';
 
 /// Karty boost'un ortak, hacimli enerji parçası.
 ///

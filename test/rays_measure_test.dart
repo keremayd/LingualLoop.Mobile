@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/quest_reward_celebration.dart';
+import 'package:stelinda/ui/widgets/quest_reward_celebration.dart';
 
 /// Ölçüm karesi: yalnız ışık dilimleri. Tasarım önizlemesi değil —
 /// referans görselle sayısal karşılaştırma için.

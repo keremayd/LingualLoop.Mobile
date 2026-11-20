@@ -5,20 +5,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
-import 'package:lingualloop/models/Karty.dart';
-import 'package:lingualloop/models/responses/ScoreWithLivesResponse.dart';
-import 'package:lingualloop/models/responses/LeagueProgressResponse.dart';
-import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
-import 'package:lingualloop/ui/widgets/SwipableCard.dart';
-import 'package:lingualloop/ui/widgets/karty_top_bar.dart';
-import 'package:lingualloop/ui/widgets/karty_league_score.dart';
-import 'package:lingualloop/ui/widgets/karty_play_surface.dart';
-import 'package:lingualloop/ui/widgets/karty_answer_actions.dart';
-import 'package:lingualloop/ui/widgets/karty_pause_overlay.dart';
-import 'package:lingualloop/ui/widgets/karty_question_parts.dart';
-import 'package:lingualloop/ui/widgets/karty_sound_button.dart';
-import 'package:lingualloop/ui/widgets/karty_time_bar.dart';
-import 'package:lingualloop/ui/widgets/karty_boost_activation_effect.dart';
+import 'package:stelinda/models/Karty.dart';
+import 'package:stelinda/models/responses/ScoreWithLivesResponse.dart';
+import 'package:stelinda/models/responses/LeagueProgressResponse.dart';
+import 'package:stelinda/providers/ScoreWithLivesProvider.dart';
+import 'package:stelinda/ui/widgets/SwipableCard.dart';
+import 'package:stelinda/ui/widgets/karty_top_bar.dart';
+import 'package:stelinda/ui/widgets/karty_league_score.dart';
+import 'package:stelinda/ui/widgets/karty_play_surface.dart';
+import 'package:stelinda/ui/widgets/karty_answer_actions.dart';
+import 'package:stelinda/ui/widgets/karty_pause_overlay.dart';
+import 'package:stelinda/ui/widgets/karty_question_parts.dart';
+import 'package:stelinda/ui/widgets/karty_sound_button.dart';
+import 'package:stelinda/ui/widgets/karty_time_bar.dart';
+import 'package:stelinda/ui/widgets/karty_boost_activation_effect.dart';
 
 // Tam ekran görseli için --dart-define=KARTY_PREVIEW_IMAGE=<yerel kart PNG>
 // verilirse gerçek içerikle golden üretir; normal koşuda yerleşimi sınar.

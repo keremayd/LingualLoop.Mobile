@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/Buttons/app_button_style.dart';
-import 'package:lingualloop/ui/widgets/clock_mark.dart';
+import 'package:stelinda/ui/app_typography.dart';
+import 'package:stelinda/ui/widgets/Buttons/app_button_style.dart';
+import 'package:stelinda/ui/widgets/clock_mark.dart';
 
 /// Kalan süre kapsülü: saat + yalnız değer ("27 gün", "1 sa 36 dk").
 ///

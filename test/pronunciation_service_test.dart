@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:lingualloop/services/PronunciationService.dart';
+import 'package:stelinda/services/PronunciationService.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

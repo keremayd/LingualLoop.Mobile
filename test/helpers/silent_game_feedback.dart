@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/services/GameFeedbackService.dart';
+import 'package:stelinda/services/GameFeedbackService.dart';
 
 /// Oyun ekranlarını kuran testler için ses ve titreşimsiz geri bildirim.
 class SilentGameFeedback extends Fake implements GameFeedbackService {

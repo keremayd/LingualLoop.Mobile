@@ -2,7 +2,7 @@
 /// restore all previous radii, bottom lips and outline widths together.
 abstract final class AppShapeStyle {
   static const bool roundedDepth = bool.fromEnvironment(
-    'LINGUALLOOP_ROUNDED_BUTTONS',
+    'STELINDA_ROUNDED_BUTTONS',
     defaultValue: true,
   );
 

@@ -1,5 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'package:lingualloop/models/responses/KartyPathResponse.dart';
+import 'package:stelinda/models/responses/KartyPathResponse.dart';
 
 part 'KartySessionStatusResponse.g.dart';
 

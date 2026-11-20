@@ -1,4 +1,4 @@
-import 'package:lingualloop/ui/app_typography.dart';
+import 'package:stelinda/ui/app_typography.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'dart:math' as math;
 

@@ -1,7 +1,7 @@
-import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/app_typography.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/article_target.dart';
+import 'package:stelinda/ui/widgets/article_target.dart';
 
 class ArticlePracticeLockedState extends StatelessWidget {
   const ArticlePracticeLockedState({

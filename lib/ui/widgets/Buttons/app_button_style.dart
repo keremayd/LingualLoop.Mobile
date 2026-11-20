@@ -1,4 +1,4 @@
-import 'package:lingualloop/ui/widgets/app_shape_style.dart';
+import 'package:stelinda/ui/widgets/app_shape_style.dart';
 import 'dart:math' as math;
 
 /// One switch for the app-wide Karty button treatment. Turning it off restores

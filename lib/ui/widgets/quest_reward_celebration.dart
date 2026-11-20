@@ -1,4 +1,4 @@
-import 'package:lingualloop/ui/app_typography.dart';
+import 'package:stelinda/ui/app_typography.dart';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 

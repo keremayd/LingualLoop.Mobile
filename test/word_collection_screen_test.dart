@@ -2,14 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/models/ApiResponse.dart';
-import 'package:lingualloop/models/responses/word_collection_response.dart';
-import 'package:lingualloop/services/PronunciationService.dart';
-import 'package:lingualloop/services/UserService.dart';
-import 'package:lingualloop/ui/screens/word_collection_screen.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
-import 'package:lingualloop/ui/widgets/karty_sound_button.dart';
-import 'package:lingualloop/ui/widgets/speaker_mark.dart';
+import 'package:stelinda/models/ApiResponse.dart';
+import 'package:stelinda/models/responses/word_collection_response.dart';
+import 'package:stelinda/services/PronunciationService.dart';
+import 'package:stelinda/services/UserService.dart';
+import 'package:stelinda/ui/screens/word_collection_screen.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/widgets/karty_sound_button.dart';
+import 'package:stelinda/ui/widgets/speaker_mark.dart';
 import 'package:provider/provider.dart';
 
 class _UserService extends Fake implements UserService {

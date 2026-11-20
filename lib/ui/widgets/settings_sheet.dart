@@ -1,13 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:lingualloop/l10n/l10n.dart';
-import 'package:lingualloop/services/GameFeedbackService.dart';
-import 'package:lingualloop/services/PronunciationService.dart';
-import 'package:lingualloop/services/account_deletion.dart';
-import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
-import 'package:lingualloop/ui/widgets/Buttons/secondary_action_button.dart';
-import 'package:lingualloop/ui/widgets/app_shape_style.dart';
+import 'package:stelinda/l10n/l10n.dart';
+import 'package:stelinda/services/GameFeedbackService.dart';
+import 'package:stelinda/services/PronunciationService.dart';
+import 'package:stelinda/services/account_deletion.dart';
+import 'package:stelinda/ui/app_typography.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/widgets/Buttons/secondary_action_button.dart';
+import 'package:stelinda/ui/widgets/app_shape_style.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 

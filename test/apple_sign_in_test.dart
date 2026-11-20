@@ -6,8 +6,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/providers/UserProvider.dart';
-import 'package:lingualloop/services/AuthenticationService.dart';
+import 'package:stelinda/providers/UserProvider.dart';
+import 'package:stelinda/services/AuthenticationService.dart';
 import 'package:provider/provider.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 

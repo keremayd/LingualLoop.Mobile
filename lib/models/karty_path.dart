@@ -1,7 +1,7 @@
-import 'package:lingualloop/l10n/l10n.dart';
+import 'package:stelinda/l10n/l10n.dart';
 import 'package:flutter/widgets.dart';
-import 'package:lingualloop/models/responses/KartyPathResponse.dart';
-import 'package:lingualloop/services/cached_signed_image.dart';
+import 'package:stelinda/models/responses/KartyPathResponse.dart';
+import 'package:stelinda/services/cached_signed_image.dart';
 
 /// Karty Yolu'nun ekran modeli: ünite → deste (8 kelime) → kelime. Sunucudaki karşılığı `GET karty/path/{userId}`
 /// ([KartyPathResponse]); ekran yalnız bu modeli tanır.

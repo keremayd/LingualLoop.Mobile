@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:lingualloop/Utils/AppNotifier.dart';
-import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/screens/legal_document_screen.dart';
-import 'package:lingualloop/ui/widgets/Buttons/app_button_style.dart';
-import 'package:lingualloop/ui/widgets/Buttons/app_icon_control_button.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
-import 'package:lingualloop/ui/widgets/karty_control_glyphs.dart';
-import 'package:lingualloop/ui/widgets/premium_ticket_mark.dart';
+import 'package:stelinda/Utils/AppNotifier.dart';
+import 'package:stelinda/ui/app_typography.dart';
+import 'package:stelinda/ui/screens/legal_document_screen.dart';
+import 'package:stelinda/ui/widgets/Buttons/app_button_style.dart';
+import 'package:stelinda/ui/widgets/Buttons/app_icon_control_button.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/widgets/karty_control_glyphs.dart';
+import 'package:stelinda/ui/widgets/premium_ticket_mark.dart';
 
 /// Kullanıcı premium ekranına nereden geldi. Tablodaki ilk premium satırı
 /// ona göre sıralanır: bileti biten önce sınırsız bileti, serisi tehlikede
@@ -356,7 +356,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
               TextSpan(
                 // Abonelik adı satın alma adımında görünür kalır
                 // (App Store 3.1.2): başlıkta artık ürün adı yok.
-                text: 'LingualLoop Premium: ${offer.trialDays} gün ücretsiz, '
+                text: 'Stelinda Premium: ${offer.trialDays} gün ücretsiz, '
                     'ardından $renewal. Abonelik, deneme süresi ya da dönem '
                     'bitmeden en az 24 saat önce iptal edilmezse ',
               ),

@@ -1,5 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'package:lingualloop/models/Video.dart';
+import 'package:stelinda/models/Video.dart';
 
 part 'GetSavedVideosByIdResponse.g.dart';
 

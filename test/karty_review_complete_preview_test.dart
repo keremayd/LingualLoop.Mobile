@@ -2,7 +2,7 @@ import 'helpers/preview_fonts.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/karty_review_complete_state.dart';
+import 'package:stelinda/ui/widgets/karty_review_complete_state.dart';
 
 /// Rövanş tamamlanma ekranını gerçek iPhone boyutunda görsel olarak doğrular.
 ///

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:lingualloop/models/responses/GetQuestionByScoreResponse.dart';
-import 'package:lingualloop/services/VideoService.dart';
-import 'package:lingualloop/services/UserService.dart';
-import 'package:lingualloop/models/ApiResponse.dart';
+import 'package:stelinda/models/responses/GetQuestionByScoreResponse.dart';
+import 'package:stelinda/services/VideoService.dart';
+import 'package:stelinda/services/UserService.dart';
+import 'package:stelinda/models/ApiResponse.dart';
 
 import '../models/responses/GetSavedVideosByIdResponse.dart';
 

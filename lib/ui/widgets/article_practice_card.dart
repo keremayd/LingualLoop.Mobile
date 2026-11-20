@@ -1,12 +1,12 @@
 import 'learning_card_frame.dart';
-import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/app_shape_style.dart';
+import 'package:stelinda/ui/app_typography.dart';
+import 'package:stelinda/ui/widgets/app_shape_style.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:lingualloop/models/ArticlePractice.dart';
-import 'package:lingualloop/ui/widgets/article_word_surface.dart';
+import 'package:stelinda/models/ArticlePractice.dart';
+import 'package:stelinda/ui/widgets/article_word_surface.dart';
 
 class ArticlePracticeCard extends StatelessWidget {
   const ArticlePracticeCard({

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/karty_boost_button_affordance.dart';
-import 'package:lingualloop/ui/widgets/karty_boost_edge_meter.dart';
+import 'package:stelinda/ui/widgets/karty_boost_button_affordance.dart';
+import 'package:stelinda/ui/widgets/karty_boost_edge_meter.dart';
 
 void main() {
   testWidgets('Köşe sabit kalır; sürükleme boost başlatmaz', (tester) async {

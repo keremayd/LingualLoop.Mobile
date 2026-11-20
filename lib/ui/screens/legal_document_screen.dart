@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/Buttons/app_icon_control_button.dart';
-import 'package:lingualloop/ui/widgets/Buttons/auth_back_button.dart';
+import 'package:stelinda/ui/app_typography.dart';
+import 'package:stelinda/ui/widgets/Buttons/app_icon_control_button.dart';
+import 'package:stelinda/ui/widgets/Buttons/auth_back_button.dart';
 
 enum LegalDocument {
   terms('Kullanım koşulları', 'assets/legal/kullanim_kosullari.md'),

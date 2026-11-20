@@ -1,4 +1,4 @@
-import 'package:lingualloop/models/karty_path.dart';
+import 'package:stelinda/models/karty_path.dart';
 
 /// Oyun (bir deste) bittiğinde Karty'nin "tamam" ekranında gösterilenler.
 ///

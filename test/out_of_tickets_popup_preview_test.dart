@@ -1,7 +1,7 @@
 import 'helpers/preview_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/Popups/out_of_tickets_popup.dart';
+import 'package:stelinda/ui/widgets/Popups/out_of_tickets_popup.dart';
 
 /// Bilet bitti penceresi: uzun ve kisa geri sayimla iki durum.
 void main() {

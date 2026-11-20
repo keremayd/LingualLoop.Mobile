@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
-import 'package:lingualloop/ui/widgets/speaker_mark.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/widgets/speaker_mark.dart';
 
 /// Duraklatmada da erişilen ses tercihi; dalgalar gerçek telaffuzu izler.
 class KartySoundButton extends StatefulWidget {

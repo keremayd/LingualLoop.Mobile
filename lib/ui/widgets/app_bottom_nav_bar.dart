@@ -1,12 +1,12 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/Buttons/app_button_style.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
-import 'package:lingualloop/ui/widgets/nav_marks.dart';
-import 'package:lingualloop/ui/widgets/premium_ticket_mark.dart';
-import 'package:lingualloop/ui/widgets/quest_flag_mark.dart';
-import 'package:lingualloop/ui/widgets/quest_icons.dart';
+import 'package:stelinda/ui/widgets/Buttons/app_button_style.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/widgets/nav_marks.dart';
+import 'package:stelinda/ui/widgets/premium_ticket_mark.dart';
+import 'package:stelinda/ui/widgets/quest_flag_mark.dart';
+import 'package:stelinda/ui/widgets/quest_icons.dart';
 
 /// Beş ana ekranın ortak alt menüsü; önizlemede de uygulamada da aynı yüzey.
 ///

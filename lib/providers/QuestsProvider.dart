@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:lingualloop/models/responses/DailyQuestsResponse.dart';
-import 'package:lingualloop/services/QuestService.dart';
+import 'package:stelinda/models/responses/DailyQuestsResponse.dart';
+import 'package:stelinda/services/QuestService.dart';
 
 enum QuestsStatus { loading, ready, error }
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/home_top_bar.dart';
+import 'package:stelinda/ui/widgets/home_top_bar.dart';
 
 import 'helpers/preview_fonts.dart';
 

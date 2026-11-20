@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/services/AuthenticationService.dart';
-import 'package:lingualloop/services/account_deletion.dart';
+import 'package:stelinda/services/AuthenticationService.dart';
+import 'package:stelinda/services/account_deletion.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 /// Silme isteklerini sırayla cevaplar ve gönderilenleri saklar.

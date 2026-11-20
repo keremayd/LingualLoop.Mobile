@@ -1,4 +1,4 @@
-import 'package:lingualloop/ui/app_typography.dart';
+import 'package:stelinda/ui/app_typography.dart';
 import 'package:flutter/material.dart';
 
 import '../widgets/Buttons/depth_pressable_button.dart';
@@ -197,7 +197,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         MascotBolt(size: 62 * scale),
         SizedBox(width: 14 * scale),
         Text(
-          'LingualLoop',
+          'Stelinda',
           style: TextStyle(
             color: _text,
             fontFamily: AppTypography.displayFamily,

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:lingualloop/models/Karty.dart';
-import 'package:lingualloop/models/responses/GetKartyByScoreResponse.dart';
-import 'package:lingualloop/services/FileService.dart';
-import 'package:lingualloop/services/KartyService.dart';
+import 'package:stelinda/models/Karty.dart';
+import 'package:stelinda/models/responses/GetKartyByScoreResponse.dart';
+import 'package:stelinda/services/FileService.dart';
+import 'package:stelinda/services/KartyService.dart';
 import 'package:provider/provider.dart';
 
 class KartyProvider with ChangeNotifier {

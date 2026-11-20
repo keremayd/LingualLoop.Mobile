@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
-import 'package:lingualloop/models/responses/word_collection_response.dart';
-import 'package:lingualloop/services/PronunciationService.dart';
-import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/karty_sound_button.dart';
-import 'package:lingualloop/ui/widgets/loading_skeleton.dart';
+import 'package:stelinda/models/responses/word_collection_response.dart';
+import 'package:stelinda/services/PronunciationService.dart';
+import 'package:stelinda/ui/app_typography.dart';
+import 'package:stelinda/ui/widgets/karty_sound_button.dart';
+import 'package:stelinda/ui/widgets/loading_skeleton.dart';
 
 class WordCollectionTile extends StatelessWidget {
   const WordCollectionTile({

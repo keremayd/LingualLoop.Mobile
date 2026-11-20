@@ -1,11 +1,11 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:lingualloop/services/PronunciationService.dart';
-import 'package:lingualloop/ui/widgets/Buttons/app_button_style.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
-import 'package:lingualloop/ui/widgets/karty_control_glyphs.dart';
-import 'package:lingualloop/ui/widgets/speaker_mark.dart';
+import 'package:stelinda/services/PronunciationService.dart';
+import 'package:stelinda/ui/widgets/Buttons/app_button_style.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/widgets/karty_control_glyphs.dart';
+import 'package:stelinda/ui/widgets/speaker_mark.dart';
 import 'package:provider/provider.dart';
 
 /// Dinleme sorusunun soru kartındaki içerik: sesli mesaj gibi bir hap ve

@@ -1,9 +1,9 @@
-import 'package:lingualloop/ui/app_typography.dart';
+import 'package:stelinda/ui/app_typography.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/karty_boost_palette.dart';
-import 'package:lingualloop/ui/widgets/karty_boost_bolt_mark.dart';
+import 'package:stelinda/ui/widgets/karty_boost_palette.dart';
+import 'package:stelinda/ui/widgets/karty_boost_bolt_mark.dart';
 
 /// Aktif boost sırasında üç puanın lig sayacına aktarıldığını gösterir.
 ///

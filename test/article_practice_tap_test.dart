@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/models/ApiResponse.dart';
-import 'package:lingualloop/models/ArticlePractice.dart';
-import 'package:lingualloop/models/responses/ScoreWithLivesResponse.dart';
-import 'package:lingualloop/providers/ArticlePracticeProvider.dart';
-import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
-import 'package:lingualloop/services/ArticlePracticeService.dart';
-import 'package:lingualloop/services/UserService.dart';
-import 'package:lingualloop/ui/screens/article_practice_screen.dart';
-import 'package:lingualloop/ui/widgets/article_target.dart';
+import 'package:stelinda/models/ApiResponse.dart';
+import 'package:stelinda/models/ArticlePractice.dart';
+import 'package:stelinda/models/responses/ScoreWithLivesResponse.dart';
+import 'package:stelinda/providers/ArticlePracticeProvider.dart';
+import 'package:stelinda/providers/ProfileLearningStatsProvider.dart';
+import 'package:stelinda/services/ArticlePracticeService.dart';
+import 'package:stelinda/services/UserService.dart';
+import 'package:stelinda/ui/screens/article_practice_screen.dart';
+import 'package:stelinda/ui/widgets/article_target.dart';
 import 'package:provider/provider.dart';
-import 'package:lingualloop/services/GameFeedbackService.dart';
+import 'package:stelinda/services/GameFeedbackService.dart';
 import 'helpers/silent_game_feedback.dart';
 
 class _Service extends Fake implements ArticlePracticeService {}

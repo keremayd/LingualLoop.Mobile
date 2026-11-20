@@ -1,19 +1,19 @@
-import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/app_shape_style.dart';
-import 'package:lingualloop/ui/widgets/karty_card_material.dart';
-import 'package:lingualloop/ui/widgets/surface_gloss.dart';
+import 'package:stelinda/ui/app_typography.dart';
+import 'package:stelinda/ui/widgets/app_shape_style.dart';
+import 'package:stelinda/ui/widgets/karty_card_material.dart';
+import 'package:stelinda/ui/widgets/surface_gloss.dart';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
-import 'package:lingualloop/models/Karty.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
-import 'package:lingualloop/ui/widgets/hourglass_mark.dart';
-import 'package:lingualloop/ui/widgets/karty_play_surface.dart';
-import 'package:lingualloop/ui/widgets/karty_answer_feedback_effect.dart';
-import 'package:lingualloop/ui/widgets/karty_boost_button_affordance.dart';
-import 'package:lingualloop/ui/widgets/karty_boost_edge_meter.dart';
+import 'package:stelinda/models/Karty.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/widgets/hourglass_mark.dart';
+import 'package:stelinda/ui/widgets/karty_play_surface.dart';
+import 'package:stelinda/ui/widgets/karty_answer_feedback_effect.dart';
+import 'package:stelinda/ui/widgets/karty_boost_button_affordance.dart';
+import 'package:stelinda/ui/widgets/karty_boost_edge_meter.dart';
 
 class SwipableCard extends StatefulWidget {
   final Karty karty;

@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:lingualloop/services/PronunciationService.dart';
+import 'package:stelinda/services/PronunciationService.dart';
 
 enum _GameSound {
   correct('assets/sounds/correct.wav'),

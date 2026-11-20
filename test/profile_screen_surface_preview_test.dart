@@ -1,17 +1,17 @@
-import 'package:lingualloop/services/FileService.dart';
+import 'package:stelinda/services/FileService.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
-import 'package:lingualloop/models/ApiResponse.dart';
-import 'package:lingualloop/models/User.dart';
-import 'package:lingualloop/models/responses/DailyActivityResponse.dart';
-import 'package:lingualloop/models/responses/ScoreWithLivesResponse.dart';
-import 'package:lingualloop/models/responses/ProfileLearningStatsResponse.dart';
-import 'package:lingualloop/providers/UserProvider.dart';
-import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
-import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
-import 'package:lingualloop/services/UserService.dart';
-import 'package:lingualloop/ui/screens/profile_screen.dart';
+import 'package:stelinda/models/ApiResponse.dart';
+import 'package:stelinda/models/User.dart';
+import 'package:stelinda/models/responses/DailyActivityResponse.dart';
+import 'package:stelinda/models/responses/ScoreWithLivesResponse.dart';
+import 'package:stelinda/models/responses/ProfileLearningStatsResponse.dart';
+import 'package:stelinda/providers/UserProvider.dart';
+import 'package:stelinda/providers/ScoreWithLivesProvider.dart';
+import 'package:stelinda/providers/ProfileLearningStatsProvider.dart';
+import 'package:stelinda/services/UserService.dart';
+import 'package:stelinda/ui/screens/profile_screen.dart';
 import 'helpers/preview_fonts.dart';
 
 final _score = ScoreWithLivesResponse(

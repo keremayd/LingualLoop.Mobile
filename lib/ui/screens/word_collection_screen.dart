@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:lingualloop/models/responses/word_collection_response.dart';
-import 'package:lingualloop/services/PronunciationService.dart';
-import 'package:lingualloop/services/UserService.dart';
-import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/Buttons/auth_back_button.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
-import 'package:lingualloop/ui/widgets/loading_skeleton.dart';
-import 'package:lingualloop/ui/widgets/word_collection_tile.dart';
+import 'package:stelinda/models/responses/word_collection_response.dart';
+import 'package:stelinda/services/PronunciationService.dart';
+import 'package:stelinda/services/UserService.dart';
+import 'package:stelinda/ui/app_typography.dart';
+import 'package:stelinda/ui/widgets/Buttons/auth_back_button.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/widgets/loading_skeleton.dart';
+import 'package:stelinda/ui/widgets/word_collection_tile.dart';
 import 'package:provider/provider.dart';
 
 class WordCollectionScreen extends StatefulWidget {

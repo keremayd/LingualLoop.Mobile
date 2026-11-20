@@ -1,10 +1,10 @@
 Son güncelleme: 13 Kasım 2026
 
-Bu koşullar LingualLoop uygulamasının kullanımını düzenler. Hesap açarak ya da uygulamayı kullanarak bu koşulları kabul etmiş olursun.
+Bu koşullar Stelinda uygulamasının kullanımını düzenler. Hesap açarak ya da uygulamayı kullanarak bu koşulları kabul etmiş olursun.
 
 ## Hizmet
 
-LingualLoop, Almanca kelime ve artikel öğrenmen için oyunlaştırılmış bir uygulamadır. İçerikler, özellikler ve kurallar zamanla değişebilir. Hizmetin kesintisiz ve hatasız olacağını garanti etmiyoruz.
+Stelinda, Almanca kelime ve artikel öğrenmen için oyunlaştırılmış bir uygulamadır. İçerikler, özellikler ve kurallar zamanla değişebilir. Hizmetin kesintisiz ve hatasız olacağını garanti etmiyoruz.
 
 ## Hesabın
 
@@ -20,7 +20,7 @@ LingualLoop, Almanca kelime ve artikel öğrenmen için oyunlaştırılmış bir
 
 ## Fikri mülkiyet
 
-Uygulamadaki içerik, görseller, sesler, maskot ve marka LingualLoop'a aittir. İzin alınmadan kopyalanamaz ve dağıtılamaz.
+Uygulamadaki içerik, görseller, sesler, maskot ve marka Stelinda'ya aittir. İzin alınmadan kopyalanamaz ve dağıtılamaz.
 
 ## Hesabın kapatılması
 

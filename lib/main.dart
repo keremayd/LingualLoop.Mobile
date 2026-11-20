@@ -1,41 +1,41 @@
-import 'package:lingualloop/l10n/app_language.dart';
-import 'package:lingualloop/l10n/l10n.dart';
-import 'package:lingualloop/models/karty_session.dart';
-import 'package:lingualloop/ui/app_typography.dart';
+import 'package:stelinda/l10n/app_language.dart';
+import 'package:stelinda/l10n/l10n.dart';
+import 'package:stelinda/models/karty_session.dart';
+import 'package:stelinda/ui/app_typography.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'
     show LicenseRegistry, LicenseEntryWithLineBreaks;
 import 'package:flutter/services.dart' show SystemUiOverlayStyle, rootBundle;
-import 'package:lingualloop/providers/BadgeProvider.dart';
-import 'package:lingualloop/providers/ArticlePracticeProvider.dart';
-import 'package:lingualloop/providers/KartyPathProvider.dart';
-import 'package:lingualloop/providers/KartyProvider.dart';
-import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
-import 'package:lingualloop/providers/QuestsProvider.dart';
-import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
-import 'package:lingualloop/providers/UserProvider.dart';
-import 'package:lingualloop/providers/VideoProvider.dart';
-import 'package:lingualloop/services/BadgeService.dart';
-import 'package:lingualloop/services/ArticlePracticeService.dart';
-import 'package:lingualloop/services/DailyReminders.dart';
-import 'package:lingualloop/services/FileService.dart';
-import 'package:lingualloop/services/GameFeedbackService.dart';
-import 'package:lingualloop/services/KartyService.dart';
-import 'package:lingualloop/services/PronunciationService.dart';
-import 'package:lingualloop/services/QuestService.dart';
-import 'package:lingualloop/services/UserService.dart';
-import 'package:lingualloop/services/AuthenticationService.dart';
-import 'package:lingualloop/services/VideoService.dart';
-import 'package:lingualloop/ui/screens/SignUpScreen.dart';
-import 'package:lingualloop/ui/screens/article_practice_screen.dart';
-import 'package:lingualloop/ui/screens/karty_quiz_screen.dart';
-import 'package:lingualloop/ui/screens/profile_screen.dart';
-import 'package:lingualloop/ui/screens/word_collection_screen.dart';
-import 'package:lingualloop/ui/screens/video_quiz_screen.dart';
-import 'package:lingualloop/ui/screens/welcome_screen.dart';
-import 'package:lingualloop/ui/widgets/NavbarWidget.dart';
+import 'package:stelinda/providers/BadgeProvider.dart';
+import 'package:stelinda/providers/ArticlePracticeProvider.dart';
+import 'package:stelinda/providers/KartyPathProvider.dart';
+import 'package:stelinda/providers/KartyProvider.dart';
+import 'package:stelinda/providers/ProfileLearningStatsProvider.dart';
+import 'package:stelinda/providers/QuestsProvider.dart';
+import 'package:stelinda/providers/ScoreWithLivesProvider.dart';
+import 'package:stelinda/providers/UserProvider.dart';
+import 'package:stelinda/providers/VideoProvider.dart';
+import 'package:stelinda/services/BadgeService.dart';
+import 'package:stelinda/services/ArticlePracticeService.dart';
+import 'package:stelinda/services/DailyReminders.dart';
+import 'package:stelinda/services/FileService.dart';
+import 'package:stelinda/services/GameFeedbackService.dart';
+import 'package:stelinda/services/KartyService.dart';
+import 'package:stelinda/services/PronunciationService.dart';
+import 'package:stelinda/services/QuestService.dart';
+import 'package:stelinda/services/UserService.dart';
+import 'package:stelinda/services/AuthenticationService.dart';
+import 'package:stelinda/services/VideoService.dart';
+import 'package:stelinda/ui/screens/SignUpScreen.dart';
+import 'package:stelinda/ui/screens/article_practice_screen.dart';
+import 'package:stelinda/ui/screens/karty_quiz_screen.dart';
+import 'package:stelinda/ui/screens/profile_screen.dart';
+import 'package:stelinda/ui/screens/word_collection_screen.dart';
+import 'package:stelinda/ui/screens/video_quiz_screen.dart';
+import 'package:stelinda/ui/screens/welcome_screen.dart';
+import 'package:stelinda/ui/widgets/NavbarWidget.dart';
 import 'ui/screens/login_screen.dart';
 import 'package:dio/dio.dart';
 import 'TokenInterceptor.dart';
@@ -201,7 +201,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       navigatorKey: navigatorKey,
       navigatorObservers: [routeObserver],
-      title: 'Lingual Loop',
+      title: 'Stelinda',
       // Arayüzün dili kullanıcının ana dili (Türkçe, Arnavutça).
       locale: context.watch<AppLanguage>().locale,
       supportedLocales: AppLocalizations.supportedLocales,

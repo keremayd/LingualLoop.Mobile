@@ -1,7 +1,7 @@
-import 'package:lingualloop/ui/app_typography.dart';
+import 'package:stelinda/ui/app_typography.dart';
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/quest_icons.dart';
-import 'package:lingualloop/ui/widgets/ticket_balance.dart';
+import 'package:stelinda/ui/widgets/quest_icons.dart';
+import 'package:stelinda/ui/widgets/ticket_balance.dart';
 
 /// Ana ekranın üst şeridi.
 ///

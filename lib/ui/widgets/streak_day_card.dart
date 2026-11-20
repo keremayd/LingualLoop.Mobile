@@ -1,9 +1,9 @@
-import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/app_shape_style.dart';
+import 'package:stelinda/ui/app_typography.dart';
+import 'package:stelinda/ui/widgets/app_shape_style.dart';
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/quest_icons.dart';
-import 'package:lingualloop/ui/widgets/streak_week_strip.dart';
-import 'package:lingualloop/ui/widgets/surface_gloss.dart';
+import 'package:stelinda/ui/widgets/quest_icons.dart';
+import 'package:stelinda/ui/widgets/streak_week_strip.dart';
+import 'package:stelinda/ui/widgets/surface_gloss.dart';
 
 /// Güne özel seri kartı — referans tasarımın uygulaması.
 ///

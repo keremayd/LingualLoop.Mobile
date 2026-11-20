@@ -1,6 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'package:lingualloop/models/responses/DailyActivityResponse.dart';
-import 'package:lingualloop/models/responses/LeagueProgressResponse.dart';
+import 'package:stelinda/models/responses/DailyActivityResponse.dart';
+import 'package:stelinda/models/responses/LeagueProgressResponse.dart';
 
 part 'ScoreWithLivesResponse.g.dart';
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
-import 'package:lingualloop/services/UserService.dart';
-import 'package:lingualloop/ui/screens/league_promotion_screen.dart';
+import 'package:stelinda/providers/ScoreWithLivesProvider.dart';
+import 'package:stelinda/services/UserService.dart';
+import 'package:stelinda/ui/screens/league_promotion_screen.dart';
 import 'package:provider/provider.dart';
 
 /// Sunucunun henüz gösterilmedi olarak tuttuğu lig terfisini açar.

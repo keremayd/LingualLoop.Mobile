@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
-import 'package:lingualloop/models/Karty.dart';
-import 'package:lingualloop/services/BadgeService.dart';
-import 'package:lingualloop/services/KartyService.dart';
+import 'package:stelinda/models/Karty.dart';
+import 'package:stelinda/services/BadgeService.dart';
+import 'package:stelinda/services/KartyService.dart';
 import 'package:provider/provider.dart';
-import 'package:lingualloop/models/Badge.dart';
+import 'package:stelinda/models/Badge.dart';
 
 
 class BadgeProvider with ChangeNotifier {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/league_badge_mark.dart';
+import 'package:stelinda/ui/widgets/league_badge_mark.dart';
 
 void main() {
   testWidgets('league badge sheet preview', (tester) async {

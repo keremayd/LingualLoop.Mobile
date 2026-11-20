@@ -2,9 +2,9 @@ import 'helpers/preview_fonts.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/models/responses/LeagueProgressResponse.dart';
-import 'package:lingualloop/ui/screens/league_promotion_screen.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/models/responses/LeagueProgressResponse.dart';
+import 'package:stelinda/ui/screens/league_promotion_screen.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
 
 void main() {
   setUpAll(loadPreviewFonts);

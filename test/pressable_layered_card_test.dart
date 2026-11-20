@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/pressable_layered_card.dart';
+import 'package:stelinda/ui/widgets/pressable_layered_card.dart';
 
 void main() {
   testWidgets(

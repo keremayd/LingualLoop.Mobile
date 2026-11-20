@@ -1,13 +1,13 @@
-import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/app_shape_style.dart';
+import 'package:stelinda/ui/app_typography.dart';
+import 'package:stelinda/ui/widgets/app_shape_style.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
-import 'package:lingualloop/ui/widgets/premium_ticket_mark.dart';
-import 'package:lingualloop/ui/widgets/quest_flag_mark.dart';
-import 'package:lingualloop/ui/widgets/quest_icons.dart';
-import 'package:lingualloop/ui/widgets/ticket_with_count.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/widgets/premium_ticket_mark.dart';
+import 'package:stelinda/ui/widgets/quest_flag_mark.dart';
+import 'package:stelinda/ui/widgets/quest_icons.dart';
+import 'package:stelinda/ui/widgets/ticket_with_count.dart';
 
 /// Bilet bittiğinde açılan pencere.
 ///

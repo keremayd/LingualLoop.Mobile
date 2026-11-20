@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/models/karty_path.dart';
-import 'package:lingualloop/models/responses/KartyPathResponse.dart';
-import 'package:lingualloop/services/cached_signed_image.dart';
+import 'package:stelinda/models/karty_path.dart';
+import 'package:stelinda/models/responses/KartyPathResponse.dart';
+import 'package:stelinda/services/cached_signed_image.dart';
 
 /// Ünite resmi imzalı adresle gelir ve imza her yanıtta değişir. Önbellek
 /// anahtarı imzaya bağlı olsaydı ana ekran her tazelendiğinde resim silinip

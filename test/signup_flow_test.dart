@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/models/ApiResponse.dart';
-import 'package:lingualloop/models/Requests/SignUpRequest.dart';
-import 'package:lingualloop/models/responses/AuthenticateResponse.dart';
-import 'package:lingualloop/services/AuthenticationService.dart';
-import 'package:lingualloop/ui/screens/SignUpScreen.dart';
-import 'package:lingualloop/ui/widgets/Buttons/auth_social_button.dart';
+import 'package:stelinda/models/ApiResponse.dart';
+import 'package:stelinda/models/Requests/SignUpRequest.dart';
+import 'package:stelinda/models/responses/AuthenticateResponse.dart';
+import 'package:stelinda/services/AuthenticationService.dart';
+import 'package:stelinda/ui/screens/SignUpScreen.dart';
+import 'package:stelinda/ui/widgets/Buttons/auth_social_button.dart';
 import 'package:provider/provider.dart';
 
 class _FakeAuthService extends AuthService {

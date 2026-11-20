@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/karty_success_celebration.dart';
+import 'package:stelinda/ui/widgets/karty_success_celebration.dart';
 
 void main() {
   setUpAll(() async {

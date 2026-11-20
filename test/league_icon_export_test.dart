@@ -4,12 +4,12 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/league_badge_mark.dart';
+import 'package:stelinda/ui/widgets/league_badge_mark.dart';
 
 const _exportDir =
-    '/Users/kerem.aydin/Desktop/Repos/Lingualloop/tmp/league_icons';
+    '/Users/kerem.aydin/Desktop/Repos/Stelinda/tmp/league_icons';
 const _assetPath =
-    '/Users/kerem.aydin/Desktop/Repos/Lingualloop/LingualLoop.Mobile/assets/icons/league.png';
+    '/Users/kerem.aydin/Desktop/Repos/Stelinda/Stelinda.Mobile/assets/icons/league.png';
 
 const _leagueKeys = [
   'merkur',
@@ -294,7 +294,7 @@ void main() {
     final asset = await recorder.endRecording().toImage(96, 96);
     await _writePng(
       asset,
-      '/Users/kerem.aydin/Desktop/Repos/Lingualloop/LingualLoop.Mobile/assets/icons/quest.png',
+      '/Users/kerem.aydin/Desktop/Repos/Stelinda/Stelinda.Mobile/assets/icons/quest.png',
     );
 
     final previewRecorder = ui.PictureRecorder();
@@ -333,7 +333,7 @@ void main() {
 
     Future<ui.Image> loadAsset(String name) async {
       final bytes = File(
-        '/Users/kerem.aydin/Desktop/Repos/Lingualloop/LingualLoop.Mobile/assets/icons/$name',
+        '/Users/kerem.aydin/Desktop/Repos/Stelinda/Stelinda.Mobile/assets/icons/$name',
       ).readAsBytesSync();
       final codec = await ui.instantiateImageCodec(bytes);
       return (await codec.getNextFrame()).image;

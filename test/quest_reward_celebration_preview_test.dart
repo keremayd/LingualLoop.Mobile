@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/quest_reward_celebration.dart';
+import 'package:stelinda/ui/widgets/quest_reward_celebration.dart';
 
 /// Kutlamanın filmşeridi. Golden statiktir; hareket ancak kare kare
 /// değerlendirilebilir.

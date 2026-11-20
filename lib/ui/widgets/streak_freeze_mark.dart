@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/quest_icons.dart';
+import 'package:stelinda/ui/widgets/quest_icons.dart';
 
 /// Seri koruma simgesi: **buz bloğunun içinde yanan alev.**
 ///

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:lingualloop/models/responses/KartyPathResponse.dart';
-import 'package:lingualloop/services/KartyService.dart';
+import 'package:stelinda/models/responses/KartyPathResponse.dart';
+import 'package:stelinda/services/KartyService.dart';
 
 enum KartyPathStatus { loading, ready, error }
 

@@ -1,10 +1,10 @@
-import 'package:lingualloop/ui/app_typography.dart';
+import 'package:stelinda/ui/app_typography.dart';
 import 'dart:math' as math;
 import 'dart:ui' show PathMetric;
 
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/pronunciation_button.dart';
+import 'package:stelinda/ui/widgets/pronunciation_button.dart';
 
 class KartyFeedbackWord extends StatefulWidget {
   const KartyFeedbackWord({

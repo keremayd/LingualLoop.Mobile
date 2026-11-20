@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/services/account_deletion.dart';
-import 'package:lingualloop/ui/screens/legal_document_screen.dart';
-import 'package:lingualloop/ui/widgets/settings_sheet.dart';
+import 'package:stelinda/services/account_deletion.dart';
+import 'package:stelinda/ui/screens/legal_document_screen.dart';
+import 'package:stelinda/ui/widgets/settings_sheet.dart';
 
 import 'helpers/preview_fonts.dart';
 

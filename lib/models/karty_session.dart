@@ -1,4 +1,4 @@
-import 'package:lingualloop/models/karty_path.dart';
+import 'package:stelinda/models/karty_path.dart';
 
 /// Oyunun Karty Yolu'nda hangi adımdan açıldığı (`/kartyquiz` rota
 /// argümanı). Yoksa oyun eski sonsuz akışta açılır (ör. Artikel'in kilitli

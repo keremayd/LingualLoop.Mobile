@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lingualloop/models/responses/ScoreWithLivesResponse.dart';
+import 'package:stelinda/models/responses/ScoreWithLivesResponse.dart';
 
 /// Ana ekrandaki seri kartının hangi **sahneyi** göstereceğine karar veren
 /// kural listesi. Tek doğruluk kaynağı.

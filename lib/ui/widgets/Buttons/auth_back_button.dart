@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/Buttons/app_icon_control_button.dart';
-import 'package:lingualloop/ui/widgets/karty_control_glyphs.dart';
+import 'package:stelinda/ui/widgets/Buttons/app_icon_control_button.dart';
+import 'package:stelinda/ui/widgets/karty_control_glyphs.dart';
 
 class AuthBackButton extends StatelessWidget {
   const AuthBackButton({

@@ -1,14 +1,14 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/models/ApiResponse.dart';
-import 'package:lingualloop/models/responses/DailyQuestsResponse.dart';
-import 'package:lingualloop/providers/QuestsProvider.dart';
-import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
-import 'package:lingualloop/services/QuestService.dart';
-import 'package:lingualloop/services/UserService.dart';
-import 'package:lingualloop/ui/screens/quests_screen.dart';
-import 'package:lingualloop/ui/widgets/NavbarWidget.dart';
+import 'package:stelinda/models/ApiResponse.dart';
+import 'package:stelinda/models/responses/DailyQuestsResponse.dart';
+import 'package:stelinda/providers/QuestsProvider.dart';
+import 'package:stelinda/providers/ScoreWithLivesProvider.dart';
+import 'package:stelinda/services/QuestService.dart';
+import 'package:stelinda/services/UserService.dart';
+import 'package:stelinda/ui/screens/quests_screen.dart';
+import 'package:stelinda/ui/widgets/NavbarWidget.dart';
 import 'package:provider/provider.dart';
 
 /// Uçan biletlerin koordinat uzayı koruması.

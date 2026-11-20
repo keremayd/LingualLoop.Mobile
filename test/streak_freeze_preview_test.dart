@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/models/responses/DailyActivityResponse.dart';
-import 'package:lingualloop/ui/widgets/Popups/streak_at_risk_popup.dart';
-import 'package:lingualloop/ui/widgets/streak_freeze_mark.dart';
-import 'package:lingualloop/ui/widgets/streak_week_strip.dart';
+import 'package:stelinda/models/responses/DailyActivityResponse.dart';
+import 'package:stelinda/ui/widgets/Popups/streak_at_risk_popup.dart';
+import 'package:stelinda/ui/widgets/streak_freeze_mark.dart';
+import 'package:stelinda/ui/widgets/streak_week_strip.dart';
 
 /// Seri koruma akışının görsel önizlemesi (gerçek test değil).
 ///

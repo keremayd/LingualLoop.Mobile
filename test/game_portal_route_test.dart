@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/ticket_spend_scene.dart';
+import 'package:stelinda/ui/widgets/ticket_spend_scene.dart';
 
 /// Oyunu açan daire zamana değil kareye bağlı ilerler. Oyun sayfasının ilk
 /// karesi ağır (kurulum ve ekran dışında ölçüm, debug'da 200 ms'ye kadar);

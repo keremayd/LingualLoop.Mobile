@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/app_typography.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
 
 /// Hoş geldin ekranındaki ikincil eylemin ortak yüzü ve basılma davranışı.
 class SecondaryActionButton extends StatelessWidget {

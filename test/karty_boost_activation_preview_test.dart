@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/karty_boost_activation_effect.dart';
-import 'package:lingualloop/ui/widgets/karty_boost_edge_meter.dart';
+import 'package:stelinda/ui/widgets/karty_boost_activation_effect.dart';
+import 'package:stelinda/ui/widgets/karty_boost_edge_meter.dart';
 
 void main() {
   setUpAll(() async {

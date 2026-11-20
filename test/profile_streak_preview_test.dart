@@ -3,10 +3,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/models/responses/DailyActivityResponse.dart';
-import 'package:lingualloop/models/responses/ProfileLearningStatsResponse.dart';
-import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
-import 'package:lingualloop/ui/widgets/profile_learning_stats_card.dart';
+import 'package:stelinda/models/responses/DailyActivityResponse.dart';
+import 'package:stelinda/models/responses/ProfileLearningStatsResponse.dart';
+import 'package:stelinda/providers/ProfileLearningStatsProvider.dart';
+import 'package:stelinda/ui/widgets/profile_learning_stats_card.dart';
 import 'package:provider/provider.dart';
 
 /// Profilin istatistik + seri şeridi bölümü.
@@ -17,7 +17,7 @@ void main() {
     TestWidgetsFlutterBinding.ensureInitialized();
     final loader = FontLoader('Inter');
     final bytes = File(
-      '/Users/kerem.aydin/Desktop/Repos/Lingualloop/LingualLoop.Mobile'
+      '/Users/kerem.aydin/Desktop/Repos/Stelinda/Stelinda.Mobile'
       '/assets/fonts/Inter-SemiBold.ttf',
     ).readAsBytesSync();
     loader.addFont(Future.value(ByteData.view(bytes.buffer)));

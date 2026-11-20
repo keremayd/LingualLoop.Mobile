@@ -1,13 +1,13 @@
 import 'package:provider/provider.dart';
-import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
-import 'package:lingualloop/ui/widgets/karty_league_score.dart';
+import 'package:stelinda/providers/ScoreWithLivesProvider.dart';
+import 'package:stelinda/ui/widgets/karty_league_score.dart';
 
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/Buttons/app_icon_control_button.dart';
-import 'package:lingualloop/ui/widgets/karty_control_glyphs.dart';
-import 'package:lingualloop/ui/widgets/karty_review_stack_bar.dart';
-import 'package:lingualloop/ui/widgets/karty_sound_button.dart';
-import 'package:lingualloop/ui/widgets/karty_time_bar.dart';
+import 'package:stelinda/ui/widgets/Buttons/app_icon_control_button.dart';
+import 'package:stelinda/ui/widgets/karty_control_glyphs.dart';
+import 'package:stelinda/ui/widgets/karty_review_stack_bar.dart';
+import 'package:stelinda/ui/widgets/karty_sound_button.dart';
+import 'package:stelinda/ui/widgets/karty_time_bar.dart';
 
 /// Tek kontrol satırı: duraklatma, süre / rövanş ilerlemesi, lig puanı ve ses.
 class KartyTopBar extends StatelessWidget {

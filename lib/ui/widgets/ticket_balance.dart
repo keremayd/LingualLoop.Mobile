@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/app_typography.dart';
+import 'package:stelinda/ui/app_typography.dart';
 
 /// Bilet bakiyesi: kalınlık bantlı yıldızlı bilet, yanında sayı ve soluk
 /// "/tavan". Görevler başlığında doğdu; ana ekranın üst şeridi de aynı

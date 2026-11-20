@@ -3,14 +3,14 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
-import 'package:lingualloop/ui/widgets/app_bottom_nav_bar.dart';
-import 'package:lingualloop/ui/widgets/countdown_pill.dart';
-import 'package:lingualloop/ui/widgets/quest_icons.dart';
-import 'package:lingualloop/ui/widgets/streak_freeze_flake.dart';
-import 'package:lingualloop/ui/widgets/surface_gloss.dart';
-import 'package:lingualloop/ui/widgets/ticket_with_count.dart';
+import 'package:stelinda/ui/app_typography.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/widgets/app_bottom_nav_bar.dart';
+import 'package:stelinda/ui/widgets/countdown_pill.dart';
+import 'package:stelinda/ui/widgets/quest_icons.dart';
+import 'package:stelinda/ui/widgets/streak_freeze_flake.dart';
+import 'package:stelinda/ui/widgets/surface_gloss.dart';
+import 'package:stelinda/ui/widgets/ticket_with_count.dart';
 
 import 'helpers/preview_fonts.dart';
 

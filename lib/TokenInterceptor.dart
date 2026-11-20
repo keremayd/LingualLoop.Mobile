@@ -1,7 +1,7 @@
-import 'package:lingualloop/l10n/app_language.dart';
+import 'package:stelinda/l10n/app_language.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:lingualloop/Utils/AppNotifier.dart';
+import 'package:stelinda/Utils/AppNotifier.dart';
 import 'services/AuthenticationService.dart';
 import 'main.dart';
 

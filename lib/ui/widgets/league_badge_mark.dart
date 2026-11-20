@@ -1,4 +1,4 @@
-import 'package:lingualloop/l10n/l10n.dart';
+import 'package:stelinda/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 class LeagueBadgeMark extends StatelessWidget {

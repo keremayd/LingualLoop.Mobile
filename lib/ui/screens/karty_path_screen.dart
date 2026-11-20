@@ -4,18 +4,18 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:lingualloop/models/karty_path.dart';
-import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/Buttons/app_button_style.dart';
-import 'package:lingualloop/ui/widgets/Buttons/app_icon_control_button.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
-import 'package:lingualloop/ui/widgets/karty_control_glyphs.dart';
-import 'package:lingualloop/ui/widgets/hop_motion.dart';
-import 'package:lingualloop/ui/widgets/karty_unit_header.dart';
-import 'package:lingualloop/ui/widgets/ticket_spend_scene.dart';
-import 'package:lingualloop/ui/widgets/karty_unit_marks.dart';
-import 'package:lingualloop/ui/widgets/quest_icons.dart';
-import 'package:lingualloop/ui/widgets/surface_gloss.dart';
+import 'package:stelinda/models/karty_path.dart';
+import 'package:stelinda/ui/app_typography.dart';
+import 'package:stelinda/ui/widgets/Buttons/app_button_style.dart';
+import 'package:stelinda/ui/widgets/Buttons/app_icon_control_button.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/widgets/karty_control_glyphs.dart';
+import 'package:stelinda/ui/widgets/hop_motion.dart';
+import 'package:stelinda/ui/widgets/karty_unit_header.dart';
+import 'package:stelinda/ui/widgets/ticket_spend_scene.dart';
+import 'package:stelinda/ui/widgets/karty_unit_marks.dart';
+import 'package:stelinda/ui/widgets/quest_icons.dart';
+import 'package:stelinda/ui/widgets/surface_gloss.dart';
 
 /// Ana ekranın içeriği: Karty Yolu (bkz. `docs/KARTY_PATIKA.md` §8, §11).
 ///

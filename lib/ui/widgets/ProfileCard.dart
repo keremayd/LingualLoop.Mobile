@@ -1,19 +1,19 @@
-import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/app_shape_style.dart';
-import 'package:lingualloop/ui/widgets/Buttons/app_button_style.dart';
+import 'package:stelinda/ui/app_typography.dart';
+import 'package:stelinda/ui/widgets/app_shape_style.dart';
+import 'package:stelinda/ui/widgets/Buttons/app_button_style.dart';
 import 'dart:ui' as ui;
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:lingualloop/Utils/AppNotifier.dart';
-import 'package:lingualloop/services/AuthenticationService.dart';
-import 'package:lingualloop/services/UserService.dart';
-import 'package:lingualloop/services/account_deletion.dart';
-import 'package:lingualloop/services/subscription_management.dart';
-import 'package:lingualloop/ui/widgets/Buttons/auth_social_button.dart';
-import 'package:lingualloop/ui/screens/legal_document_screen.dart';
-import 'package:lingualloop/ui/widgets/ProfilePhoto.dart';
-import 'package:lingualloop/ui/widgets/settings_sheet.dart';
+import 'package:stelinda/Utils/AppNotifier.dart';
+import 'package:stelinda/services/AuthenticationService.dart';
+import 'package:stelinda/services/UserService.dart';
+import 'package:stelinda/services/account_deletion.dart';
+import 'package:stelinda/services/subscription_management.dart';
+import 'package:stelinda/ui/widgets/Buttons/auth_social_button.dart';
+import 'package:stelinda/ui/screens/legal_document_screen.dart';
+import 'package:stelinda/ui/widgets/ProfilePhoto.dart';
+import 'package:stelinda/ui/widgets/settings_sheet.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/UserProvider.dart';

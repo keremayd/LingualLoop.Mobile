@@ -1,7 +1,7 @@
-import 'package:lingualloop/ui/app_typography.dart';
+import 'package:stelinda/ui/app_typography.dart';
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/karty_boost_palette.dart';
-import 'package:lingualloop/ui/widgets/league_badge_mark.dart';
+import 'package:stelinda/ui/widgets/karty_boost_palette.dart';
+import 'package:stelinda/ui/widgets/league_badge_mark.dart';
 
 /// Üst satırdaki lig puanı. Çarpan sayının altında durur, barı daraltmaz.
 class KartyLeagueScore extends StatelessWidget {

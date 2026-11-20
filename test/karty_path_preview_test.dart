@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/models/karty_path.dart';
-import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/screens/karty_path_screen.dart';
+import 'package:stelinda/models/karty_path.dart';
+import 'package:stelinda/ui/app_typography.dart';
+import 'package:stelinda/ui/screens/karty_path_screen.dart';
 
 import 'helpers/karty_path_preview.dart';
 import 'helpers/preview_fonts.dart';

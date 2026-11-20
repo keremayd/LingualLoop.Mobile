@@ -1,16 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:lingualloop/Utils/AppNotifier.dart';
-import 'package:lingualloop/models/ApiResponse.dart';
-import 'package:lingualloop/models/responses/UpdateLivesResponse.dart';
-import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
-import 'package:lingualloop/providers/QuestsProvider.dart';
-import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
-import 'package:lingualloop/services/UserService.dart';
-import 'package:lingualloop/ui/screens/premium_screen.dart';
-import 'package:lingualloop/ui/widgets/Popups/out_of_tickets_popup.dart';
-import 'package:lingualloop/ui/widgets/ticket_spend_scene.dart';
+import 'package:stelinda/Utils/AppNotifier.dart';
+import 'package:stelinda/models/ApiResponse.dart';
+import 'package:stelinda/models/responses/UpdateLivesResponse.dart';
+import 'package:stelinda/providers/ProfileLearningStatsProvider.dart';
+import 'package:stelinda/providers/QuestsProvider.dart';
+import 'package:stelinda/providers/ScoreWithLivesProvider.dart';
+import 'package:stelinda/services/UserService.dart';
+import 'package:stelinda/ui/screens/premium_screen.dart';
+import 'package:stelinda/ui/widgets/Popups/out_of_tickets_popup.dart';
+import 'package:stelinda/ui/widgets/ticket_spend_scene.dart';
 import 'package:provider/provider.dart';
 
 /// Biletin yetmediği durumda sunucu E4116 döndürür ve oyun açılmaz.

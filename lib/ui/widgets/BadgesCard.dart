@@ -1,6 +1,6 @@
-import 'package:lingualloop/ui/app_typography.dart';
+import 'package:stelinda/ui/app_typography.dart';
 import 'package:flutter/material.dart';
-import 'package:lingualloop/models/Badge.dart' as model;
+import 'package:stelinda/models/Badge.dart' as model;
 import 'package:provider/provider.dart';
 
 import '../../providers/BadgeProvider.dart';

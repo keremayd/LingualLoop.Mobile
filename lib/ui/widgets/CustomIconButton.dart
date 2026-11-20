@@ -1,4 +1,4 @@
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:flutter/material.dart';
 
 class CustomIconButton extends StatefulWidget {

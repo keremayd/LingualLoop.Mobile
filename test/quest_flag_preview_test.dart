@@ -3,12 +3,12 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/quest_flag_mark.dart';
+import 'package:stelinda/ui/widgets/quest_flag_mark.dart';
 
 void main() {
   test('flag icon sheet', () async {
     final boltBytes = File(
-      '/Users/kerem.aydin/Desktop/Repos/Lingualloop/LingualLoop.Mobile/assets/icons/boost-bolt.png',
+      '/Users/kerem.aydin/Desktop/Repos/Stelinda/Stelinda.Mobile/assets/icons/boost-bolt.png',
     ).readAsBytesSync();
     final bolt =
         (await (await ui.instantiateImageCodec(boltBytes)).getNextFrame()).image;

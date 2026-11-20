@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/streak_freeze_mark.dart';
+import 'package:stelinda/ui/widgets/streak_freeze_mark.dart';
 
 /// Koruma simgesinin (buz bloğu + içinde alev) önizlemesi.
 ///

@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/profile_learning_stats_card.dart' show ArticleLearnedIcon;
+import 'package:stelinda/ui/widgets/profile_learning_stats_card.dart' show ArticleLearnedIcon;
 
 /// Görev kartlarının ikonları. Bayrak simgesiyle aynı dilde çizilir:
 /// dolu ve tombul gövde, gövdenin altına inen koyu kalınlık bandı

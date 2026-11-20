@@ -1,9 +1,9 @@
 import 'package:provider/provider.dart';
-import 'package:lingualloop/services/PronunciationService.dart';
+import 'package:stelinda/services/PronunciationService.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/karty_answer_feedback_effect.dart';
+import 'package:stelinda/ui/widgets/karty_answer_feedback_effect.dart';
 import 'helpers/preview_fonts.dart';
 
 class _SilentAudio extends Fake implements PronunciationService {

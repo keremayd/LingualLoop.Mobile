@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:lingualloop/models/responses/GetKartyByScoreResponse.dart';
-import 'package:lingualloop/models/responses/KartyPathResponse.dart';
-import 'package:lingualloop/models/responses/KartySessionStatusResponse.dart';
-import 'package:lingualloop/models/responses/ResolveWrongKartyReviewResponse.dart';
+import 'package:stelinda/models/responses/GetKartyByScoreResponse.dart';
+import 'package:stelinda/models/responses/KartyPathResponse.dart';
+import 'package:stelinda/models/responses/KartySessionStatusResponse.dart';
+import 'package:stelinda/models/responses/ResolveWrongKartyReviewResponse.dart';
 
 import '../models/ApiResponse.dart';
 

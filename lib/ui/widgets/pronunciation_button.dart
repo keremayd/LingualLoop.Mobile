@@ -1,7 +1,7 @@
-import 'package:lingualloop/ui/widgets/Buttons/app_button_style.dart';
+import 'package:stelinda/ui/widgets/Buttons/app_button_style.dart';
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/speaker_mark.dart';
-import 'package:lingualloop/services/PronunciationService.dart';
+import 'package:stelinda/ui/widgets/speaker_mark.dart';
+import 'package:stelinda/services/PronunciationService.dart';
 import 'package:provider/provider.dart';
 
 /// Telaffuz butonu: hoparlör + ses dalgaları.

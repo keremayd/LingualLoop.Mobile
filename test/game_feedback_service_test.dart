@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:lingualloop/services/GameFeedbackService.dart';
-import 'package:lingualloop/services/PronunciationService.dart';
+import 'package:stelinda/services/GameFeedbackService.dart';
+import 'package:stelinda/services/PronunciationService.dart';
 
 class _Player extends Fake implements AudioPlayer {
   _Player(this.log);

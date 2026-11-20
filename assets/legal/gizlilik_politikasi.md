@@ -1,6 +1,6 @@
 Son güncelleme: 13 Kasım 2026
 
-Bu metin, LingualLoop'u kullanırken hangi kişisel verilerinin işlendiğini, neden işlendiğini ve hangi haklara sahip olduğunu anlatır. 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamındaki aydınlatma metnidir.
+Bu metin, Stelinda'yı kullanırken hangi kişisel verilerinin işlendiğini, neden işlendiğini ve hangi haklara sahip olduğunu anlatır. 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamındaki aydınlatma metnidir.
 
 ## Veri sorumlusu
 

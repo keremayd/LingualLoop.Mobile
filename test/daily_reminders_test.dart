@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/services/DailyReminders.dart';
+import 'package:stelinda/services/DailyReminders.dart';
 
 void main() {
   List<DailyReminder> plan(int hour,

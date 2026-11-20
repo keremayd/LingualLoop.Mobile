@@ -1,4 +1,4 @@
-import 'package:lingualloop/models/responses/GetKartyByScoreResponse.dart';
+import 'package:stelinda/models/responses/GetKartyByScoreResponse.dart';
 
 /// Görsel seçilen soruda bir seçenek; görsel önbellekteki dosyadır.
 class KartyOption {

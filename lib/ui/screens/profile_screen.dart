@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
-import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
-import 'package:lingualloop/services/UserService.dart';
-import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/ProfileCard.dart';
-import 'package:lingualloop/ui/widgets/loading_skeleton.dart';
-import 'package:lingualloop/ui/widgets/profile_learning_stats_card.dart';
+import 'package:stelinda/providers/ProfileLearningStatsProvider.dart';
+import 'package:stelinda/providers/ScoreWithLivesProvider.dart';
+import 'package:stelinda/services/UserService.dart';
+import 'package:stelinda/ui/app_typography.dart';
+import 'package:stelinda/ui/widgets/ProfileCard.dart';
+import 'package:stelinda/ui/widgets/loading_skeleton.dart';
+import 'package:stelinda/ui/widgets/profile_learning_stats_card.dart';
 import 'package:provider/provider.dart';
 
 class ProfileScreen extends StatefulWidget {

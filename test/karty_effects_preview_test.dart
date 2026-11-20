@@ -4,9 +4,9 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/karty_answer_feedback_effect.dart';
-import 'package:lingualloop/ui/widgets/mascot_mark.dart';
-import 'package:lingualloop/ui/widgets/quest_reward_celebration.dart';
+import 'package:stelinda/ui/widgets/karty_answer_feedback_effect.dart';
+import 'package:stelinda/ui/widgets/mascot_mark.dart';
+import 'package:stelinda/ui/widgets/quest_reward_celebration.dart';
 
 /// Karty efektleri: mevcut hâl ve öneri, film şeridi olarak.
 /// **Üretim kodu değil.**

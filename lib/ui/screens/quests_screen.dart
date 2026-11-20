@@ -1,26 +1,26 @@
-import 'package:lingualloop/ui/app_typography.dart';
+import 'package:stelinda/ui/app_typography.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
-import 'package:lingualloop/Utils/AppNotifier.dart';
-import 'package:lingualloop/main.dart';
-import 'package:lingualloop/models/responses/DailyQuestsResponse.dart';
-import 'package:lingualloop/providers/QuestsProvider.dart';
-import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
-import 'package:lingualloop/services/UserService.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
-import 'package:lingualloop/ui/widgets/clock_mark.dart';
-import 'package:lingualloop/ui/widgets/hop_motion.dart';
-import 'package:lingualloop/ui/widgets/loading_skeleton.dart';
-import 'package:lingualloop/ui/widgets/quest_icons.dart';
-import 'package:lingualloop/ui/widgets/quest_reward_celebration.dart';
-import 'package:lingualloop/ui/widgets/streak_freeze_flake.dart';
-import 'package:lingualloop/ui/widgets/surface_gloss.dart';
-import 'package:lingualloop/ui/widgets/ticket_balance.dart';
-import 'package:lingualloop/ui/widgets/ticket_with_count.dart';
+import 'package:stelinda/Utils/AppNotifier.dart';
+import 'package:stelinda/main.dart';
+import 'package:stelinda/models/responses/DailyQuestsResponse.dart';
+import 'package:stelinda/providers/QuestsProvider.dart';
+import 'package:stelinda/providers/ScoreWithLivesProvider.dart';
+import 'package:stelinda/services/UserService.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/widgets/clock_mark.dart';
+import 'package:stelinda/ui/widgets/hop_motion.dart';
+import 'package:stelinda/ui/widgets/loading_skeleton.dart';
+import 'package:stelinda/ui/widgets/quest_icons.dart';
+import 'package:stelinda/ui/widgets/quest_reward_celebration.dart';
+import 'package:stelinda/ui/widgets/streak_freeze_flake.dart';
+import 'package:stelinda/ui/widgets/surface_gloss.dart';
+import 'package:stelinda/ui/widgets/ticket_balance.dart';
+import 'package:stelinda/ui/widgets/ticket_with_count.dart';
 import 'package:provider/provider.dart';
 
 class QuestsScreen extends StatefulWidget {

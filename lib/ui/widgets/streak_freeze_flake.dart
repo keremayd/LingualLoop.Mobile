@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/quest_icons.dart';
+import 'package:stelinda/ui/widgets/quest_icons.dart';
 
 /// Seri koruma sayacının ikonu — **buz tutmuş alev**.
 ///

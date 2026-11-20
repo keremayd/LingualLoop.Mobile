@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/services/cached_signed_image.dart';
+import 'package:stelinda/services/cached_signed_image.dart';
 
 /// S3 gibi davranır: görselin içeriği ve ETag'i var; `If-None-Match` aynıysa
 /// 304 döner.

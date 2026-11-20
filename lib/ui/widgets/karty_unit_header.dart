@@ -1,11 +1,11 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:lingualloop/models/karty_path.dart';
-import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/Buttons/app_button_style.dart';
-import 'package:lingualloop/ui/widgets/karty_unit_marks.dart';
-import 'package:lingualloop/ui/widgets/pressable_layered_card.dart';
+import 'package:stelinda/models/karty_path.dart';
+import 'package:stelinda/ui/app_typography.dart';
+import 'package:stelinda/ui/widgets/Buttons/app_button_style.dart';
+import 'package:stelinda/ui/widgets/karty_unit_marks.dart';
+import 'package:stelinda/ui/widgets/pressable_layered_card.dart';
 
 // Karty Yolu'nun ünite kartı. Patikada her ünitenin başlığı, oturum
 // özetinde günün ilerlemesi bu kartla gösterilir; iki ayrı kart çizilseydi

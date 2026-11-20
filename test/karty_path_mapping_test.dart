@@ -2,8 +2,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/models/karty_path.dart';
-import 'package:lingualloop/models/responses/KartyPathResponse.dart';
+import 'package:stelinda/models/karty_path.dart';
+import 'package:stelinda/models/responses/KartyPathResponse.dart';
 
 /// `GET karty/path` yanıtının ekran modeline çevrilmesi: deste durumları ve
 /// etiketleri, yalnız tekrar adımı, kilitli ünitenin açılma koşulu.

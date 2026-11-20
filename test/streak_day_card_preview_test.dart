@@ -2,9 +2,9 @@ import 'helpers/preview_fonts.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/streak_day_card.dart';
-import 'package:lingualloop/ui/widgets/streak_day_scenes.dart';
-import 'package:lingualloop/ui/widgets/streak_week_strip.dart';
+import 'package:stelinda/ui/widgets/streak_day_card.dart';
+import 'package:stelinda/ui/widgets/streak_day_scenes.dart';
+import 'package:stelinda/ui/widgets/streak_week_strip.dart';
 
 /// Güne özel seri kartları — kayıtlı bütün sahneler.
 ///

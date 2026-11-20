@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/screens/karty_path_screen.dart';
+import 'package:stelinda/ui/screens/karty_path_screen.dart';
 
 /// Pekiştirme halkasının taşları kelime sayısından bağımsız: halka hep
 /// yoldaki boyda 16 taş (kullanıcı, 19 Kas 2026: kelime başına taş 24

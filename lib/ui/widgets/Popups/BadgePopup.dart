@@ -1,8 +1,8 @@
-import 'package:lingualloop/ui/app_typography.dart';
+import 'package:stelinda/ui/app_typography.dart';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:lingualloop/providers/BadgeProvider.dart';
+import 'package:stelinda/providers/BadgeProvider.dart';
 import 'package:provider/provider.dart';
 
 import '../CustomIconButton.dart';

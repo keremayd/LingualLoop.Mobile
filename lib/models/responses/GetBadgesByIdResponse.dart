@@ -1,5 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'package:lingualloop/models/Badge.dart';
+import 'package:stelinda/models/Badge.dart';
 
 part 'GetBadgesByIdResponse.g.dart';
 

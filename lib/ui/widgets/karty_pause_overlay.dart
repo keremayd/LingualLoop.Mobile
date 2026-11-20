@@ -1,12 +1,12 @@
-import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/app_shape_style.dart';
+import 'package:stelinda/ui/app_typography.dart';
+import 'package:stelinda/ui/widgets/app_shape_style.dart';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
-import 'package:lingualloop/ui/widgets/Buttons/secondary_action_button.dart';
-import 'package:lingualloop/ui/widgets/karty_control_glyphs.dart';
-import 'package:lingualloop/ui/widgets/quest_icons.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/widgets/Buttons/secondary_action_button.dart';
+import 'package:stelinda/ui/widgets/karty_control_glyphs.dart';
+import 'package:stelinda/ui/widgets/quest_icons.dart';
 
 class KartyPauseOverlay extends StatelessWidget {
   const KartyPauseOverlay({

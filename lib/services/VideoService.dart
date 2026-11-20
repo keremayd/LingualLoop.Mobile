@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:lingualloop/models/responses/GetQuestionByScoreResponse.dart';
-import 'package:lingualloop/models/responses/GetSavedVideosByIdResponse.dart';
+import 'package:stelinda/models/responses/GetQuestionByScoreResponse.dart';
+import 'package:stelinda/models/responses/GetSavedVideosByIdResponse.dart';
 
 import '../models/ApiResponse.dart';
 

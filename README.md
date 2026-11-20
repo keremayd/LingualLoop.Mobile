@@ -1,6 +1,6 @@
-# lingualloop
+# Stelinda
 
-lingualloopmobile
+Stelinda mobil uygulamasi.
 
 ## Getting Started
 

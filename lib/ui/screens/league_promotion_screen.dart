@@ -1,11 +1,11 @@
-import 'package:lingualloop/ui/app_typography.dart';
+import 'package:stelinda/ui/app_typography.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:lingualloop/models/responses/LeagueProgressResponse.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
-import 'package:lingualloop/ui/widgets/league_badge_mark.dart';
+import 'package:stelinda/models/responses/LeagueProgressResponse.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/widgets/league_badge_mark.dart';
 
 class LeaguePromotionScreen extends StatefulWidget {
   const LeaguePromotionScreen({

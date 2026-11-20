@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:lingualloop/models/ApiResponse.dart';
-import 'package:lingualloop/models/responses/DailyQuestsResponse.dart';
+import 'package:stelinda/models/ApiResponse.dart';
+import 'package:stelinda/models/responses/DailyQuestsResponse.dart';
 
 class QuestService {
   final Dio _dio;

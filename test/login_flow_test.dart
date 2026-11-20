@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/models/ApiResponse.dart';
-import 'package:lingualloop/models/responses/AuthenticateResponse.dart';
-import 'package:lingualloop/services/AuthenticationService.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
-import 'package:lingualloop/ui/screens/login_screen.dart';
+import 'package:stelinda/models/ApiResponse.dart';
+import 'package:stelinda/models/responses/AuthenticateResponse.dart';
+import 'package:stelinda/services/AuthenticationService.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/screens/login_screen.dart';
 import 'package:provider/provider.dart';
 
 class _LoginRequest {

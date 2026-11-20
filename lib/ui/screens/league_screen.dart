@@ -1,21 +1,21 @@
-import 'package:lingualloop/l10n/l10n.dart';
-import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/app_shape_style.dart';
+import 'package:stelinda/l10n/l10n.dart';
+import 'package:stelinda/ui/app_typography.dart';
+import 'package:stelinda/ui/widgets/app_shape_style.dart';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
-import 'package:lingualloop/main.dart';
-import 'package:lingualloop/models/responses/LeagueProgressResponse.dart';
-import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
-import 'package:lingualloop/services/UserService.dart';
-import 'package:lingualloop/ui/widgets/ProfilePhoto.dart';
-import 'package:lingualloop/ui/widgets/Buttons/app_icon_control_button.dart';
-import 'package:lingualloop/ui/widgets/countdown_pill.dart';
-import 'package:lingualloop/ui/widgets/Popups/league_info_popup.dart';
-import 'package:lingualloop/ui/widgets/league_badge_mark.dart';
-import 'package:lingualloop/ui/flows/league_promotion_flow.dart';
-import 'package:lingualloop/ui/screens/league_promotion_screen.dart';
+import 'package:stelinda/main.dart';
+import 'package:stelinda/models/responses/LeagueProgressResponse.dart';
+import 'package:stelinda/providers/ScoreWithLivesProvider.dart';
+import 'package:stelinda/services/UserService.dart';
+import 'package:stelinda/ui/widgets/ProfilePhoto.dart';
+import 'package:stelinda/ui/widgets/Buttons/app_icon_control_button.dart';
+import 'package:stelinda/ui/widgets/countdown_pill.dart';
+import 'package:stelinda/ui/widgets/Popups/league_info_popup.dart';
+import 'package:stelinda/ui/widgets/league_badge_mark.dart';
+import 'package:stelinda/ui/flows/league_promotion_flow.dart';
+import 'package:stelinda/ui/screens/league_promotion_screen.dart';
 import 'package:provider/provider.dart';
 
 class LeagueScreen extends StatefulWidget {

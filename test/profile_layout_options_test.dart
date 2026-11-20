@@ -4,10 +4,10 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/league_badge_mark.dart';
+import 'package:stelinda/ui/widgets/league_badge_mark.dart';
 import 'helpers/legacy_level_bars_icon.dart';
-import 'package:lingualloop/ui/widgets/points_star_icon.dart';
-import 'package:lingualloop/ui/widgets/quest_icons.dart';
+import 'package:stelinda/ui/widgets/points_star_icon.dart';
+import 'package:stelinda/ui/widgets/quest_icons.dart';
 
 /// Profil ekranı yerleşim seçenekleri — gerçek cihaz genişliğinde (430px).
 ///
@@ -31,7 +31,7 @@ void main() {
     TestWidgetsFlutterBinding.ensureInitialized();
     final loader = FontLoader('Inter');
     final bytes = File(
-      '/Users/kerem.aydin/Desktop/Repos/Lingualloop/LingualLoop.Mobile'
+      '/Users/kerem.aydin/Desktop/Repos/Stelinda/Stelinda.Mobile'
       '/assets/fonts/Inter-SemiBold.ttf',
     ).readAsBytesSync();
     loader.addFont(Future.value(ByteData.view(bytes.buffer)));

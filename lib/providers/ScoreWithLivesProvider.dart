@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lingualloop/models/User.dart';
-import 'package:lingualloop/models/responses/ScoreWithLivesResponse.dart';
+import 'package:stelinda/models/User.dart';
+import 'package:stelinda/models/responses/ScoreWithLivesResponse.dart';
 
 class ScoreWithLivesProvider with ChangeNotifier {
   ScoreWithLivesResponse? _scoreWithLives;

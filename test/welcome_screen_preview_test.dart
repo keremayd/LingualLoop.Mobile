@@ -2,7 +2,7 @@ import 'helpers/preview_fonts.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/screens/welcome_screen.dart';
+import 'package:stelinda/ui/screens/welcome_screen.dart';
 
 /// Hoş geldin ekranı — **gerçek cihaz ölçüsünde** (430×932).
 ///

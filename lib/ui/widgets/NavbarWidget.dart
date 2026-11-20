@@ -1,13 +1,13 @@
-import 'package:lingualloop/l10n/app_language.dart';
+import 'package:stelinda/l10n/app_language.dart';
 import 'package:flutter/material.dart';
-import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
-import 'package:lingualloop/services/UserService.dart';
-import 'package:lingualloop/ui/screens/league_screen.dart';
-import 'package:lingualloop/ui/screens/premium_screen.dart';
-import 'package:lingualloop/ui/screens/profile_screen.dart';
-import 'package:lingualloop/ui/screens/quests_screen.dart';
-import 'package:lingualloop/ui/widgets/Popups/streak_at_risk_popup.dart';
-import 'package:lingualloop/ui/widgets/app_bottom_nav_bar.dart';
+import 'package:stelinda/providers/ProfileLearningStatsProvider.dart';
+import 'package:stelinda/services/UserService.dart';
+import 'package:stelinda/ui/screens/league_screen.dart';
+import 'package:stelinda/ui/screens/premium_screen.dart';
+import 'package:stelinda/ui/screens/profile_screen.dart';
+import 'package:stelinda/ui/screens/quests_screen.dart';
+import 'package:stelinda/ui/widgets/Popups/streak_at_risk_popup.dart';
+import 'package:stelinda/ui/widgets/app_bottom_nav_bar.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/UserProvider.dart';

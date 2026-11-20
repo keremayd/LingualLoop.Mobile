@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/app_shape_style.dart';
-import 'package:lingualloop/ui/widgets/karty_answer_feedback_effect.dart';
-import 'package:lingualloop/ui/widgets/karty_card_material.dart';
-import 'package:lingualloop/ui/widgets/surface_gloss.dart';
+import 'package:stelinda/ui/widgets/app_shape_style.dart';
+import 'package:stelinda/ui/widgets/karty_answer_feedback_effect.dart';
+import 'package:stelinda/ui/widgets/karty_card_material.dart';
+import 'package:stelinda/ui/widgets/surface_gloss.dart';
 
 /// Görsel seçilen sorularda soruyu taşıyan yatay kart.
 ///

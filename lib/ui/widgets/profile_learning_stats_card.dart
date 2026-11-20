@@ -1,18 +1,18 @@
-import 'package:lingualloop/ui/app_typography.dart';
-import 'package:lingualloop/ui/widgets/app_shape_style.dart';
+import 'package:stelinda/ui/app_typography.dart';
+import 'package:stelinda/ui/widgets/app_shape_style.dart';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:lingualloop/models/responses/DailyActivityResponse.dart';
-import 'package:lingualloop/providers/ProfileLearningStatsProvider.dart';
-import 'package:lingualloop/ui/widgets/streak_milestones.dart';
-import 'package:lingualloop/ui/widgets/league_badge_mark.dart';
-import 'package:lingualloop/ui/widgets/points_star_icon.dart';
-import 'package:lingualloop/ui/widgets/Popups/streak_at_risk_popup.dart';
-import 'package:lingualloop/ui/widgets/quest_icons.dart';
-import 'package:lingualloop/ui/widgets/streak_freeze_flake.dart';
-import 'package:lingualloop/ui/widgets/streak_week_strip.dart';
+import 'package:stelinda/models/responses/DailyActivityResponse.dart';
+import 'package:stelinda/providers/ProfileLearningStatsProvider.dart';
+import 'package:stelinda/ui/widgets/streak_milestones.dart';
+import 'package:stelinda/ui/widgets/league_badge_mark.dart';
+import 'package:stelinda/ui/widgets/points_star_icon.dart';
+import 'package:stelinda/ui/widgets/Popups/streak_at_risk_popup.dart';
+import 'package:stelinda/ui/widgets/quest_icons.dart';
+import 'package:stelinda/ui/widgets/streak_freeze_flake.dart';
+import 'package:stelinda/ui/widgets/streak_week_strip.dart';
 import 'package:provider/provider.dart';
 
 /// Profilin omurgası: **"neye ne kadar kaldın".**

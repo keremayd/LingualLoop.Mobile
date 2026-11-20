@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:lingualloop/services/cached_signed_image.dart';
+import 'package:stelinda/services/cached_signed_image.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 

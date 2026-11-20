@@ -6,12 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/providers/UserProvider.dart';
-import 'package:lingualloop/services/AuthenticationService.dart';
-import 'package:lingualloop/services/GameFeedbackService.dart';
-import 'package:lingualloop/services/PronunciationService.dart';
-import 'package:lingualloop/services/UserService.dart';
-import 'package:lingualloop/services/account_deletion.dart';
+import 'package:stelinda/providers/UserProvider.dart';
+import 'package:stelinda/services/AuthenticationService.dart';
+import 'package:stelinda/services/GameFeedbackService.dart';
+import 'package:stelinda/services/PronunciationService.dart';
+import 'package:stelinda/services/UserService.dart';
+import 'package:stelinda/services/account_deletion.dart';
 import 'package:provider/provider.dart';
 
 /// İsteği saklar, verilen durum ve gövdeyle döner.

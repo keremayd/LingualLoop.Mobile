@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
 
 /// Karty ve form başlıklarında kullanılan aynı ölçüde derinlikli ikon kontrolü.
 class AppIconControlButton extends StatelessWidget {

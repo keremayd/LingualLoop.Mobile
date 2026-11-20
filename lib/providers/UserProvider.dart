@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lingualloop/models/User.dart';
+import 'package:stelinda/models/User.dart';
 import 'package:provider/provider.dart';
 
 import '../models/responses/GetSavedVideosByIdResponse.dart';

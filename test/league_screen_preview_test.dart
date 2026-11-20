@@ -2,15 +2,15 @@ import 'helpers/preview_fonts.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/models/ApiResponse.dart';
-import 'package:lingualloop/models/responses/LeagueProgressResponse.dart';
-import 'package:lingualloop/models/responses/ScoreWithLivesResponse.dart';
-import 'package:lingualloop/providers/ScoreWithLivesProvider.dart';
-import 'package:lingualloop/providers/UserProvider.dart';
-import 'package:lingualloop/services/FileService.dart';
-import 'package:lingualloop/services/UserService.dart';
-import 'package:lingualloop/ui/screens/league_screen.dart';
-import 'package:lingualloop/ui/widgets/Popups/league_info_popup.dart';
+import 'package:stelinda/models/ApiResponse.dart';
+import 'package:stelinda/models/responses/LeagueProgressResponse.dart';
+import 'package:stelinda/models/responses/ScoreWithLivesResponse.dart';
+import 'package:stelinda/providers/ScoreWithLivesProvider.dart';
+import 'package:stelinda/providers/UserProvider.dart';
+import 'package:stelinda/services/FileService.dart';
+import 'package:stelinda/services/UserService.dart';
+import 'package:stelinda/ui/screens/league_screen.dart';
+import 'package:stelinda/ui/widgets/Popups/league_info_popup.dart';
 import 'package:provider/provider.dart';
 
 LeagueProgressResponse _sampleLeague({bool solo = false}) =>

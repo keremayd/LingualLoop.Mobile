@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/practice_station_marks.dart';
+import 'package:stelinda/ui/widgets/practice_station_marks.dart';
 
 /// Yan durak simgeleri: Artikel Pusulası ve Rövanş, durak karosu
 /// boyutunda ve büyük.

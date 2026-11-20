@@ -1,4 +1,4 @@
-import 'package:lingualloop/models/responses/DailyActivityResponse.dart';
+import 'package:stelinda/models/responses/DailyActivityResponse.dart';
 
 class ProfileLearningStatsResponse {
   const ProfileLearningStatsResponse({

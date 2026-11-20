@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:lingualloop/models/responses/GetBadgesByIdResponse.dart';
-import 'package:lingualloop/models/responses/GetKartyByScoreResponse.dart';
+import 'package:stelinda/models/responses/GetBadgesByIdResponse.dart';
+import 'package:stelinda/models/responses/GetKartyByScoreResponse.dart';
 
 import '../models/ApiResponse.dart';
 

@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/screens/premium_screen.dart';
+import 'package:stelinda/ui/screens/premium_screen.dart';
 
 import 'helpers/preview_fonts.dart';
 

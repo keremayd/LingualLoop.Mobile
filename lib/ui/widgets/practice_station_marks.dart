@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:lingualloop/ui/widgets/learning_card_gradient.dart';
-import 'package:lingualloop/ui/widgets/quest_icons.dart';
+import 'package:stelinda/ui/widgets/learning_card_gradient.dart';
+import 'package:stelinda/ui/widgets/quest_icons.dart';
 
 /// Karty Yolu'nun yan duraklarının simgeleri: Artikel Pusulası ve Rövanş.
 /// Görev ikonlarının reçetesiyle çizilir (§2.5): tombul gövde, altında koyu

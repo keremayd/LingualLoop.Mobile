@@ -4,7 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart' show clampDouble;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:lingualloop/ui/widgets/karty_unit_marks.dart';
+import 'package:stelinda/ui/widgets/karty_unit_marks.dart';
 
 /// Oyuna girişin bedeli: bilet sayaçtan büyüyerek düğümün üstüne iner, kapıda
 /// kesilir gibi yırtılır, kopan parça düşer, yıldızlı gövde düğüme girer ve

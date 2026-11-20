@@ -5,7 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/quest_icons.dart';
+import 'package:stelinda/ui/widgets/quest_icons.dart';
 
 /// Seri kartı — **gün gün** durumlar, kullanıcının tasarlattığı sete göre.
 ///
@@ -25,7 +25,7 @@ void main() {
     TestWidgetsFlutterBinding.ensureInitialized();
     final loader = FontLoader('Inter');
     final bytes = File(
-      '/Users/kerem.aydin/Desktop/Repos/Lingualloop/LingualLoop.Mobile'
+      '/Users/kerem.aydin/Desktop/Repos/Stelinda/Stelinda.Mobile'
       '/assets/fonts/Inter-SemiBold.ttf',
     ).readAsBytesSync();
     loader.addFont(Future.value(ByteData.view(bytes.buffer)));

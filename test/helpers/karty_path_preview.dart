@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
-import 'package:lingualloop/ui/screens/karty_path_screen.dart';
-import 'package:lingualloop/ui/widgets/home_top_bar.dart';
-import 'package:lingualloop/ui/widgets/practice_station_marks.dart';
+import 'package:stelinda/ui/screens/karty_path_screen.dart';
+import 'package:stelinda/ui/widgets/home_top_bar.dart';
+import 'package:stelinda/ui/widgets/practice_station_marks.dart';
 
 /// Patika önizlemelerinin ortak üst şeridi ve yan durakları.
 Widget previewPathHeader(

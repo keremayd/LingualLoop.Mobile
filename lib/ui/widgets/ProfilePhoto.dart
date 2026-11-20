@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:lingualloop/Utils/AppNotifier.dart';
-import 'package:lingualloop/services/FileService.dart';
+import 'package:stelinda/Utils/AppNotifier.dart';
+import 'package:stelinda/services/FileService.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/User.dart';

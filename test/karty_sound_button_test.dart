@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/karty_sound_button.dart';
-import 'package:lingualloop/ui/widgets/karty_answer_actions.dart';
-import 'package:lingualloop/ui/widgets/speaker_mark.dart';
-import 'package:lingualloop/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/widgets/karty_sound_button.dart';
+import 'package:stelinda/ui/widgets/karty_answer_actions.dart';
+import 'package:stelinda/ui/widgets/speaker_mark.dart';
+import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
 
 void main() {
   testWidgets('Ses dalgaları çalarken hareket eder, bitince ve sessizde durur',

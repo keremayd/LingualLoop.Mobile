@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:lingualloop/models/ArticlePractice.dart';
-import 'package:lingualloop/services/ArticlePracticeService.dart';
+import 'package:stelinda/models/ArticlePractice.dart';
+import 'package:stelinda/services/ArticlePracticeService.dart';
 
 enum ArticlePracticeStatus {
   loading,

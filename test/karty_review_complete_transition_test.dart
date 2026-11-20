@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lingualloop/ui/widgets/karty_review_complete_state.dart';
+import 'package:stelinda/ui/widgets/karty_review_complete_state.dart';
 
 void main() {
   testWidgets('rövanş sonucu katmanlı girer ve butonu sona kadar kilitler',
