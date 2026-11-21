@@ -56,4 +56,4 @@ Sorular için: destek@stelinda.com
 
 ## Değişiklikler
 
-Koşullar güncellenirse yeni hâli uygulamada ve stelinda.com/kosullar adresinde yayımlanır; tarih en üstte yazar.
+Koşullar güncellenirse yeni hâli uygulamada ve stelinda.com/terms adresinde yayımlanır; tarih en üstte yazar.

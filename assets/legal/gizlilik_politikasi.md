@@ -55,4 +55,4 @@ stelinda.com reklam ya da izleme çerezi kullanmaz. Altyapı sağlayıcısı Clo
 
 ## Değişiklikler
 
-Bu metin güncellenirse yeni hâli uygulamada ve stelinda.com/gizlilik adresinde yayımlanır; tarih en üstte yazar.
+Bu metin güncellenirse yeni hâli uygulamada ve stelinda.com/privacy adresinde yayımlanır; tarih en üstte yazar.

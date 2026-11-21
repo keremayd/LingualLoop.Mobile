@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Destek adresi; stelinda.com/destek ve yasal metinlerdekiyle aynı.
+/// Destek adresi; stelinda.com/support ve yasal metinlerdekiyle aynı.
 abstract final class SupportContact {
   static const email = 'destek@stelinda.com';
 
