@@ -42,5 +42,7 @@
   "premiumManage": "MENAXHO ABONIMIN",
   "premiumActiveClose": "Mbyll",
   "premiumManageFailed": "Faqja e abonimit nuk u hap. Provo sërish.",
-  "ticketsUnlimited": "Bileta të pakufizuara"
+  "ticketsUnlimited": "Bileta të pakufizuara",
+  "accountDeletionSubscriptionNote": "Abonimi Premium nuk anulohet bashkë me llogarinë. Që pagesa të ndalet, abonimi duhet anuluar veçmas në App Store.",
+  "accountDeletionManageSubscription": "Menaxho abonimin"
 }

@@ -146,4 +146,11 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get ticketsUnlimited => 'Sınırsız bilet';
+
+  @override
+  String get accountDeletionSubscriptionNote =>
+      'Premium abonelik hesapla birlikte iptal edilmez. Ödemenin durması için abonelik App Store\'dan ayrıca iptal edilmelidir.';
+
+  @override
+  String get accountDeletionManageSubscription => 'Aboneliği yönet';
 }

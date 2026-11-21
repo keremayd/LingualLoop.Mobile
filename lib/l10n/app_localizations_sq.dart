@@ -147,4 +147,11 @@ class AppLocalizationsSq extends AppLocalizations {
 
   @override
   String get ticketsUnlimited => 'Bileta të pakufizuara';
+
+  @override
+  String get accountDeletionSubscriptionNote =>
+      'Abonimi Premium nuk anulohet bashkë me llogarinë. Që pagesa të ndalet, abonimi duhet anuluar veçmas në App Store.';
+
+  @override
+  String get accountDeletionManageSubscription => 'Menaxho abonimin';
 }

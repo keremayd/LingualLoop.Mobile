@@ -75,5 +75,9 @@
   "premiumActiveClose": "Kapat",
   "premiumManageFailed": "Abonelik sayfası açılamadı. Tekrar dene.",
   "ticketsUnlimited": "Sınırsız bilet",
-  "@ticketsUnlimited": {"description": "Ekran okuyucu: premium üyenin bilet sayacı (∞)."}
+  "@ticketsUnlimited": {"description": "Ekran okuyucu: premium üyenin bilet sayacı (∞)."},
+  "accountDeletionSubscriptionNote": "Premium abonelik hesapla birlikte iptal edilmez. Ödemenin durması için abonelik App Store'dan ayrıca iptal edilmelidir.",
+  "@accountDeletionSubscriptionNote": {"description": "Hesap silme penceresi, premium üyede: abonelik hesapla birlikte iptal edilmez (Apple'ın hesap silme yönergesi)."},
+  "accountDeletionManageSubscription": "Aboneliği yönet",
+  "@accountDeletionManageSubscription": {"description": "Hesap silme penceresinde App Store abonelik sayfasını açan bağlantı."}
 }

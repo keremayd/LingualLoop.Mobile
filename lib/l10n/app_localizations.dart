@@ -337,6 +337,18 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Sınırsız bilet'**
   String get ticketsUnlimited;
+
+  /// Hesap silme penceresi, premium üyede: abonelik hesapla birlikte iptal edilmez (Apple'ın hesap silme yönergesi).
+  ///
+  /// In tr, this message translates to:
+  /// **'Premium abonelik hesapla birlikte iptal edilmez. Ödemenin durması için abonelik App Store\'dan ayrıca iptal edilmelidir.'**
+  String get accountDeletionSubscriptionNote;
+
+  /// Hesap silme penceresinde App Store abonelik sayfasını açan bağlantı.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aboneliği yönet'**
+  String get accountDeletionManageSubscription;
 }
 
 class _AppLocalizationsDelegate

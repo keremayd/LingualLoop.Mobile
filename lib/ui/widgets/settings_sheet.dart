@@ -5,6 +5,7 @@ import 'package:stelinda/services/GameFeedbackService.dart';
 import 'package:stelinda/services/PronunciationService.dart';
 import 'package:stelinda/services/account_deletion.dart';
 import 'package:stelinda/services/premium_store.dart';
+import 'package:stelinda/services/subscription_management.dart';
 import 'package:stelinda/ui/app_typography.dart';
 import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:stelinda/ui/widgets/Buttons/secondary_action_button.dart';
@@ -323,21 +324,33 @@ class _ToggleMark extends StatelessWidget {
 /// arada Apple penceresi açılır, bkz. `deleteAccountWithAppleConsent`);
 /// bitene kadar pencere kapanmaz, olmazsa hata kartta yazar. Hesap
 /// silindiyse `true` döner.
+///
+/// [subscriptionActive]: Premium üyede kart, aboneliğin hesapla birlikte
+/// iptal edilmediğini söyler ve abonelik sayfasına bağlantı verir (Apple'ın
+/// hesap silme yönergesi: ödeme App Store'da iptal edilene kadar sürer).
 Future<bool> confirmAccountDeletion(
   BuildContext context, {
   required Future<AccountDeletionResult> Function() delete,
+  bool subscriptionActive = false,
 }) async =>
     await showDialog<bool>(
       context: context,
       barrierColor: const Color(0xFF041227).withValues(alpha: 0.86),
-      builder: (_) => _AccountDeletionDialog(delete: delete),
+      builder: (_) => _AccountDeletionDialog(
+        delete: delete,
+        subscriptionActive: subscriptionActive,
+      ),
     ) ??
     false;
 
 class _AccountDeletionDialog extends StatefulWidget {
-  const _AccountDeletionDialog({required this.delete});
+  const _AccountDeletionDialog({
+    required this.delete,
+    required this.subscriptionActive,
+  });
 
   final Future<AccountDeletionResult> Function() delete;
+  final bool subscriptionActive;
 
   @override
   State<_AccountDeletionDialog> createState() => _AccountDeletionDialogState();
@@ -374,6 +387,12 @@ class _AccountDeletionDialogState extends State<_AccountDeletionDialog> {
     });
   }
 
+  Future<void> _manageSubscription() async {
+    final failed = context.l10n.premiumManageFailed;
+    if (await SubscriptionManagement.open() || !mounted) return;
+    setState(() => _error = failed);
+  }
+
   @override
   Widget build(BuildContext context) => PopScope(
         // İstek yoldayken pencere kapanırsa sonuç kaybolur.
@@ -388,6 +407,8 @@ class _AccountDeletionDialogState extends State<_AccountDeletionDialog> {
             error: _error,
             onConfirm: _confirm,
             onCancel: () => Navigator.of(context).pop(false),
+            onManageSubscription:
+                widget.subscriptionActive ? _manageSubscription : null,
           ),
         ),
       );
@@ -402,6 +423,7 @@ class AccountDeletionCard extends StatelessWidget {
     required this.onCancel,
     this.busy = false,
     this.error,
+    this.onManageSubscription,
   });
 
   final VoidCallback onConfirm;
@@ -409,9 +431,14 @@ class AccountDeletionCard extends StatelessWidget {
   final bool busy;
   final String? error;
 
+  /// Verilirse abonelik uyarısı ve abonelik sayfasının bağlantısı çizilir.
+  final VoidCallback? onManageSubscription;
+
   static const _background = Color(0xFF041227);
   static const _border = Color(0xFF0B2143);
   static const _muted = Color(0xFF8FA0B5);
+  static const _text = Color(0xFFE9EEF5);
+  static const _accent = Color(0xFF1CB1F5);
   static const _danger = Color(0xFFF52A2A);
   static const _dangerDepth = Color(0xFF9A1414);
 
@@ -420,6 +447,7 @@ class AccountDeletionCard extends StatelessWidget {
     final s = MediaQuery.sizeOf(context).width / 750;
     final radius = BorderRadius.circular(AppShapeStyle.cardRadius(34 * s));
     final buttonWidth = 594 * s;
+    final manage = onManageSubscription;
 
     return Container(
       width: 662 * s,
@@ -462,6 +490,42 @@ class AccountDeletionCard extends StatelessWidget {
                 height: 1.35,
               ),
             ),
+            if (manage != null) ...[
+              SizedBox(height: 20 * s),
+              Text(
+                context.l10n.accountDeletionSubscriptionNote,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: _text,
+                  fontFamily: AppTypography.family,
+                  fontSize: 25 * s,
+                  fontWeight: AppTypography.body,
+                  height: 1.35,
+                ),
+              ),
+              Semantics(
+                button: true,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: busy ? null : manage,
+                  child: SizedBox(
+                    width: buttonWidth,
+                    height: 80 * s,
+                    child: Center(
+                      child: Text(
+                        context.l10n.accountDeletionManageSubscription,
+                        style: TextStyle(
+                          color: _accent,
+                          fontFamily: AppTypography.family,
+                          fontSize: 27 * s,
+                          fontWeight: AppTypography.action,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
             if (error != null) ...[
               SizedBox(height: 22 * s),
               Text(

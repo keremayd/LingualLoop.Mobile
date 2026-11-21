@@ -173,6 +173,36 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('Premium üyede abonelik uyarısı ve bağlantısı çıkar',
+      (tester) async {
+    tester.view.physicalSize = const Size(375, 667);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    var manage = 0;
+    Widget card({VoidCallback? onManage}) => MaterialApp(
+          home: Material(
+            type: MaterialType.transparency,
+            child: Center(
+              child: AccountDeletionCard(
+                onConfirm: () {},
+                onCancel: () {},
+                onManageSubscription: onManage,
+              ),
+            ),
+          ),
+        );
+
+    await tester.pumpWidget(card());
+    expect(find.textContaining('iptal edilmez'), findsNothing);
+    expect(find.text('Aboneliği yönet'), findsNothing);
+
+    await tester.pumpWidget(card(onManage: () => manage++));
+    expect(find.textContaining('iptal edilmez'), findsOneWidget);
+    await tester.tap(find.text('Aboneliği yönet'));
+    expect(manage, 1);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final document in LegalDocument.values) {
     testWidgets('${document.title} metni okunur ve taşmadan çizilir',
         (tester) async {

@@ -9,6 +9,7 @@ import 'package:stelinda/Utils/AppNotifier.dart';
 import 'package:stelinda/services/AuthenticationService.dart';
 import 'package:stelinda/services/UserService.dart';
 import 'package:stelinda/services/account_deletion.dart';
+import 'package:stelinda/services/premium_store.dart';
 import 'package:stelinda/services/subscription_management.dart';
 import 'package:stelinda/ui/widgets/Buttons/auth_social_button.dart';
 import 'package:stelinda/ui/screens/legal_document_screen.dart';
@@ -16,6 +17,7 @@ import 'package:stelinda/ui/widgets/ProfilePhoto.dart';
 import 'package:stelinda/ui/widgets/settings_sheet.dart';
 import 'package:provider/provider.dart';
 
+import '../../providers/ScoreWithLivesProvider.dart';
 import '../../providers/UserProvider.dart';
 
 class ProfileCard extends StatelessWidget {
@@ -164,8 +166,14 @@ class ProfileCard extends StatelessWidget {
         await AuthService(Dio()).signOut(context);
       case SettingsAction.deleteAccount:
         final users = context.read<UserService>();
+        final premium = context
+                .read<ScoreWithLivesProvider>()
+                .scoreWithLives
+                ?.isPremium ==
+            true;
         final deleted = await confirmAccountDeletion(
           context,
+          subscriptionActive: PremiumStore.supported && premium,
           // Apple ile bağlı hesapta arada Apple penceresi açılır; Android'de
           // Apple penceresi yok, sunucu izni geri almadan siler.
           delete: () => deleteAccountWithAppleConsent(
