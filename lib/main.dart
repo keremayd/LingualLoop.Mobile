@@ -54,8 +54,10 @@ final RouteObserver<ModalRoute<void>> routeObserver =
 /// geliştirmede canlı sunucuyu denemek).
 const _apiBaseUrlOverride = String.fromEnvironment('API_BASE_URL');
 
-/// Canlı sunucunun adresi (Cloud Run). Yayına alınınca yazılır.
-const productionApiBaseUrl = '';
+/// Canlı sunucunun adresi: Google Cloud Run, proje `stelinda`, bölge
+/// europe-west1 (yayımlama: backend `scripts/cloud-run-deploy.sh`).
+const productionApiBaseUrl =
+    'https://stelinda-api-723796932192.europe-west1.run.app/api/';
 
 String get apiBaseUrl {
   if (_apiBaseUrlOverride.isNotEmpty) return _apiBaseUrlOverride;
