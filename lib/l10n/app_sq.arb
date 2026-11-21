@@ -44,5 +44,11 @@
   "premiumManageFailed": "Faqja e abonimit nuk u hap. Provo sërish.",
   "ticketsUnlimited": "Bileta të pakufizuara",
   "accountDeletionSubscriptionNote": "Abonimi Premium nuk anulohet bashkë me llogarinë. Që pagesa të ndalet, abonimi duhet anuluar veçmas në App Store.",
-  "accountDeletionManageSubscription": "Menaxho abonimin"
+  "accountDeletionManageSubscription": "Menaxho abonimin",
+  "passwordHelpTitle": "E harrove fjalëkalimin?",
+  "passwordHelpBody": "Lidhja për rivendosjen e fjalëkalimit do të shtohet së shpejti në aplikacion. Deri atëherë mund t'i shkruhet mbështetjes nga adresa e email-it e regjistruar në llogari:",
+  "passwordHelpWrite": "SHKRUAJI MBËSHTETJES",
+  "passwordHelpMailSubject": "Rivendosja e fjalëkalimit",
+  "passwordHelpCopied": "Aplikacioni i email-it nuk u hap; adresa u kopjua.",
+  "passwordHelpClose": "Mbyll"
 }

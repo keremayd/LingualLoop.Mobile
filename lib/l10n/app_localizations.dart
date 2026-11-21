@@ -349,6 +349,42 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Aboneliği yönet'**
   String get accountDeletionManageSubscription;
+
+  /// Girişte "Parolamı unuttum"a dokununca açılan pencerenin başlığı.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şifreni mi unuttun?'**
+  String get passwordHelpTitle;
+
+  /// Şifre penceresinin açıklaması; altında destek adresi ayrı satırda durur.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şifre sıfırlama bağlantısı yakında uygulamaya eklenecek. O zamana kadar hesapta kayıtlı e-posta adresinden destek adresine yazılabilir:'**
+  String get passwordHelpBody;
+
+  /// E-posta uygulamasında destek adresine taslak açan düğme.
+  ///
+  /// In tr, this message translates to:
+  /// **'DESTEĞE YAZ'**
+  String get passwordHelpWrite;
+
+  /// Destek e-postası taslağının konusu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şifre sıfırlama'**
+  String get passwordHelpMailSubject;
+
+  /// E-posta uygulaması açılamayınca adres panoya kopyalanır.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta uygulaması açılamadı; adres kopyalandı.'**
+  String get passwordHelpCopied;
+
+  /// No description provided for @passwordHelpClose.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapat'**
+  String get passwordHelpClose;
 }
 
 class _AppLocalizationsDelegate

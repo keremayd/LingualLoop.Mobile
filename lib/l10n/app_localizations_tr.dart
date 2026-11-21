@@ -153,4 +153,24 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get accountDeletionManageSubscription => 'Aboneliği yönet';
+
+  @override
+  String get passwordHelpTitle => 'Şifreni mi unuttun?';
+
+  @override
+  String get passwordHelpBody =>
+      'Şifre sıfırlama bağlantısı yakında uygulamaya eklenecek. O zamana kadar hesapta kayıtlı e-posta adresinden destek adresine yazılabilir:';
+
+  @override
+  String get passwordHelpWrite => 'DESTEĞE YAZ';
+
+  @override
+  String get passwordHelpMailSubject => 'Şifre sıfırlama';
+
+  @override
+  String get passwordHelpCopied =>
+      'E-posta uygulaması açılamadı; adres kopyalandı.';
+
+  @override
+  String get passwordHelpClose => 'Kapat';
 }

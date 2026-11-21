@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:stelinda/models/ApiResponse.dart';
 import 'package:stelinda/models/responses/AuthenticateResponse.dart';
 import 'package:stelinda/services/AuthenticationService.dart';
+import 'package:stelinda/services/support_contact.dart';
 import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
 import 'package:stelinda/ui/screens/login_screen.dart';
 import 'package:provider/provider.dart';
@@ -58,6 +59,24 @@ void main() {
     );
     await tester.pump();
   }
+
+  testWidgets('Parolamı unuttum destek adresini gösteren pencereyi açar',
+      (tester) async {
+    final auth = _FakeAuthService();
+    await showLogin(tester, auth);
+
+    await tester.tap(find.text('Parolamı unuttum'));
+    await tester.pumpAndSettle();
+    expect(find.text('Şifreni mi unuttun?'), findsOneWidget);
+    expect(find.text(SupportContact.email), findsOneWidget);
+    expect(find.text('DESTEĞE YAZ'), findsOneWidget);
+
+    await tester.tap(find.text('Kapat'));
+    await tester.pumpAndSettle();
+    expect(find.text('Şifreni mi unuttun?'), findsNothing);
+    expect(auth.requests, isEmpty);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('form doğrulanır ve girilen bilgilerle tek istek gönderilir',
       (tester) async {

@@ -8,6 +8,7 @@ import 'package:stelinda/ui/widgets/Buttons/app_icon_control_button.dart';
 import 'package:stelinda/ui/widgets/Buttons/auth_back_button.dart';
 import 'package:stelinda/ui/widgets/Buttons/auth_social_button.dart';
 import 'package:stelinda/ui/widgets/Buttons/depth_pressable_button.dart';
+import 'package:stelinda/ui/widgets/password_help_sheet.dart';
 import 'package:provider/provider.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart'
     show SignInWithAppleException;
@@ -309,7 +310,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     left: 0,
                     right: 0,
                     child: TextButton(
-                      onPressed: _isLoading ? null : () {},
+                      onPressed: _isLoading
+                          ? null
+                          : () => showPasswordHelpSheet(context),
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
                         minimumSize: Size.zero,

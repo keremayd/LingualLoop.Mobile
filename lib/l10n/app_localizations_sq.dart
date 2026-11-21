@@ -154,4 +154,24 @@ class AppLocalizationsSq extends AppLocalizations {
 
   @override
   String get accountDeletionManageSubscription => 'Menaxho abonimin';
+
+  @override
+  String get passwordHelpTitle => 'E harrove fjalëkalimin?';
+
+  @override
+  String get passwordHelpBody =>
+      'Lidhja për rivendosjen e fjalëkalimit do të shtohet së shpejti në aplikacion. Deri atëherë mund t\'i shkruhet mbështetjes nga adresa e email-it e regjistruar në llogari:';
+
+  @override
+  String get passwordHelpWrite => 'SHKRUAJI MBËSHTETJES';
+
+  @override
+  String get passwordHelpMailSubject => 'Rivendosja e fjalëkalimit';
+
+  @override
+  String get passwordHelpCopied =>
+      'Aplikacioni i email-it nuk u hap; adresa u kopjua.';
+
+  @override
+  String get passwordHelpClose => 'Mbyll';
 }

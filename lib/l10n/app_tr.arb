@@ -79,5 +79,16 @@
   "accountDeletionSubscriptionNote": "Premium abonelik hesapla birlikte iptal edilmez. Ödemenin durması için abonelik App Store'dan ayrıca iptal edilmelidir.",
   "@accountDeletionSubscriptionNote": {"description": "Hesap silme penceresi, premium üyede: abonelik hesapla birlikte iptal edilmez (Apple'ın hesap silme yönergesi)."},
   "accountDeletionManageSubscription": "Aboneliği yönet",
-  "@accountDeletionManageSubscription": {"description": "Hesap silme penceresinde App Store abonelik sayfasını açan bağlantı."}
+  "@accountDeletionManageSubscription": {"description": "Hesap silme penceresinde App Store abonelik sayfasını açan bağlantı."},
+  "passwordHelpTitle": "Şifreni mi unuttun?",
+  "@passwordHelpTitle": {"description": "Girişte \"Parolamı unuttum\"a dokununca açılan pencerenin başlığı."},
+  "passwordHelpBody": "Şifre sıfırlama bağlantısı yakında uygulamaya eklenecek. O zamana kadar hesapta kayıtlı e-posta adresinden destek adresine yazılabilir:",
+  "@passwordHelpBody": {"description": "Şifre penceresinin açıklaması; altında destek adresi ayrı satırda durur."},
+  "passwordHelpWrite": "DESTEĞE YAZ",
+  "@passwordHelpWrite": {"description": "E-posta uygulamasında destek adresine taslak açan düğme."},
+  "passwordHelpMailSubject": "Şifre sıfırlama",
+  "@passwordHelpMailSubject": {"description": "Destek e-postası taslağının konusu."},
+  "passwordHelpCopied": "E-posta uygulaması açılamadı; adres kopyalandı.",
+  "@passwordHelpCopied": {"description": "E-posta uygulaması açılamayınca adres panoya kopyalanır."},
+  "passwordHelpClose": "Kapat"
 }
